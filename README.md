@@ -1,0 +1,2 @@
+# SqCore
+SqCore Framework
