@@ -1,0 +1,46 @@
+<HTML>
+<head>
+    <meta charset="utf-8" />
+    <title>SqCore</title>
+    <script src="ExampleNonRealtime.js"></script>
+    <link rel="stylesheet" href="ExampleNonRealtime.css">
+</head>
+
+<body>
+    <div class="overlap-div-outer">
+        <div class="overlap-div-inner1">
+
+            <div class="video-container">
+                <div class="video-foreground">
+                    <div id="yt-player"></div>
+                </div>
+            </div>
+        </div>
+        <div id="MainDivOverVidBkg" class="overlap-div-inner2">
+
+            <H2>Example Non Realtime Webapp</H2>
+
+                <div class="worktopArea">
+                <br />Data will arrive here after (simulated) 3 seconds delay to test user experience:<br /><br /><br />
+                <div id="DebugDataArrivesHere"></div><br /><br /><br />
+
+                <span class="largerText"><img src="/images/favicon/favicon_Home64x64Resonly.ico" /> <a href="https://dashboard.sqcore.net">Dashboard (as example link)</a></span><br /><br /><br /><br />
+            </div><br />
+
+            <div class="miniSizeText">
+            Change background video: &nbsp; &nbsp;
+            <select name="video-selector" id="video-selector-1" onchange="video_selector_onchange()">
+                <option value="iss">ISS Timelapse - The English Channel</option>
+                <option value="minority">Minority report UI</option>
+                <option value="stocks3d">3D stock market</option>
+                <option value="matrix">Matrix</option>
+                <option value="london">London</option>
+                <option value="sea">Sea</option>
+                <option value="clouds">Clouds</option>
+            </select>
+            &nbsp; &nbsp; &nbsp;Tested in 1920x1080 (Scale:100%).
+            </div>
+        </div>
+    </div>
+</body>
+</HTML>

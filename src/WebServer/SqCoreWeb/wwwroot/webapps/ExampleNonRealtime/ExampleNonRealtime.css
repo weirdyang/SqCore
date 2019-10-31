@@ -1,0 +1,100 @@
+html { font-size: 62.5%; }  /* set 1.0rem = 10px. revert to root font size of 10px. it allows to set font-size in rem, that corresponds to px */
+
+body {
+    margin: 0;  /* originally, there is a 8px margin  */
+    overflow-y: scroll; /* enable y scrollbar */
+    overflow-x: hidden;  /* disable x scrollbar */
+    font-size: 1.6rem;  /* = 16px. Wiki uses 14px. Ft.com uses size 18px fonts. CNBC is using 18 and 14. Bloomberg uses Georgia 18px (for text). But 18px is too big for condensing a lot of info to the page. 16px should be our default too for text and header of tables. For numbers in cells in table we should targer 14px. 20px for section headers. 24px for webpage main title. */
+  }
+
+  h2 {
+    margin-top: 0.4rem;
+    margin-bottom: 0.7rem;
+    font-size: 2.4rem;  /* = 24px */
+  }
+
+  .largeSizeText {
+    font-size: 2.0rem;  /* = 20px */
+  }
+
+  .normalSizeText {
+    font-size: 1.6rem;  /* = 16px */
+  }
+
+  .dataSizeText {
+    font-size: 1.4rem;  /* = 14px */
+  }
+
+  .miniSizeText {
+    font-size: 1.0rem;  /* = 10px. For insignificant debug info. */
+  }
+
+  img {     /* icons are next to a text on the same line. If text font changes, this should change. Define this icons as 2x the size of the font (2x14px=28px). Use EM, so it scales with the containing element fontsize. So, if that fontsize change, we don't have to resize img here. */
+    width: 2em;
+    height: 2em;
+    vertical-align: text-bottom;
+  }
+
+  a {
+    color: inherit;  /* inherit from parent, if is set dynamically as dark/light mode */
+    display: inline-block;
+    padding: 0.8rem 0.2rem;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-shadow: 0px 1px 0px #528ecc; /* shadow is the only exception when fixed pixel units should be used. */
+  }
+
+  a:hover {
+    color: blue;  /* blue Href hover is good for both dark and light mode  */
+  }
+
+
+  .overlap-div-inner1 {
+    position: absolute;
+  }
+
+  .overlap-div-inner2 {
+    position: absolute;
+    width: 100%;
+    margin-left: 2.0rem;
+    text-align: center;
+    font-family: "Georgia";
+    color: white;
+  }
+
+  .worktopArea {
+    width: 90%;
+    height: 60vh;
+    margin-left: 2.0rem;
+    color: inherit;  /* inherit from parent, if is set dynamically as dark/light mode */
+    background: linear-gradient(135deg, rgba(251,63,63,0.95) 0%, rgba(162,164,77,0.95) 50%, rgba(70,93,252,0.95) 100%);
+  }
+
+   select {   /* Combo box inner text should be the same as its surrounding */
+      font-size: inherit;
+  }
+
+  /* see discussion https://stackoverflow.com/questions/52886853/youtube-embed-showinfo-has-been-deprecated */
+  /* https://jsfiddle.net/xcr298fu/   */
+  .video-container {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .video-container iframe {
+    pointer-events: none;
+  }
+
+  .video-container iframe {
+    position: absolute;
+    top: -60px;     /* elongate by 60px up. Background video control is better to be done in pixels. */
+    left: 0;
+    width: 100%;     /* elongate by 60px down. So, vplayer is 120 px bigger than 100%. This still indroduces black borders */
+    height: calc(100% + 120px);
+  }
+
+  .video-foreground {
+    pointer-events: none;
+  }

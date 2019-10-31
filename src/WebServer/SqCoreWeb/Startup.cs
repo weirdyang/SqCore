@@ -1,0 +1,533 @@
+using System;
+using System.IO;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.SpaServices.AngularCli;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.AspNetCore.Rewrite;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.ResponseCompression;
+using System.Threading.Tasks;
+using System.IO.Compression;
+using System.Linq;
+using Microsoft.AspNetCore.Mvc;
+using SqCommon;
+
+namespace SqCoreWeb
+{
+    public class Startup
+    {
+        public Startup(IConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
+
+        public IConfiguration Configuration { get; }
+
+        // This method gets called by the runtime. Use this method to add services to the container.
+        public void ConfigureServices(IServiceCollection services)
+        {
+            services.AddHttpsRedirection(options =>
+            {
+                options.RedirectStatusCode = StatusCodes.Status307TemporaryRedirect;
+                options.HttpsPort = 5001;
+            });
+
+            // https://docs.microsoft.com/en-us/aspnet/core/performance/caching/response?view=aspnetcore-3.0
+            services.AddResponseCaching(); // DI: these services could be used in MVC control/Razor pages (either as [Attributes], or in code)
+            services.AddMvc(options =>     // AddMvc() equals AddControllersWithViews() + AddRazorPages()
+            {
+                options.CacheProfiles.Add("NoCache",      // this CashProfile is given once here, and if it changes, we only have to change here, not in all Controllers.
+                    new CacheProfile()
+                    {
+                        Duration = 0,
+                        Location = ResponseCacheLocation.None,
+                        NoStore = true
+                    });
+                options.CacheProfiles.Add("DefaultMidDuration",      // this CashProfile is given once here, and if it changes, we only have to change here, not in all Controllers.
+                new CacheProfile()
+                {
+                    //Duration = (int)TimeSpan.FromHours(12).TotalSeconds
+                    Duration = 100000   // 100,000 seconds = 27 hours
+                });
+            }).SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
+            //services.AddControllersWithViews();        // AddMvc() equals AddControllersWithViews() + AddRazorPages(), so we don't use Razor pages now.
+            // In production, the Angular files (index.html) will be served from this directory, but actually we don't use UseSpaStaticFiles(), so we don't need this here.
+            services.AddSpaStaticFiles(configuration =>
+            {
+                configuration.RootPath = "Angular/dist";
+            });
+
+            // https://docs.microsoft.com/en-us/aspnet/core/performance/response-compression
+            services.AddResponseCompression(options =>
+            {
+                options.Providers.Add<BrotliCompressionProvider>();
+                options.Providers.Add<GzipCompressionProvider>();
+                // Default Mime types: application/javascript, application/json, application/xml, text/css, text/html, text/json, text/plain, text/xml
+                options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat( new[] { "image/svg+xml" });
+            });
+            services.Configure<BrotliCompressionProviderOptions>(options =>
+            {
+                options.Level = CompressionLevel.Fastest;
+            });
+            
+            string googleClientId = Utils.Configuration["Google:ClientId"];
+            string googleClientSecret = Utils.Configuration["Google:ClientSecret"];
+            
+            if (!String.IsNullOrEmpty(googleClientId) && !String.IsNullOrEmpty(googleClientSecret))
+            {
+                // The reason you have BOTH google and cookies Auth is because you're using google for identity information but using cookies for storage of the identity for only asking Google once.
+                //So AddIdentity() is not required, but Cookies Yes.
+                services.AddAuthentication(options =>
+                {
+                    // If you don't want the cookie to be automatically authenticated and assigned to HttpContext.User, 
+                    // remove the CookieAuthenticationDefaults.AuthenticationScheme parameter passed to AddAuthentication.
+                    options.DefaultScheme =  CookieAuthenticationDefaults.AuthenticationScheme;  // For anything else (sign in, sign out, authenticate, forbid), use the cookies scheme
+                    options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;   // For challenges, use the google scheme. If not, "InvalidOperationException: No authenticationScheme was specified"
+
+                    options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                    options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                })
+                .AddCookie(o => {  // CookieAuth will be the default from the two, GoogleAuth is used only for Challenge
+                    o.LoginPath = "/account/login";
+                    o.LogoutPath = "/account/logout";
+                    //o.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;   // this is the default BTW, so no need to set.
+                    // problem: if Cookie storage works in https://localhost:5001/account/login  but not in HTTP: http://localhost:5000/account/login
+                    // "Note that the http page cannot set an insecure cookie of the same name as the secure cookie."
+                    // Solution: Manually delete the cookie from Chrome. see here.  https://bugs.chromium.org/p/chromium/issues/detail?id=843371
+                    // in Production, only HTTPS is allowed anyway, so it will work. Best is not mix development in both HTTP/HTTPS (just stick to one of them). 
+                    // stick to HTTPS. Although Chrome browser-caching will not work in HTTPS (because of insecure cert), it is better to test HTTPS, because that will be the production.
+
+                    // Controls how much time the authentication ticket stored in the cookie will remain valid
+                    // This is separate from the value of Microsoft.AspNetCore.Http.CookieOptions.Expires, which specifies how long the browser will keep the cookie. We will set that in OnTicketReceived()
+                    o.ExpireTimeSpan = TimeSpan.FromDays(350);  // allow 1 year expiration.
+                })
+                .AddGoogle("Google", options =>
+                {
+                    options.ClientId = googleClientId;
+                    options.ClientSecret = googleClientSecret;
+                    options.Events = new OAuthEvents
+                    {
+                        OnCreatingTicket = context =>
+                        {
+                            Console.WriteLine(context.User);
+                            // string email = context.User.Value<Newtonsoft.Json.Linq.JArray>("emails")[0]["value"].ToString();
+                            // Utils.Logger.Debug($"[Authorize] attribute forced Google auth. Email:'{email ?? "null"}', RedirectUri: '{context.Properties.RedirectUri ?? "null"}'");
+
+                            // if (!Utils.IsAuthorizedGoogleUsers(Utils.Configuration, email))
+                            //     throw new Exception($"Google Authorization Is Required. Your Google account: '{ email }' is not accepted. Logout this Google user and login with another one.");
+
+                            //string domain = context.User.Value<string>("domain");
+                            //if (domain != "jerriepelser.com")
+                            //    throw new GoogleAuthenticationException("You must sign in with a jerriepelser.com email address");
+
+                            return Task.CompletedTask;
+                        },
+                        OnTicketReceived = context =>
+                        {
+                            // if this is not set, then the cookie in the browser expires, even though the validation-info in the cookie is still valid. By default, cookies expire: "When the browsing session ends" Expires: 'session'
+                            // https://www.jerriepelser.com/blog/managing-session-lifetime-aspnet-core-oauth-providers/
+                            context.Properties.IsPersistent = true;
+                            context.Properties.ExpiresUtc = DateTimeOffset.UtcNow.AddDays(25);
+
+                            return Task.FromResult(0);
+                        }
+                    };
+                });
+            }
+            else
+            {
+                Console.WriteLine("A_G_CId and A_G_CSe from Config has NOT been found. Cannot initialize GoogelAuthentication.");
+                //Utils.Logger.Warn("A_G_CId and A_G_CSe from Config has NOT been found. Cannot initialize GoogelAuthentication.");
+            }
+
+        }
+
+        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        {
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
+            else
+            {
+                app.UseExceptionHandler("/Error");
+                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+                app.UseHsts();
+
+                app.UseHttpsRedirection();     // Chrome Caching warning! If you are developing using a self-signed certificate over https and there is an issue with the certificate then google will not cache the response
+            }
+
+            app.UseMiddleware<SqFirewallMiddleware>();  // For this to catch Exceptions, it should come after UseExceptionHadlers(), because those will swallow exceptions and generates nice ErrPage.
+
+            app.Use(async (context, next) =>
+            {
+                Console.WriteLine($"Before UseHttpsRedirection(): Request.Path: '{context.Request.Path.Value}'");
+
+                await next();
+
+                // if (context.Response.StatusCode == 404 &&
+                //     !Path.HasExtension(context.Request.Path.Value) &&
+                //     !context.Request.Path.Value.StartsWith("/api/"))
+                // {
+                //     context.Request.Path = "/angulardev.html";
+
+                //     await next();
+                // }
+            });
+
+           
+
+            //app.UseDefaultFiles();      // "UseDefaultFiles is a URL rewriter (default.htm, default.html, index.htm, index.html whichever first, 4 file queries to find the file) that doesn't actually serve the file. "
+            app.UseRewriter(new RewriteOptions()
+            .AddRewrite(@"^$", "index.html", skipRemainingRules: true)              // empty string converted to index.html. Only 1 query to find the index.html file. Better than UseDefaultFiles()
+            .AddRewrite(@"^(.*)/$", "$1/index.html", skipRemainingRules: true)      // converts "/" to "/index.html", e.g. .AddRewrite(@"^HealthMonitor/$", @"HealthMonitor/index.html" and all Angular projects.     
+            );    
+
+            // Edge browser bug. Aug 30, 2019: "EdgeHTML not respecting nomodule attribute on script tag". It downloads both ES5 and ES6(2015) versions. https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/23357397/
+            // can be fixed to only emit ES2015: https://stackoverflow.com/questions/56495683/angular-cli-8-is-it-possible-to-build-only-on-es2015
+
+            // Chrome Caching warning! If you are developing using a self-signed certificate over https and there is an issue with the certificate then google will not cache the response no matter what cache headers you use.
+            // So, while developing browser caching on localhost: Either:
+            // 1. Test HTTPS on port 5001 in Edge, https://localhost:5001/HealthMonitor/   OR
+            // 2. Test HTTP on PORT 5000 in Chrome, http://localhost:5000/HealthMonitor/  (disable UseHttpsRedirection()) not HTTPS  (but note that Chrome can be slow on http://localhost)
+            app.UseResponseCaching();       // this fills up the Response header Cache-Control, but only for MVC Controllers (classes, methods), Razor Page handlers (classes)
+            app.Use(async (context, next) =>    // this fills up the Response header Cache-Control for everything else, like static files.
+            {
+                if (!env.IsDevelopment())   // in development, don't use browser caching at all.
+                {
+                    // we have to add header Before filling up the response with 'await next();', otherwise 
+                    // if we try to add After StaticFiles(), we got exception: "System.InvalidOperationException: Headers are read-only, response has already started."
+                    Console.WriteLine($"Adding Cache-control to header '{context.Request.Path}'");
+                    string ext = Path.GetExtension(context.Request.Path.Value) ?? String.Empty;
+                    if (ext != String.Empty)    // If has any extension, then it is not a Controller (but probably a StaticFile()). If it is "/", then it is already converted to "index.htmL". Controllers will handle its own cacheAge with attributes. 
+                    {
+                        // UseResponseCaching() will fill up headers, if MVC controllers or Razor pages, we don't want to use this caching, because the Controller will specify it in an attribute.
+                        // probably no cache for API calls like "https://localhost:5001/WeatherForecast"  (they probably get RT data), Controllers will handle it.
+                        TimeSpan maxBrowserCacheAge = (ext) switch
+                        {
+                            ".html" => TimeSpan.FromDays(8),
+                            var xt when xt == ".html" || xt == ".htm" => TimeSpan.FromHours(8),    // short cache time for html files (like index.html or when no  that contains the URL links for other JS, CSS files)                            
+                            var xt when xt == ".css" => TimeSpan.FromDays(7),   // mediam time frames for CSS and JS files. Angular only changes HTML files.
+                            var xt when xt == ".js" => TimeSpan.FromDays(7),
+                            var xt when xt == ".jpg" || xt == ".jpeg" || xt == ".ico" => TimeSpan.FromDays(300),      // images files are very long term, long cache time for *.jpg files. assume a year, 31536000 seconds, typically used. They will never change
+                            _ => TimeSpan.FromDays(350)
+                        };
+                       
+                        if (maxBrowserCacheAge.TotalSeconds > 0)    // if Duration = 0, it will raise exception of "The relative expiration value must be positive. (Parameter 'AbsoluteExpirationRelativeToNow')"
+                        {
+                            context.Response.GetTypedHeaders().CacheControl =
+                                new Microsoft.Net.Http.Headers.CacheControlHeaderValue()
+                                {
+                                    Public = true,
+                                    MaxAge = maxBrowserCacheAge
+                                };
+                        }
+                    }
+                }
+                // Vary: User-Agent or Vary: Accept-Encoding is used by intermediate CDN caches (if used, we don't.) It is not necessary to set in direct server to client connection.
+                // so the CDN caches differentiate by user-agents or gzip/brotli/noCompressions.
+                // StaticFiles(): index.html sets vary: Accept-Encoding, because html can be compressed. Ico/jpeg files are not compressed, so 'vary' is not set in HTTP header.
+                // https://blog.stackpath.com/accept-encoding-vary-important/
+                //context.Response.Headers[Microsoft.Net.Http.Headers.HeaderNames.Vary] = new string[] { "Accept-Encoding" };
+
+                await next();
+            });
+
+
+
+            AddAngularSpaHandlingMiddleware(app, env, "HealthMonitor");
+            AddAngularSpaHandlingMiddleware(app, env, "MarketDashboard");
+
+            app.UseResponseCompression();       // this is on the fly, just-in-time (JIT) compression. CompressionLevel.Optimal takes 250ms, but CompressionLevel.Fastest takes 4ms time on CPU, but still worth it.
+
+
+            // var rwOptions = new RewriteOptions();
+            // if (env.IsDevelopment())
+            // {
+            //     rwOptions
+            //     .AddRedirect(@"^HealthMonitor", @"dev/DeveloperWarningForServingAngularSPA.html")  // Redirect() forces client to query again.
+            //     .AddRedirect(@"^MarketDashboard", @"dev/DeveloperWarningForServingAngularSPA.html");  // Redirect() forces client to query again.
+            // }
+            // else
+            // {
+            //     rwOptions
+            //     .AddRedirect(@"^HealthMonitor$", @"HealthMonitor/")  // Redirect() forces client to query again (needed for base URL to be the SPA folder)
+            //     .AddRewrite(@"^HealthMonitor/$", @"HealthMonitor/index.html", skipRemainingRules: true)   // Rewrite() is hidden from the Client. Helps to find it by UseStaticFiles()
+            //     .AddRedirect(@"^MarketDashboard$", @"MarketDashboard/")  // Redirect() forces client to query again (needed for base URL to be the SPA folder)
+            //     .AddRewrite(@"^MarketDashboard/$", @"MarketDashboard/index.html", skipRemainingRules: true);   // Rewrite() is hidden from the Client. Helps to find it by UseStaticFiles()
+            // }
+
+            // app.UseRewriter(rwOptions);
+
+            // string angularSpaStr = String.Empty;
+
+            // app.Use(async (context, next) =>
+            // {
+            //     Console.WriteLine($"After UseRewriter():  Request.Path: '{context.Request.Path.Value}'");
+
+            //     if (context.Request.Path.Value.StartsWith("/HealthMonitor/", StringComparison.OrdinalIgnoreCase))
+            //         angularSpaStr = "HealthMonitor";
+            //     else if (context.Request.Path.Value.StartsWith("/MarketDashboard/", StringComparison.OrdinalIgnoreCase))
+            //         angularSpaStr = "MarketDashboard";
+
+            //     if (!String.IsNullOrEmpty(angularSpaStr)) {
+            //     Problem, this app.UseStaticFiles() never worked here. It didn't file the files, because it is not in the middleware chain.
+            //         context.Request.Path = context.Request.Path.Value.Replace("/" + angularSpaStr, "");
+            //         // "Serving UseStaticFiles():  Request.Path: '/HealthMonitor/index.html' in folder:'Angular\dist\HealthMonitor'"
+            //         Console.WriteLine($"Serving UseStaticFiles():  Request.Path: '{context.Request.Path.Value}' in folder:'{@"Angular\dist\" + angularSpaStr}'");
+            //         app.UseStaticFiles(new StaticFileOptions() { FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"Angular\dist\" + angularSpaStr))});
+            //     }
+
+            //     await next();
+            // });
+
+
+            // app.Map(new PathString("/HealthMonitor"), client =>
+            // {
+            //     // In Development, when we do 'ng serve' the 'index.hml' should be in the root folder, and all other files (main, pollyfill) should be in the root too. So, only <base href=""> is possible
+            //     // Therefor, in Production, index.html should be in the HealthMonitor folder, so browser should ask 'https://localhost:5001/HealthMonitor/' and NOT 'https://localhost:5001/HealthMonitor'
+            //     // If browser asks 'https://localhost:5001/HealthMonitor', we should redirect to 'https://localhost:5001/HealthMonitor/'
+            //     client.Use(async (context, next) =>
+            //     {
+            //         Console.WriteLine($"Map.Use: context.Request.Path.Value: '{context.Request.Path.Value}'");
+
+            //         // if (String.IsNullOrEmpty(context.Request.Path.Value))    // turn https://localhost:5001/HealthMonitor   to // turn https://localhost:5001/HealthMonitor/index.html
+            //         // {
+            //         //     context.Request.Path = "/index.html";
+            //         // }
+            //         // else if (String.Equals(context.Request.Path.Value, "/index.html", StringComparison.OrdinalIgnoreCase))
+            //         //     context.Request.Path = "";
+
+            //         await next();
+            //     });
+
+            //     StaticFileOptions clientAppDist = new StaticFileOptions()
+            //     {
+            //         FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"Angular\dist\HealthMonitor"))
+            //     };
+            //     client.UseStaticFiles(clientAppDist);
+            // });
+
+            // app.Map(new PathString("/MarketDashboard"), client =>
+            // {
+            //     StaticFileOptions clientAppDist = new StaticFileOptions()
+            //     {
+            //         FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"Angular\dist\MarketDashboard"))
+            //     };
+            //     client.UseStaticFiles(clientAppDist);
+            // });
+
+            // if (!env.IsDevelopment())   // this is not used now.
+            // {
+            //     app.UseSpaStaticFiles();    // RootPath = "Angular/dist";, this serves https://localhost:5001/HealthMonitor/styles.3ff695c00d717f2d2a11.css , however, it doesn't serve https://localhost:5001/HealthMonitor/index.html
+            // }
+
+
+            // Serve the files Default.htm, default.html, Index.htm, Index.html
+            // by default (in that order), i.e., without having to explicitly qualify the URL.
+            // For example, if your endpoint is http://localhost:3012/ and wwwroot directory
+            // has Index.html, then Index.html will be served when someone hits
+            // http://localhost:3012/
+
+
+            // Enable static files to be served. This would allow html, images, etc. in wwwroot directory to be served. 
+            // The URLs of files exposed using UseDirectoryBrowser and UseStaticFiles are case sensitive and character constrained, subject to the underlying file system.
+            // For example, Windows is not case sensitive, but MACOS and Linux are case sensitive.
+            // for jpeg files, place UseStaticFiles BEFORE UseRouting
+            if (env.IsDevelopment()) 
+                app.UseStaticFilesCaseSensitive();
+            else 
+                app.UseStaticFiles();
+
+            app.UseRouting();
+
+            // place UseAuthentication() AFTER UseRouting(),  https://docs.microsoft.com/en-us/aspnet/core/migration/22-to-30?view=aspnetcore-2.2&tabs=visual-studio
+            app.UseAuthentication();    // needed for filling httpContext?.User?.Claims. StaticFiles are served Before the user is authenticed. This is fast, but httpContext?.User?.Claims is null in this case.
+            app.UseAuthorization();     // needed for [Authorize] attributes protection, "If the app uses authentication/authorization features such as AuthorizePage or [Authorize], place the call to UseAuthentication and UseAuthorization after UseRouting"
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllerRoute(
+                    name: "default",
+                    pattern: "{controller}/{action=Index}/{id?}");
+            });
+
+            app.Use(async (context, next) =>
+            {
+                Console.WriteLine($"Problem. End of the serving line. Request.Path: '{context.Request.Path.Value}'");
+
+                await next();
+            });
+
+            // https://stackoverflow.com/questions/54582037/asp-net-core-iapplicationbuilder-map-spa-and-static-files
+            // the query is: "https://localhost:5001/HealthMonitor/styles.3ff695c00d717f2d2a11.css"
+            // this should serve only  https://localhost:5001/HealthMonitor/index.html when client ask  https://localhost:5001/HealthMonitor
+            // app.Map(new PathString("/HealthMonitor"), client =>
+            // {
+            //     Console.WriteLine("app.Map('/HealthMonitor'");
+
+            //     client.Use(async (context, next) =>
+            //     {
+            //         Console.WriteLine($"Map.Use: context.Request.Path.Value: {context.Request.Path.Value}");
+
+            //         if (context.Request.Path.Value.Equals("/HealthMonitor", StringComparison.OrdinalIgnoreCase))
+            //         {
+            //             context.Request.Path = "/HealthMonitor/index.html";
+
+            //         }
+
+            //         await next();
+
+            //         // if (context.Response.StatusCode == 404 &&
+            //         //     !Path.HasExtension(context.Request.Path.Value) &&
+            //         //     !context.Request.Path.Value.StartsWith("/api/"))
+            //         // {
+            //         //     context.Request.Path = "/angulardev.html";
+
+            //         //     await next();
+            //         // }
+            //     });
+
+            //     // Each map gets its own physical path for it to map the static files to. 
+            //     // StaticFileOptions clientAppDist = new StaticFileOptions()
+            //     // {
+            //     //     //FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"Angular\dist\HealthMonitor"))
+            //     //     FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"Angular\dist"))
+            //     // };
+
+            //     DefaultFilesOptions clientAppDist2 = new DefaultFilesOptions()
+            //     {
+            //         //FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"Angular\dist\HealthMonitor"))
+            //         FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"Angular\dist"))
+            //     };
+
+
+            //     app.UseDefaultFiles(clientAppDist2);        // this is doing Redirects. We don't like the extra query.
+
+
+
+            //     //app.UseStaticFiles(clientAppDist);
+
+            //     // Each map its own static files otherwise, it will only ever serve index.html no matter the filename 
+            //     //client.UseSpaStaticFiles(clientAppDist); // allowFallbackOnServingWebRootFiles: false //  if only index.html served, check in index.html the relative path: <base href="MarketDashboard/">
+
+            //     // // Each map will call its own UseSpa where we give its own sourcepath
+            //     // client.UseSpa(spa =>   // allowFallbackOnServingWebRootFiles: true     // Strange. Without this, it doesn't work !!!.
+            //     // {
+            //     //     spa.Options.SourcePath = @"Angular\projects\HealthMonitor";
+            //     //     spa.Options.DefaultPageStaticFileOptions = clientAppDist;
+            //     // });
+            // });
+
+
+
+            // // https://stackoverflow.com/questions/54582037/asp-net-core-iapplicationbuilder-map-spa-and-static-files
+            // // the query is: "https://localhost:5001/HealthMonitor/styles.3ff695c00d717f2d2a11.css"
+            // app.Map(new PathString("/HealthMonitor"), client =>
+            // {
+            //     Console.WriteLine("app.Map('/HealthMonitor'");
+            //     // Each map gets its own physical path for it to map the static files to. 
+            //     StaticFileOptions clientAppDist = new StaticFileOptions()
+            //     {
+            //         //FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"Angular\dist\HealthMonitor"))
+            //         FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"Angular\dist"))
+            //     };
+
+            //     // Each map its own static files otherwise, it will only ever serve index.html no matter the filename 
+            //     client.UseSpaStaticFiles(clientAppDist); // allowFallbackOnServingWebRootFiles: false //  if only index.html served, check in index.html the relative path: <base href="MarketDashboard/">
+
+            //     // // Each map will call its own UseSpa where we give its own sourcepath
+            //     // client.UseSpa(spa =>   // allowFallbackOnServingWebRootFiles: true     // Strange. Without this, it doesn't work !!!.
+            //     // {
+            //     //     spa.Options.SourcePath = @"Angular\projects\HealthMonitor";
+            //     //     spa.Options.DefaultPageStaticFileOptions = clientAppDist;
+            //     // });
+            // });
+
+            // app.Map("/HealthMonitor", app1 =>
+            // {
+            //     Console.WriteLine("app.Map('/HealthMonitor', app1 ");
+            //     app1.UseSpaStaticFiles(new StaticFileOptions
+            //     {
+            //         RequestPath = "/HealthMonitor"
+            //     });
+                
+
+            //     app1.UseSpa(spa =>
+            //     {
+            //         // To learn more about options for serving an Angular SPA from ASP.NET Core,
+            //         // see https://go.microsoft.com/fwlink/?linkid=864501
+
+            //         spa.Options.SourcePath = "Angular";     // "Gets or sets the path, relative to the application working directory, of the directory that contains the SPA source files during development. The directory may not exist in published applications."
+
+            //     });
+            // });
+
+            // app.UseSpa(spa =>
+            // {
+            //     // To learn more about options for serving an Angular SPA from ASP.NET Core,
+            //     // see https://go.microsoft.com/fwlink/?linkid=864501
+
+            //     spa.Options.SourcePath = "Angular";     // "Gets or sets the path, relative to the application working directory, of the directory that contains the SPA source files during development. The directory may not exist in published applications."
+
+            //     if (env.IsDevelopment())
+            //     {
+            //         spa.UseAngularCliServer(npmScript: "start");
+            //     }
+            // });
+        }
+
+        private void AddAngularSpaHandlingMiddleware(IApplicationBuilder app, IWebHostEnvironment env, string spaName)
+        {
+            var rwOptions = new RewriteOptions();
+            if (env.IsDevelopment())
+            {
+                rwOptions
+                .AddRedirect(@"^"+spaName, @"dev/DeveloperWarningForServingAngularSPA.html");  // Redirect() forces client to query again.
+            }
+            else
+            {
+                rwOptions
+                .AddRedirect(@"^" + spaName +"$", spaName + @"/");  // Redirect("HealthMonitor" to "HealthMonitor/") forces client to query again (needed for base URL to be the SPA folder)
+                //.AddRewrite(@"^" + spaName + "/$", spaName + @"/index.html", skipRemainingRules: true);   // Rewrite("HealthMonitor/" to "HealthMonitor/index.html") is hidden from the Client. Helps to find it by UseStaticFiles()
+            }
+            app.UseRewriter(rwOptions);
+
+            app.Map(new PathString("/" + spaName), client =>
+            {
+                // In Development, when we do 'ng serve' the 'index.hml' should be in the root folder, and all other files (main, pollyfill) should be in the root too. So, only <base href=""> is possible
+                // Therefor, in Production, index.html should be in the HealthMonitor folder, so browser should ask 'https://localhost:5001/HealthMonitor/' and NOT 'https://localhost:5001/HealthMonitor'
+                // If browser asks 'https://localhost:5001/HealthMonitor', we should redirect to 'https://localhost:5001/HealthMonitor/'
+                client.Use(async (context, next) =>
+                {
+                    Console.WriteLine($"Map.Use({"/" + spaName}): context.Request.Path.Value: '{context.Request.Path.Value}'");
+
+                    // if (String.IsNullOrEmpty(context.Request.Path.Value))    // turn https://localhost:5001/HealthMonitor   to // turn https://localhost:5001/HealthMonitor/index.html
+                    // {
+                    //     context.Request.Path = "/index.html";
+                    // }
+                    // else if (String.Equals(context.Request.Path.Value, "/index.html", StringComparison.OrdinalIgnoreCase))
+                    //     context.Request.Path = "";
+
+                    await next();
+                });
+
+                StaticFileOptions clientAppDist = new StaticFileOptions()
+                {
+                    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"Angular/dist/" + spaName))   // "Angular\dist\" is Windows like, not good. Use forward slash for Linux.
+                };
+                //client.UseStaticFiles(clientAppDist);
+                client.UseCompressedStaticFiles(clientAppDist);
+            });
+        }
+    }
+}

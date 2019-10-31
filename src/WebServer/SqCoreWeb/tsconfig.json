@@ -1,0 +1,24 @@
+{
+  "compileOnSave": true,
+  "compilerOptions": {
+    "strict": true,       // strict = true is the default
+    "alwaysStrict": true, // emit "use strict" in all JS files. Strict mode execution is 50-80% faster for specific cases
+    "noUnusedLocals": true,
+    "noImplicitAny": false,
+    "noEmitOnError": true,
+    "removeComments": false,
+    "sourceMap": true,
+    "target": "es2015",
+    "typeRoots": [
+      "node_modules/@types"
+    ],
+    "types": [
+      "youtube" // npm install @types/youtube  was needed
+    ] 
+  },
+  "exclude": [
+    "node_modules",
+    "Angular",
+    "bin"
+  ]
+}

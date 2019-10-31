@@ -1,0 +1,82 @@
+
+
+1. Data persistance in Redis.
+
+Config file: /etc/redis/redis.conf
+2019-09-07 settings: we left the default:
+it create snapshots at least every 15 minutes. So, so if a key has changed
+and we want to reboot, we should wait for 15 minutes, or login and ask a "Save"
+(probably better to wait at least 15 minutes and not doing any Redis insertion during that time)
+Or before reboot (if you want to be sure) go to "Redis Desktop Manager" Go to "Console", type: BGSAVE, result: "Background saving started"
+
+In the future, if you want absolute sure persistance, enable append-file type behaviour in config file. Then every INSERT will be written to disk asap.
+We don't need that now.
+
+
+"
+################################ SNAPSHOTTING  ################################
+#
+# Save the DB on disk:
+#
+#   save <seconds> <changes>
+#
+#   Will save the DB if both the given number of seconds and the given
+#   number of write operations against the DB occurred.
+#
+#   In the example below the behaviour will be to save:
+#   after 900 sec (15 min) if at least 1 key changed
+#   after 300 sec (5 min) if at least 10 keys changed
+#   after 60 sec if at least 10000 keys changed
+#
+#   Note: you can disable saving completely by commenting out all "save" lines.
+#
+#   It is also possible to remove all the previously configured save
+#   points by adding a save directive with a single empty string argument
+#   like in the following example:
+#
+#   save ""
+
+save 900 1
+save 300 10
+save 60 10000
+...
+############################## APPEND ONLY MODE ###############################
+
+# By default Redis asynchronously dumps the dataset on disk. This mode is
+# good enough in many applications, but an issue with the Redis process or
+# a power outage may result into a few minutes of writes lost (depending on
+# the configured save points).
+#
+# The Append Only File is an alternative persistence mode that provides
+# much better durability. For instance using the default data fsync policy
+# (see later in the config file) Redis can lose just one second of writes in a
+# dramatic event like a server power outage, or a single write if something
+# wrong with the Redis process itself happens, but the operating system is
+# still running correctly.
+#
+# AOF and RDB persistence can be enabled at the same time without problems.
+# If the AOF is enabled on startup Redis will load the AOF, that is the file
+# with the better durability guarantees.
+#
+# Please check http://redis.io/topics/persistence for more information.
+
+appendonly no
+
+# The name of the append only file (default: "appendonly.aof")
+
+appendfilename "appendonly.aof"
+"
+
+
+>https://stackoverflow.com/questions/25328317/does-redis-persist-data
+"It saved data in one of the following cases:
+automatically from time to time
+when you manually call BGSAVE command
+when redis is shutting down
+But data in redis is not really persistent, because:
+
+crash of redis process means losing all changes since last save
+BGSAVE operation can only be performed if you have enough free RAM (the amount of extra RAM is equal to the size of redis DB)"
+
+>https://stackoverflow.com/questions/43968841/how-to-configure-redis-to-persist-data-after-reboot-on-linux
+Append-only file will be enabled by adding (or uncommenting) appendonly yes in config file

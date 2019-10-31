@@ -1,0 +1,91 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "WebServer/SqCoreWeb (DEBUG)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "SqCoreWeb predebugBuildAndTscWatchTask",
+            "postDebugTask": "SqCoreWeb postdebugKillVsCodeTask",
+            // If you have changed target frameworks, make sure to update the program path.
+            "program": "${workspaceFolder}/src/WebServer/SqCoreWeb/bin/Debug/netcoreapp3.0/SqCoreWeb.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/src/WebServer/SqCoreWeb",
+            "stopAtEntry": false,
+            // Enable launching a web browser when ASP.NET Core starts. For more information: https://aka.ms/VSCode-CS-LaunchJson-WebBrowser
+            "serverReadyAction": {
+                "action": "openExternally",
+                //"pattern": "^\\s*Now listening on:\\s+(https?://\\S+)"                
+                "pattern": "^\\s*Now listening on:\\s+(https://\\S+)"                
+            },
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "sourceFileMap": {
+                "/Views": "${workspaceFolder}/src/WebServer/SqCoreWeb/Views"
+            }
+        },
+        {
+            "name": "WebServer/SqCoreWeb (PUBLISHED), Use Ctrl-F5 to NOT attach the debugger",
+            "type": "coreclr",
+            "request": "launch",
+            //"preLaunchTask": "WebServer/SqCoreWeb publish",
+            "program": "SqCoreWeb.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}/src/WebServer/SqCoreWeb/bin/Release/netcoreapp3.0/publish",
+            "console": "externalTerminal",
+            "stopAtEntry": false
+        },
+        {
+            "name": "Tools/RedisManager (DEBUG)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "RedisManager build Debug",
+            "program": "${workspaceFolder}/src/Tools/RedisManager/bin/Debug/netcoreapp3.0/RedisManager.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/src/Tools/RedisManager",
+            "console": "externalTerminal",
+            "stopAtEntry": false
+        },
+        {
+            "name": "Tools/BenchmarkDB (DEBUG)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "BenchmarkDB build Debug",
+            "program": "${workspaceFolder}/src/Tools/BenchmarkDB/bin/Debug/netcoreapp3.0/BenchmarkDB.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/src/Tools/BenchmarkDB",
+            "console": "externalTerminal",
+            "stopAtEntry": false,
+            "logging": {
+                "engineLogging": false,
+                "moduleLoad": false,
+                "exceptions": true,
+                "browserStdOut": false,
+                "elapsedTiming": false,
+                "programOutput": true
+            },
+        },
+        {
+            "name": "PerfTestExperiment (RELEASE), run without Debugger Attached (Ctrl-F5, not F5)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build Release PerfTestExperiment",
+            "program": "${workspaceFolder}/test/PerfTestExperiment/bin/Release/netcoreapp3.0/PerfTestExperiment.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}/test/PerfTestExperiment",
+            "console": "externalTerminal",
+            "externalConsole": true,
+            "stopAtEntry": false
+        },
+        {
+            "name": ".NET Core Attach",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:pickProcess}"
+        }
+    ]
+}

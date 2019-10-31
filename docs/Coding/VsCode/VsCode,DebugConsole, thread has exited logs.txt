@@ -1,0 +1,26 @@
+>understand "The thread 14824 has exited with code 0 (0x0)." in Terminal. and how to eliminate it. (put it to doc/tricks)
+https://stackoverflow.com/questions/12410548/the-thread-has-exited-with-code-0-0x0-with-no-unhandled-exception
+"Yes, it is "Thread Exit Messages" on VS 2015 output window. "
+"Tools > Options > Debugging > General Output Settings > Thread Exit Messages : Off"
+"Executing Linq queries can generate extra threads. "
+Simple, easiest console.app doesn't release these. But the BenchmarkDB tool is complex, already using Nlog or opening config.json files.
+Even LINQ can release threads. So, exiting threads are not a problem. Part of the framework.
+Cluttering Debug console is the problem. To resolve it.
+Point is: in 2019, they hasn't developed this feature yet.
+
+https://github.com/Microsoft/vscode-cpptools/issues/1017
+
+https://stackoverflow.com/questions/50224573/vs-code-net-core-project-shows-verbose-debug-console-messages
+This is suggested into the launch.json:
+"logging": {
+                "engineLogging": false,
+                "moduleLoad": false,
+                "exceptions": true,
+                "browserStdOut": false,
+                "elapsedTiming": false,
+                "programOutput": true
+            },
+>Agy: it works. Eliminates 'Loaded... DLL' logs from DebugConsole inside VScode.
+However, Thread exit message still comes: "The thread 5032 has exited with code 0 (0x0)."
+			
+>Probably a better option: Always use the external terminal as console, and log into it, and ignore the internal terminal, the DebugConsole.

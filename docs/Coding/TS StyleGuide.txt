@@ -1,0 +1,46 @@
+
+1. How to check undefined in Typescript ? See options here:
+https://stackoverflow.com/questions/28975896/is-there-a-way-to-check-for-both-null-and-undefined
+
+" a situation where you do want to allow null and undefined, you can define the type as Type | null | undefined."
+
+https://stackoverflow.com/questions/40349987/how-to-suppress-error-ts2533-object-is-possibly-null-or-undefined
+https://stackoverflow.com/questions/40349987/how-to-suppress-error-ts2533-object-is-possibly-null-or-undefined
+The general advice:
+Either this: 
+if (object != null) {   // Use this if the variable 'can be null': this non-exact 'equality checks (the ==, not the ===)' checks for both null and undefined
+    // continue - error suppressed when used in this way.
+}
+Or Alternatively, you could use type coercion:  (if you are 100% sure it cannot be null). I think the better option is to cast the desired value with as if you 100% sure. 
+const objectX = object as string
+let c: number = (a as string[]).length; // ok
+Or
+"If you know the type will never be null or undefined, you should declare it as foo: Bar without the ?. 
+Declaring a type with the ? Bar syntax means it could potentially be undefined, which is something you need to check for."
+
+2. Curly Braces.
+This is the standard in JS, TS. Follow this.
+
+if(myBoolean == true) {
+    //do something
+} else {
+    //do something else
+}
+	
+3.
+"take a moment to consider if you actually need jQuery as a dependency. Maybe you can include a few lines of utility code, and forgo the requirement."
+http://youmightnotneedjquery.com/
+jQuery: $('.my #awesome selector');
+equivalent vanilla JS: document.querySelectorAll('.my #awesome selector');
+But it reveals, that jQuery is wasting CPU time. It searches for ID's classnames, names. All 3.
+However, when we own the source code, we actually know that we only want to search among IDs only, not classnames.
+So, this is more efficient use of CPU:
+(document.getElementById('MainDivOverVidBkg') as HTMLElement).style.color = '#ffffff';
+So, if possible, avoid jQuery, but do DOM manipulation direct. (or write tiny utility function). That way you learn DOM  manipulation better.
+
+
+
+
+
+
+

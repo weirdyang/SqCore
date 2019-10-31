@@ -3,6 +3,7 @@
 
 # SqCore files
 *.sqlog
+*.map
 
 # User-specific files
 *.suo
@@ -26,6 +27,11 @@ bin/
 Bin/
 obj/
 Obj/
+dist/
+**/ts/*.js
+
+#Typescript compiled JS files. There is no other way than to list them one by one. Otherwise, legit JS files would not be commited
+**/webapps/ExampleNonRealtime/ExampleNonRealtime.js
 
 # Visual Studio 2015 cache/options directory
 .vs/

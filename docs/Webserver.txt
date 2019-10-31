@@ -1,0 +1,45 @@
+
+
+*** Subdomain plans when registering sqcore.net domain
+like benzinga has: benzinga.com  and  pro.benzinga.com   (a different server)
+
+> do not use www.sqcore.net  (because that will be misleading that there is 1 main site)
+However, we have to use sqcore.net. Because the DNS servers will point 'sqcore.net' to somewhere.
+And it is easier for the user to remember only the short 'sqcore.net', and not the longer subdomains.
+
+
+>Possible subdomains of sqcore.net:
+(these can be different IP address servers OR it can go to the same server inside a subfolder (the actual implementation is hidden from the user))
+
+dashboard.sqcore.net 		// marketDashboard, we develop this now , goes to sqcore.net/MarketDashboard (but invisible)
+healthmonitor.sqcore.net 	// healthmonitor, we develop this now , goes to sqcore.net/HealthMonitor (but invisible)
+tools.sqcore.net			// all the simpler tools in a List: ContangoViewer, Balazs's tools. goes to sqcore.net/Tools/index.html
+
+sqlab.sqcore.net			// route this the https://www.snifferquant.net/ webserver IP. This is Tools 2.
+
+In the future: 
+
+developer.sqcore.net,   	// for programmers for testing things
+admin.sqcore.net,   		// for admin, not common users.
+vbroker.sqcore.net, 		// the computer VBroker trading.
+snifferX.sqcore.net			// for future hedge fund clients, etc.   
+
+
+****************** Trust HTTPS developer certificate
+
+https://go.microsoft.com/fwlink/?linkid=848054
+ASP.NET Core
+------------
+Successfully installed the ASP.NET Core HTTPS Development Certificate.
+To trust the certificate run 'dotnet dev-certs https --trust' (Windows and macOS only).
+For establishing trust on other platforms refer to the platform specific documentation.
+For more information on configuring HTTPS see https://go.microsoft.com/fwlink/?linkid=848054
+Installing the .NET Core SDK installs the ASP.NET Core HTTPS development certificate to the local user certificate store. The certificate has been installed, but it's not trusted. To trust the certificate perform the one-time step to run the dotnet dev-certs tool:
+.NET Core CLI
+Copy: dotnet dev-certs https --trust
+"You are about to install a cert from a CA, claiming "localhost"
+There is a thumbprint... ends with *....1332FEAB
+This is a root certificate. If trusted, Windows will trust any other certificate issued by this CA.
+
+After this, Chrome will accept that https://localhost is trusted.
+

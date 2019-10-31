@@ -1,0 +1,75 @@
+********************** SqCore framework on Github Folder structure
+
+SqCore: 
+/3rdParty
+/logs  (do not commit to GitHub)
+/docs
+/src is this
+	/ThirdParty
+		/IB TWS 
+	/Common
+		/SqCommon	(all programs, small tools)
+		/DbCommon	(programs that need database)
+		/WebAppCommon	(not small tools, but bigger webbapps that handle HTTP requests)
+		/DesktopUICommon (in case we write an app which has destkop UI, like SqDesktop for Windows)
+	/Matlab		(things that are not C#)
+	/R
+	/Python	(tools, apps, written in Python)
+	/Server	 (examples)
+		/HealthMonitor(Server)
+		/Overmind
+		/Crawlers
+			/XYCrawler
+		/VirtualBroker
+	/WebServer  (all is Website based)
+		/SqCoreWeb (main website that contains MarketDashboard)
+		/HealthMonitorClientFrontEndWebsite (because this should be in another serverFarm than the othe)
+		/UserHelperWebsite (CurrentLeverageCalculator + OvermindClient+VBrokerClient+all other Clients)
+	/Tools  (not really resident, always running server apps, only small exe tools needed for something)
+/test	Tools for testing small things (HttpConnection, Rx, EmailSending), like HelloWorld
+	UnitTests  (all unit tests in one csproj)
+	PerformanceTests  (all benchmark tests in one csproj)
+	PerformanceTestExperiment (customizable to benchmark only 2 versions of a single function)
+
+
+
+************ each website (SqCore) has a folder structure like this:
+1.
+https://www.sqcore.net will have a list of tools. like now on https://www.snifferquant.net/. (with login/logout)
+(The idea that www.sqcore.net returns NULL, and the main functionality is on www.sqcore.net/DAC is good for security, but annoying for the user,
+and it is not the industry practice. We have to attack unwanted traffic in other ways: SqFirewall, logging, blacklist IPs who query frequently, etc.)
+2. static HTML pages with Controllers (MVC) who serve them.
+https://www.sqcore.net/VXXAdaptiveConnorLiveBacktest  	(served from static HTMLs in the secret_wwwroot folder. can connect to /Controllers folder.)			
+3. Angular SPA projects:
+MarketDashboard (https://www.sqcore.net/MarketDashboard the main InfoPusher) (folder /angular/MarketDashboard)  (uses /angular/angularLib)
+QuickTester (https://www.sqcore.net/QuickTester), 							(folder /angular/QuickTester)
+HealthMonitor (https://www.sqcore.net/HealthMonitor), 						
+
+It is not necessary, but later, on the user side, we can do subdomains like that:
+https://MarketDashboard.sqcore.net   it is just a synthetic sugar to https://www.sqcore.net/MarketDashboard
+https://HealthMonitor.sqcore.net
+https://QuickTester.sqcore.net
+(this is how to do it https://timdows.com/projects/host-multiple-spas-with-aps-net-core/)
+
+
+Target folder structure:
+/Angular
+	/MarketDashboard
+	/HealthMonitor
+	/QuickTester
+	/AngularCommon
+/Pages  (MVR views and Razor pages)
+	Error.cshtml
+/Controllers 
+
+
+
+************ Webserver: Source code separation of many webapps (tools). There are two options:
+Option1: 
+https://sqcore.net/ContangoVisualizer.html (then all files of all Tools is in the wwwroot/js/ts/css folders.  However, it seems messy and less separation.
+Option2:
+https://sqcore.net/ContangoVisualizer/ (index.html) is taken. So, preferable we have all JS/TS/CSS/images in that folder.
+Choose option2.
+So, in the wwwroot/css/js/ts/images folder there should be the only files that are used by many WebApps. But the specific TS/CSS files should be in their own folder.
+
+

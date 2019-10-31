@@ -1,0 +1,47 @@
+using System;
+using System.Text.RegularExpressions;
+
+
+namespace SqCommon
+{
+
+    public static partial class Utils
+    {
+
+        public static string TruncateLongString(this string str, int maxLengthAllowed)
+        {
+            if (string.IsNullOrEmpty(str) || str.Length <= maxLengthAllowed)
+                return str;
+            // add "..." at the end only if it was truncated
+      
+            return str.Substring(0, maxLengthAllowed - "...".Length) + "...";
+        }
+
+        public static string[] SplitStringByString(this string str)
+        {
+            return str.Split(new char[] {','}, StringSplitOptions.RemoveEmptyEntries);
+        }
+
+        public static string[] SplitStringByRegex(this string str)
+        {
+            return Regex.Split(str, @"(,\s)+");
+        }
+
+        public static string ToStringWithShortenedStackTrace(this Exception e, int p_maxLength)
+        {
+            string s = (e == null ? null : e.ToString()) ?? String.Empty;
+            if (s.Length <= p_maxLength)
+                return s;
+            else
+                return s.Substring(0, p_maxLength) + "...";
+        }
+
+        public static string FormatInvCult(this string p_fmt, params object[] p_args)
+        {
+            if (p_fmt == null || p_args == null || p_args.Length == 0)
+                return p_fmt ?? String.Empty;
+            return String.Format(InvCult, p_fmt, p_args);
+        }
+    }
+
+}
