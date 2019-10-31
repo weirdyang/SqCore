@@ -19,7 +19,7 @@ FOR /D /r %%D in ("*") DO (
 
         IF defined ISBROTLINEEDED (
             Echo Brotli-ing: %%F [%%~xF]
-            "..\..\..\..\..\..\3rdParty\brotli.exe" "%%F" --best --force --verbose
+            "brotli.exe" "%%F" --best --force --verbose
         )
     )
     cd ..

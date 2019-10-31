@@ -8,7 +8,7 @@
             "problemMatcher": "$tsc"
         },
         {
-            "label": "SqCoreWeb build Debug",       // the official predebugBuild
+            "label": "SqCoreWeb build Debug",       // the official predebugBuild       
             "command": "dotnet",
             "type": "process",
             "args": [
@@ -40,7 +40,7 @@
                     "background": {
                         "activeOnStart": true,
                         "beginsPattern": ".",
-                        "endsPattern": ".",
+                        "endsPattern": "."
                     }
                 }
             ]
@@ -50,8 +50,8 @@
             "type": "process",
             "command": [
                 "${command:workbench.action.tasks.terminate}", // The first "${command:workbench.action.tasks.terminate}" will bring up a panel asking you to select which task to terminate. So if you had multiple running tasks and wanted to choose one you would use this command only.
-                "${command:workbench.action.acceptSelectedQuickOpenItem}", // will terminate the selected task in that panel mentioned above. 2019-10-17: it doesn't seem to work. However, manual termination is fine. Maybe it is good that it doesn't work, intentional, so we accidentally don't delete wrong tasks.
-            ],
+                "${command:workbench.action.acceptSelectedQuickOpenItem}" // will terminate the selected task in that panel mentioned above. 2019-10-17: it doesn't seem to work. However, manual termination is fine. Maybe it is good that it doesn't work, intentional, so we accidentally don't delete wrong tasks.
+            ]
         },
         {
             "label": "SqCoreWeb publish Release",

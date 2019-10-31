@@ -98,7 +98,8 @@ namespace SqCommon
                     //return "/home/ubuntu/SQ/Tools/BenchmarkDB/";  // on Linux, sometimes it is not the 'ubuntu' superuser, but something else.
                     // GetCurrentDirectory() is the current working directory of the app. Most likely it is the folder of the '*.csproj'.
                     // but deployment rm -rf everything until the src folder.
-                    return Directory.GetCurrentDirectory() + "/../../.." + "/";
+                    //return Directory.GetCurrentDirectory() + "/../../.." + "/";
+                    return "/home/sq-vnc-client/SQ/NonCommitedSensitiveData/";
 
                 case Platform.Windows:
                     // find out which user from the team and determine it accordingly. Or just check whether folders exists (but that takes HDD read, which is slow)

@@ -15,7 +15,7 @@ serverHost = "ec2-34-251-1-119.eu-west-1.compute.amazonaws.com"  # ManualTrading
 serverPort = 22
 serverUser = "sq-vnc-client"
 serverRsaKeyFile = "g:\work\Archi-data\HedgeQuant\src\Server\AmazonAWS\AwsMTrader\AwsMTrader,sq-vnc-client.pem"
-rootRemoteDir = "/home/sq-vnc-client/SqCore/Tools/BenchmarkDB/src"
+rootRemoteDir = "/home/sq-vnc-client/SQ/Tools/BenchmarkDB/src"
 
 excludeDirs = set(["bin", "obj", ".vs", "artifacts", "Properties"])
 excludeFileExts = set(["sln", "xproj", "log", "sqlog", "ps1", "py", "sh", "user", "md"])
