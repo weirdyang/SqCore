@@ -166,11 +166,20 @@ namespace SqCoreWeb
                 app.UseHttpsRedirection();     // Chrome Caching warning! If you are developing using a self-signed certificate over https and there is an issue with the certificate then google will not cache the response
             }
 
+            //app.UseDefaultFiles();      // "UseDefaultFiles is a URL rewriter (default.htm, default.html, index.htm, index.html whichever first, 4 file queries to find the file) that doesn't actually serve the file. "
+            app.UseRewriter(new RewriteOptions()
+            .AddRewrite(@"^$", "index.html", skipRemainingRules: true)              // empty string converted to index.html. Only 1 query to find the index.html file. Better than UseDefaultFiles()
+            .AddRewrite(@"^(.*)/$", "$1/index.html", skipRemainingRules: true)      // converts "/" to "/index.html", e.g. .AddRewrite(@"^HealthMonitor/$", @"HealthMonitor/index.html" and all Angular projects.     
+            );
+
+            // place UseAuthentication() AFTER UseRouting(),  https://docs.microsoft.com/en-us/aspnet/core/migration/22-to-30?view=aspnetcore-2.2&tabs=visual-studio
+            app.UseAuthentication();    // needed for filling httpContext?.User?.Claims. StaticFiles are served Before the user is authenticed. This is fast, but httpContext?.User?.Claims is null in this case.
+
             app.UseMiddleware<SqFirewallMiddleware>();  // For this to catch Exceptions, it should come after UseExceptionHadlers(), because those will swallow exceptions and generates nice ErrPage.
 
             app.Use(async (context, next) =>
             {
-                Console.WriteLine($"Before UseHttpsRedirection(): Request.Path: '{context.Request.Path.Value}'");
+                Console.WriteLine($"After SqFirewallMiddleware(): Request.Path: '{context.Request.Path.Value}'");
 
                 await next();
 
@@ -183,14 +192,6 @@ namespace SqCoreWeb
                 //     await next();
                 // }
             });
-
-           
-
-            //app.UseDefaultFiles();      // "UseDefaultFiles is a URL rewriter (default.htm, default.html, index.htm, index.html whichever first, 4 file queries to find the file) that doesn't actually serve the file. "
-            app.UseRewriter(new RewriteOptions()
-            .AddRewrite(@"^$", "index.html", skipRemainingRules: true)              // empty string converted to index.html. Only 1 query to find the index.html file. Better than UseDefaultFiles()
-            .AddRewrite(@"^(.*)/$", "$1/index.html", skipRemainingRules: true)      // converts "/" to "/index.html", e.g. .AddRewrite(@"^HealthMonitor/$", @"HealthMonitor/index.html" and all Angular projects.     
-            );    
 
             // Edge browser bug. Aug 30, 2019: "EdgeHTML not respecting nomodule attribute on script tag". It downloads both ES5 and ES6(2015) versions. https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/23357397/
             // can be fixed to only emit ES2015: https://stackoverflow.com/questions/56495683/angular-cli-8-is-it-possible-to-build-only-on-es2015
@@ -241,7 +242,6 @@ namespace SqCoreWeb
 
                 await next();
             });
-
 
 
             AddAngularSpaHandlingMiddleware(app, env, "HealthMonitor");
@@ -343,15 +343,13 @@ namespace SqCoreWeb
             // The URLs of files exposed using UseDirectoryBrowser and UseStaticFiles are case sensitive and character constrained, subject to the underlying file system.
             // For example, Windows is not case sensitive, but MACOS and Linux are case sensitive.
             // for jpeg files, place UseStaticFiles BEFORE UseRouting
-            if (env.IsDevelopment()) 
+            if (env.IsDevelopment())
                 app.UseStaticFilesCaseSensitive();
             else 
                 app.UseStaticFiles();
 
             app.UseRouting();
 
-            // place UseAuthentication() AFTER UseRouting(),  https://docs.microsoft.com/en-us/aspnet/core/migration/22-to-30?view=aspnetcore-2.2&tabs=visual-studio
-            app.UseAuthentication();    // needed for filling httpContext?.User?.Claims. StaticFiles are served Before the user is authenticed. This is fast, but httpContext?.User?.Claims is null in this case.
             app.UseAuthorization();     // needed for [Authorize] attributes protection, "If the app uses authentication/authorization features such as AuthorizePage or [Authorize], place the call to UseAuthentication and UseAuthorization after UseRouting"
 
             app.UseEndpoints(endpoints =>

@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Http;
 using SqCommon;
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using static SqCoreWeb.WsUtils;
 
 namespace SqCoreWeb
 {
@@ -43,19 +45,38 @@ namespace SqCoreWeb
             if (httpContext == null)
                 throw new ArgumentNullException(nameof(httpContext));
 
+            // 1. checks user auth for some staticFiles (like HTMLs, Controller APIs), but not for everything (not jpg, CSS, JS)
+            var userAuthCheck = WsUtils.CheckAuthorizedGoogleEmail(httpContext);
+            if (userAuthCheck != UserAuthCheckResult.UserKnownAuthOK)
+            {
+                string msg = String.Format($"{DateTime.UtcNow.ToString("HH':'mm':'ss.f")}#Uknown or not allowed user request should be redirected to Login: {httpContext.Request.Method} '{httpContext.Request.Path}' from {WsUtils.GetRequestIP(httpContext)}");
+                Console.WriteLine(msg);
+                gLogger.Info(msg);
 
-            // Don't push it to the next Middleware if the path or IP is on the blacklist. In the future, implement a whitelist too, and only allow  requests explicitely on the whitelist.
+                string ext = Path.GetExtension(httpContext.Request.Path.Value) ?? String.Empty;
+                if (ext.Equals(".html", StringComparison.OrdinalIgnoreCase) || ext.Equals(".htm", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (!httpContext.Request.Path.Value.Equals("/index.html", StringComparison.OrdinalIgnoreCase))   // if it is HTML only allow '/index.html' through
+                        return; // raw Return in Kestrel chain gives client a response header: status: 200 (OK), Data size: 0. Browser will present a blank page. Which is fine now.
+                }
+                if (String.IsNullOrEmpty(ext))
+                {
+                    if (!httpContext.Request.Path.Value.Equals("/account/login", StringComparison.OrdinalIgnoreCase))   // if it is an API call only allow '/account/login' through. 
+                        return;
+                }
+            }
+
+            // 2. Don't push it to the next Middleware if the path or IP is on the blacklist. In the future, implement a whitelist too, and only allow  requests explicitely on the whitelist.
             if (IsHttpRequestOnBlacklist(httpContext))
             {
                 // silently log it and stop processing
-                string isHttpsStr = httpContext.Request.IsHttps ? "HTTPS" : "HTTP";
-                var clientIP = WsUtils.GetRequestIP(httpContext);
-                string msg = String.Format($"{DateTime.UtcNow.ToString("HH':'mm':'ss.f")}#Blacklisted request is terminated: {isHttpsStr} {httpContext.Request.Method} '{httpContext.Request.Path}' from {clientIP}");
+                string msg = String.Format($"{DateTime.UtcNow.ToString("HH':'mm':'ss.f")}#Blacklisted request is terminated: {httpContext.Request.Method} '{httpContext.Request.Path}' from {WsUtils.GetRequestIP(httpContext)}");
                 Console.WriteLine(msg);
                 gLogger.Info(msg);
                 return;
             }
 
+            // 3.
             if (!IsHttpRequestOnWhitelist(httpContext))
             {
                 // inform the user in a nice HTML page that 'for security' ask the superwisor to whitelist path ''

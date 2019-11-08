@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
+using SqCommon;
 
 namespace SqCoreWeb
 {
@@ -50,6 +52,52 @@ namespace SqCoreWeb
                     return (T)Convert.ChangeType(values.ToString(), typeof(T));
             }
             return default(T);
+        }
+
+        public enum UserAuthCheckResult { UserKnownAuthOK, UserKnownAuthNotEnugh, UserUnknown };
+
+        public static UserAuthCheckResult CheckAuthorizedGoogleEmail(HttpContext p_httpContext)
+        {
+#if DEBUG
+             return UserAuthCheckResult.UserKnownAuthOK;
+#else
+            var email = WsUtils.GetRequestUser(p_httpContext);
+            if (String.IsNullOrEmpty(email))
+                return UserAuthCheckResult.UserUnknown;
+
+            if (IsAuthorizedGoogleUsers(email))
+                return UserAuthCheckResult.UserKnownAuthOK;
+            else
+                return UserAuthCheckResult.UserKnownAuthNotEnugh;               
+#endif
+        }
+
+        static List<string>? g_authorizedGoogleUsers = null;
+
+        public static bool IsAuthorizedGoogleUsers(string p_email)
+        {
+            if (g_authorizedGoogleUsers == null)
+            {
+                g_authorizedGoogleUsers = new List<string>() {
+                    Utils.Configuration["Emails:Gyant"].ToLower(),
+                    Utils.Configuration["Emails:Gyant2"].ToLower(),
+                    Utils.Configuration["Emails:Laci"].ToLower(),
+                    Utils.Configuration["Emails:Balazs"].ToLower(),
+                    Utils.Configuration["Emails:Sumi"].ToLower(),
+                    Utils.Configuration["Emails:Bunny"].ToLower(),
+                    Utils.Configuration["Emails:Tundi"].ToLower(),
+                    Utils.Configuration["Emails:Lukacs"].ToLower(),
+                    Utils.Configuration["Emails:Charm0"].ToLower(),
+                    Utils.Configuration["Emails:Charm1"].ToLower(),
+                    Utils.Configuration["Emails:Charm2"].ToLower(),
+                    Utils.Configuration["Emails:Charm3"].ToLower(),
+                    Utils.Configuration["Emails:JCharm1"].ToLower(),
+                    Utils.Configuration["Emails:Brook"].ToLower(),
+                    Utils.Configuration["Emails:Dinah1"].ToLower()
+                };
+            }
+            bool isUserOK = g_authorizedGoogleUsers.Contains(p_email.ToLower());
+            return isUserOK;
         }
 
     }
