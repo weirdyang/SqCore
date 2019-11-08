@@ -8,10 +8,13 @@
     <TypeScriptToolsVersion>Latest</TypeScriptToolsVersion>
     <IsPackable>false</IsPackable>
     <SpaRoot>Angular\</SpaRoot>
-    <DefaultItemExcludes>$(DefaultItemExcludes);$(SpaRoot)node_modules\**</DefaultItemExcludes>
+    <DefaultItemExcludes>$(DefaultItemExcludes);node_modules\**;$(SpaRoot)node_modules\**</DefaultItemExcludes>
 
     <!-- Set this to true if you enable server-side prerendering -->
     <BuildServerSideRenderer>false</BuildServerSideRenderer>
+    <!-- File with modifytime of last successful npm install -->
+    <NpmInstallStampFile>node_modules/.install-stamp</NpmInstallStampFile>
+    <NpmInstallStampFileAngular>Angular/node_modules/.install-stamp</NpmInstallStampFileAngular>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,19 +34,21 @@
     <None Include="$(SpaRoot)**" Exclude="$(SpaRoot)node_modules\**" />
   </ItemGroup>
 
-  <Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">
-    <!-- Ensure Node.js is installed -->
-    <Exec Command="node --version" ContinueOnError="true">
-      <Output TaskParameter="ExitCode" PropertyName="ErrorCode" />
-    </Exec>
-    <Error Condition="'$(ErrorCode)' != '0'" Text="Node.js is required to build and run this project. To continue, please install Node.js from https://nodejs.org/, and then restart your command prompt or IDE." />
-    <Message Importance="high" Text="Restoring dependencies using 'npm'. This may take several minutes..." />
-    <!-- <Exec WorkingDirectory="$(SpaRoot)" Command="npm install" /> -->
-    <Exec WorkingDirectory="$(SpaRoot)" Command="ServeOnly1ProjectInMonorepo.cmd" />
+  <!-- "If there are no initial targets, default targets, or command-line targets, then MSBuild runs the first target it encounters in the project file or any imported project files." 
+  https://docs.microsoft.com/en-us/visualstudio/msbuild/target-build-order -->
+  <!-- The "dotnet build" command is equivalent to "dotnet msbuild -restore -target:Build". The "dotnet msbuild" gives you more control.  -->
+
+
+  <!-- This will only run if '$(Configuration)' == 'Debug', so not in Release. -->
+  <Target Name="DebugServe1Angular" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug'">
+    <Message Importance="high" Text="SqBuild: Target: DebugServe1Angular...skipping serving Angular temporary now, because it never returns, and F5 Debug cannot be run." />
+    <!-- <Exec WorkingDirectory="$(SpaRoot)" Command="ServeOnly1ProjectInMonorepo.cmd" /> -->   <!-- This never returns, so tsc -watch cannot be called after. A Pypthon solution is needed. -->
   </Target>
 
-  <Target Name="PublishRunWebpack" AfterTargets="ComputeFilesToPublish">
+  <Target Name="PublishRunWebpack" AfterTargets="ComputeFilesToPublish" Condition=" '$(Configuration)' == 'Release'">
+    <Message Importance="high" Text="SqBuild: Target: PublishRunWebpack..." />
     <!-- As part of publishing, ensure the JS resources are freshly built in production mode -->
+    <!-- <Exec WorkingDirectory="" Command="npm install" /> -->
     <Exec WorkingDirectory="$(SpaRoot)" Command="npm install" />
     <Exec WorkingDirectory="$(SpaRoot)" Command="BuildAllProjectsInMonorepo.cmd" />
 
@@ -57,6 +62,25 @@
         <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       </ResolvedFileToPublish>
     </ItemGroup>
+  </Target>
+
+  <!-- https://stackoverflow.com/questions/35435041/run-npm-install-only-when-needed-and-or-partially -->
+  <Target Name="NpmInstall" BeforeTargets="BeforeBuild" Inputs="package.json" Outputs="$(NpmInstallStampFile)">
+    <Message Importance="high" Text="SqBuild: Restoring npm packages..." />
+    <!-- Ensure Node.js is installed -->
+    <Exec Command="node --version" ContinueOnError="true">
+      <Output TaskParameter="ExitCode" PropertyName="ErrorCode" />
+    </Exec>
+    <Error Condition="'$(ErrorCode)' != '0'" Text="Node.js is required to build and run this project. To continue, please install Node.js from https://nodejs.org/, and then restart your command prompt or IDE." />
+    
+    <Exec Command="npm install" />
+    <Touch Files="$(NpmInstallStampFile)" AlwaysCreate="true" />
+  </Target>
+
+  <Target Name="NpmInstallAngular" BeforeTargets="BeforeBuild" Inputs="$(SpaRoot)package.json" Outputs="$(NpmInstallStampFileAngular)">
+    <Message Importance="high" Text="SqBuild: Restoring Angular npm packages..." />    
+    <Exec WorkingDirectory="$(SpaRoot)" Command="npm install" />
+    <Touch Files="$(NpmInstallStampFileAngular)" AlwaysCreate="true" />
   </Target>
 
 </Project>

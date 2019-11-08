@@ -35,7 +35,7 @@ namespace SqCoreWeb.Controllers
         [HttpGet]
         public IEnumerable<ExampleMessage> Get()
         {
-            Thread.Sleep(3000);     // intentional delay to simulate a longer process to crunch data. This can be removed.
+            Thread.Sleep(5000);     // intentional delay to simulate a longer process to crunch data. This can be removed.
 
             var userEmailClaim = HttpContext?.User?.Claims?.FirstOrDefault(p => p.Type == @"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress");
             string email = userEmailClaim?.Value  ?? "Unknown email";
