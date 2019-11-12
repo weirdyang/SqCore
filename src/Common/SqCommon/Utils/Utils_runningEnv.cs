@@ -101,12 +101,16 @@ namespace SqCommon
                     //return Directory.GetCurrentDirectory() + "/../../.." + "/";
                     return "/home/sq-vnc-client/SQ/NonCommitedSensitiveData/";
 
-                case Platform.Windows:
+               case Platform.Windows:
                     // find out which user from the team and determine it accordingly. Or just check whether folders exists (but that takes HDD read, which is slow)
                     switch (Environment.UserName)   // Windows user name
                     {
                         case "gyantal":
                             return "g:/agy/Google Drive/GDriveHedgeQuant/shared/GitHubRepos/NonCommitedSensitiveData/";
+                        case "Balazs":
+                            return "d:/GDrive/GDriveHedgeQuant/shared/GitHubRepos/NonCommitedSensitiveData/";
+                        case "Laci":
+                            return "d:/ArchiData/GoogleDrive/GDriveHedgeQuant/shared/GitHubRepos/NonCommitedSensitiveData/";
                         default:
                             throw new Exception("Windows user name is not recognized. Add your username and folder here!");
                     }
