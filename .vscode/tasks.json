@@ -23,7 +23,7 @@
             "label": "SqCoreWeb predebugBuildAndTscWatchTask",
             "type": "shell",
             "isBackground": true,
-            "command": "dotnet build \"${workspaceFolder}/src/WebServer/SqCoreWeb/SqCoreWeb.csproj\" \"/property:GenerateFullPaths=true\"  \"/consoleloggerparameters:NoSummary\" && tsc --watch -p \"${workspaceFolder}/src/WebServer/SqCoreWeb/tsconfig.json\"",
+            "command": "dotnet build \"${workspaceFolder}/src/WebServer/SqCoreWeb/SqCoreWeb.csproj\" \"/property:GenerateFullPaths=true\"  \"/consoleloggerparameters:NoSummary\"; tsc --watch -p \"${workspaceFolder}/src/WebServer/SqCoreWeb/tsconfig.json\"",
             // This task is run before some debug tasks.
             // Problem is, it's a watch script, and since it never exits, VSCode
             // complains. All this is needed so VSCode just lets it run.
