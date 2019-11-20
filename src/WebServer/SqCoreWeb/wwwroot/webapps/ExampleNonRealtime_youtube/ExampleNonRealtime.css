@@ -74,3 +74,54 @@ body {
   a:hover {
     color: rgb(174, 0, 255);  /* blue Href hover is good for both dark and light mode  */
   }
+
+
+  .overlap-div-inner1 {
+    position: absolute;
+  }
+
+  .overlap-div-inner2 {
+    position: absolute;
+    width: 100%;
+    margin-left: 0.0rem;
+    color: white;
+    /* background: linear-gradient(to right, #3080c7, #3080c7 5%, #75e0e1 45%, #73e5e1 55%, #91d73a 95%);   */   /* original dark */
+    /* background: linear-gradient(to right, #3080c7 5%, #5b9dd7 10%, #d5f5f6 30%, #d5f5f6 70%, #ace16b 90%, #91d73a 95%);   */   /* new light */
+  }
+
+  .worktopArea {
+    width: 90%;
+    height: 60vh;
+    margin-left: 5%;
+    color: inherit;  /* inherit from parent, if is set dynamically as dark/light mode */
+    background: linear-gradient(to right, #3080c7F2 5%, #5b9dd7F2 10%, #d5f5f6F2 30%, #d5f5f6F2 70%, #ace16bF2 90%, #91d73aF2 95%);  /* new light with 95% alpha */
+  }
+
+   select {   /* Combo box inner text should be the same as its surrounding */
+      font-size: inherit;
+  }
+
+  /* see discussion https://stackoverflow.com/questions/52886853/youtube-embed-showinfo-has-been-deprecated */
+  /* https://jsfiddle.net/xcr298fu/   */
+  .video-container {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .video-container iframe {
+    pointer-events: none;
+  }
+
+  .video-container iframe {
+    position: absolute;
+    top: -60px;     /* elongate by 60px up. Background video control is better to be done in pixels. */
+    left: 0;
+    width: 100%;     /* elongate by 60px down. So, vplayer is 120 px bigger than 100%. This still indroduces black borders */
+    height: calc(100% + 120px);
+  }
+
+  .video-foreground {
+    pointer-events: none;
+  }
