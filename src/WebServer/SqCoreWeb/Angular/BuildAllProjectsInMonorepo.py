@@ -1,29 +1,13 @@
 import os
 import subprocess
-
-
-#os.system("brotli.exe ")
-#p = subprocess.call(r'c:\windows\system32\brotli.exe ')
-#print (p)
-
-
-#import brotli
+#import platform
+#print("Python version: " + platform.python_version() + " (" + platform.architecture()[0] + ")")
 
 os.system("npm run build -- MarketDashboard --prod")
 os.system("npm run build -- HealthMonitor --prod")
 
-#os.system("d:\temp\letoltes\broli.exe")
-
-#print(os.environ['COMSPEC'])
-#FNULL = open(os.devnull, 'w')    #use this if you want to suppress output to stdout from the subprocess
-#os.chdir("c:/windows/system32")
-#subprocess.call(["brotli.exe",""],  shell=True)
-#subprocess.call(["c:/windows/system32/brotli.exe", "--best"], shell=True)
-workDir = os.getcwd()
-
 for dir in os.walk("dist"):
 	print("directory"+dir[0])
-	os.chdir(dir[0])
 	for file in dir[2]:
 		fileSplit = os.path.splitext(file)
 		print (fileSplit)
@@ -47,6 +31,5 @@ for dir in os.walk("dist"):
 			print ("    found txt") 
 			brotliNeeded = 1
 		if (brotliNeeded == 1):
-			print ("!!!!!!!!!!!!      brotli  !!!!!!!!!!")
-			os.system(r"c:/windows/system32/brotli.exe")
-	os.chdir(workDir)
+#			print ("!!!!!!!!!!!!      brotli  !!!!!!!!!!")
+			os.system(r"c:/windows/system32/brotli.exe " +dir[0]+ '/' + file + " --best --force --verbose")
