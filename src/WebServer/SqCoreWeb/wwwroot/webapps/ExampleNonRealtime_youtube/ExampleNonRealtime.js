@@ -45,10 +45,10 @@ window.onload = function onLoadWindow() {
     // x.style.backgroundColor = "#f00"
     getDocElementById('video-selector-1').selectedIndex = iVidBkg - 1; // changing the combobox selection only works in window.onload(), not yet in DOMContentLoaded()
     if (iVidBkg === 5 || iVidBkg === 7) {
-        getDocElementById('MainDivOverVidBkg').style.color = '#000080';
+        getDocElementById('MainDivOverVidBkg').style.color = '#000000'; // on white background, font is black, as usual
     }
     else {
-        getDocElementById('MainDivOverVidBkg').style.color = '#ffffff';
+        getDocElementById('MainDivOverVidBkg').style.color = '#0000FF'; // on black background, font is blue, so something is visible in the black video
     }
     AsyncStartDownloadAndExecuteCbLater('/ExampleNonRealtime', (json) => {
         // const jsonToStr = JSON.stringify(json).substr(0, 60) + '...';
@@ -116,10 +116,10 @@ function video_selector_onchange() {
     player.loadVideoById(vidId);
     iVidBkg = vdBkgSelector.selectedIndex + 1;
     if (iVidBkg === 5 || iVidBkg === 7) {
-        getDocElementById('MainDivOverVidBkg').style.color = '#000080';
+        getDocElementById('MainDivOverVidBkg').style.color = '#000000'; // on white background, font is black, as usual
     }
     else {
-        getDocElementById('MainDivOverVidBkg').style.color = '#ffffff';
+        getDocElementById('MainDivOverVidBkg').style.color = '#0000FF'; // on black background, font is blue, so something is visible in the black video
     }
 }
 console.log('SqCore: Script END');
