@@ -58,9 +58,9 @@ namespace SqCoreWeb
 
         public static UserAuthCheckResult CheckAuthorizedGoogleEmail(HttpContext p_httpContext)
         {
- #if DEBUG
+#if DEBUG
               return UserAuthCheckResult.UserKnownAuthOK;
- #else
+#else
             var email = WsUtils.GetRequestUser(p_httpContext);
             if (String.IsNullOrEmpty(email))
                 return UserAuthCheckResult.UserUnknown;
