@@ -1,0 +1,53 @@
+﻿body {
+    margin: 3px 6px 5px 6px;
+}
+
+h1 {
+    font-family: "Comic Sans MS", cursive, sans-serif;
+    text-align: center;
+    color: blue;
+    font-size: 150%;
+    border: 0px; 
+    padding: 0; 
+    margin: 0px;
+}
+
+h2 {
+    font-family: "Comic Sans MS", cursive, sans-serif;
+    color: gainsboro;
+    font-size: 125%;
+}
+
+h3 {
+    font-family: "Comic Sans MS", cursive, sans-serif;
+    color: mediumblue;
+    font-size: 110%;
+}
+
+table, td, th {
+    border: 1px solid black;
+    border-collapse: collapse;
+    padding: 2px 10px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+tr.toppri {
+    font-weight: bold;
+    font-size: 108%;
+    /*font-style: italic;*/
+    color: darkblue;
+}
+
+tr.secpri {
+    font-weight: bold;
+}
+
+th {
+    cursor: n-resize;
+    background-color: lightgrey;
+}
+
+table td:nth-of-type(1), td:nth-of-type(3), td:nth-of-type(4) {
+    text-align: left;
+}

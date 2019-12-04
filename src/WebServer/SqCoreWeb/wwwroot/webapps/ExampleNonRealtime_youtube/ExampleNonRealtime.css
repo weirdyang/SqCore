@@ -55,10 +55,15 @@ body {
     font-size: 1.0rem;  /* = 10px. For insignificant debug info. */
   }
 
-  img {     /* icons are next to a text on the same line. If text font changes, this should change. Define this icons as 2x the size of the font (2x14px=28px). Use EM, so it scales with the containing element fontsize. So, if that fontsize change, we don't have to resize img here. */
-    width: 2em;
-    height: 2em;
+  img {
+    /* icons are next to a text on the same line. If text font changes, this should change. Define this icons as 2x the size of the font (2x14px=28px). Use EM, so it scales with the containing element fontsize. So, if that fontsize change, we don't have to resize img here. */
+    width: 4rem;
+    height: 4rem;
     vertical-align: text-bottom;
+  }
+
+  .widerImg {
+    width: 6rem;
   }
 
   a {

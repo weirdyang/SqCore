@@ -7,24 +7,22 @@ using Microsoft.Extensions.Logging;
 
 namespace SqCoreWeb.Controllers
 {
-    // public class ExampleMessage
-    // {
-    //     public string MsgType { get; set; } = String.Empty;
-
-    //     public string StringData { get; set; } = String.Empty;
-    //     public DateTime DateOrTime { get; set; }
-
-    //     public int IntData { get; set; }
-
-    //     public int IntDataFunction => 32 + (int)(IntData / 0.5556);
-
-    // }
-
     [ApiController]
     [Route("[controller]")]
     [ResponseCache(CacheProfileName = "DefaultMidDuration")]
     public class BalazsTestController : ControllerBase
     {
+        public class ExampleMessage
+        {
+            public string MsgType { get; set; } = String.Empty;
+
+            public string StringData { get; set; } = String.Empty;
+            public DateTime DateOrTime { get; set; }
+
+            public int IntData { get; set; }
+
+            public int IntDataFunction => 32 + (int)(IntData / 0.5556);
+        }
         private readonly ILogger<WeatherForecastController> _logger;
 
         public BalazsTestController(ILogger<WeatherForecastController> logger)

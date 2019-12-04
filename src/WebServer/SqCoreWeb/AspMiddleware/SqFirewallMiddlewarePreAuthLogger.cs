@@ -27,13 +27,13 @@ namespace SqCoreWeb
 
 
     // we can call it SqFirewallMiddleware because it is used as a firewall too, not only logging request
-    internal class SqFirewallMiddleware
+    internal class SqFirewallMiddlewarePreAuthLogger
     {
         private static readonly NLog.Logger gLogger = NLog.LogManager.GetCurrentClassLogger();   // the name of the logger will be the "Namespace.Class"
 
         readonly RequestDelegate _next;
 
-        public SqFirewallMiddleware(RequestDelegate next)
+        public SqFirewallMiddlewarePreAuthLogger(RequestDelegate next)
         {
             if (next == null)
                 throw new ArgumentNullException(nameof(next));
@@ -44,29 +44,8 @@ namespace SqCoreWeb
         {
             if (httpContext == null)
                 throw new ArgumentNullException(nameof(httpContext));
-
-            // 1. checks user auth for some staticFiles (like HTMLs, Controller APIs), but not for everything (not jpg, CSS, JS)
-            var userAuthCheck = WsUtils.CheckAuthorizedGoogleEmail(httpContext);
-            if (userAuthCheck != UserAuthCheckResult.UserKnownAuthOK)
-            {
-                string msg = String.Format($"{DateTime.UtcNow.ToString("HH':'mm':'ss.f")}#Uknown or not allowed user request should be redirected to Login: {httpContext.Request.Method} '{httpContext.Request.Path}' from {WsUtils.GetRequestIP(httpContext)}");
-                Console.WriteLine(msg);
-                gLogger.Info(msg);
-
-                string ext = Path.GetExtension(httpContext.Request.Path.Value) ?? String.Empty;
-                if (ext.Equals(".html", StringComparison.OrdinalIgnoreCase) || ext.Equals(".htm", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (!httpContext.Request.Path.Value.Equals("/index.html", StringComparison.OrdinalIgnoreCase))   // if it is HTML only allow '/index.html' through
-                        return; // raw Return in Kestrel chain gives client a response header: status: 200 (OK), Data size: 0. Browser will present a blank page. Which is fine now.
-                }
-                if (String.IsNullOrEmpty(ext))
-                {
-                    if (!httpContext.Request.Path.Value.Equals("/account/login", StringComparison.OrdinalIgnoreCase))   // if it is an API call only allow '/account/login' through. 
-                        return;
-                }
-            }
-
-            // 2. Don't push it to the next Middleware if the path or IP is on the blacklist. In the future, implement a whitelist too, and only allow  requests explicitely on the whitelist.
+           
+            // 1. Don't push it to the next Middleware if the path or IP is on the blacklist. In the future, implement a whitelist too, and only allow  requests explicitely on the whitelist.
             if (IsHttpRequestOnBlacklist(httpContext))
             {
                 // silently log it and stop processing
@@ -76,7 +55,7 @@ namespace SqCoreWeb
                 return;
             }
 
-            // 3.
+            // 2.
             if (!IsHttpRequestOnWhitelist(httpContext))
             {
                 // inform the user in a nice HTML page that 'for security' ask the superwisor to whitelist path ''
@@ -118,7 +97,8 @@ namespace SqCoreWeb
 
                 // string.Format("Value is {0}", someValue) which will check for a null reference and replace it with an empty string. It will however throw an exception if you actually pass  null like this string.Format("Value is {0}", null)
                 string msg = String.Format("{0}#{1}{2} {3} '{4}' from {5} (u: {6}) ret: {7} in {8:0.00}ms", requestLog.StartTime.ToString("HH':'mm':'ss.f"), requestLog.IsError ? "ERROR in " : String.Empty, requestLog.IsHttps ? "HTTPS" : "HTTP", requestLog.Method, requestLog.Path, requestLog.ClientIP, requestLog.ClientUserEmail, requestLog.StatusCode, requestLog.TotalMilliseconds);
-                Console.WriteLine(msg);
+                string shortMsg = String.Format("{0}#{1} {2} '{3}' from {4} ({5}) in {6:0.00}ms", requestLog.StartTime.ToString("HH':'mm':'ss.f"), requestLog.IsError ? "ERROR in " : String.Empty, requestLog.Method, requestLog.Path, requestLog.ClientIP, requestLog.ClientUserEmail, requestLog.TotalMilliseconds);
+                Console.WriteLine(shortMsg);
                 gLogger.Info(msg);
 
                 if (requestLog.IsError)
