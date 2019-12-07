@@ -165,14 +165,15 @@ namespace SqCoreWeb
         {
             if (env.IsDevelopment())
             {
-                app.UseDeveloperExceptionPage();
+                app.UseDeveloperExceptionPage();        // in DEBUG it returns a nice webpage that shows the stack trace and everything of the crash.
             }
             else
             {
-                app.UseExceptionHandler("/Error");
+                // app.UseDeveloperExceptionPage();     // a very detailed Exception page can be used even in Production to catch the error quicker.
+                app.UseExceptionHandler("/error.html"); // it hides the crash totally. There is no browser redirection. It returns error.html with status: 200 (OK). Maybe 500 (Error) would be better to return, but then the Browser might not display that page to the user.
+                
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
-
                 app.UseHttpsRedirection();     // Chrome Caching warning! If you are developing using a self-signed certificate over https and there is an issue with the certificate then google will not cache the response
             }
 
