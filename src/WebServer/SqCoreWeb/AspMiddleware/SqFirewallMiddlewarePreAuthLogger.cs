@@ -107,11 +107,11 @@ namespace SqCoreWeb
                 // at the moment, send only raised Exceptions to HealthMonitor, not general IsErrors, like wrong statusCodes
                 if (requestLog.Exception != null && IsSendableToHealthMonitorForEmailing(requestLog.Exception))
                 {
-                    StringBuilder sb = new StringBuilder("Exception in Website.C#.SqFirewallMiddleware. \r\n");
+                    StringBuilder sb = new StringBuilder("Exception in SqCore.Website.C#.SqFirewallMiddleware. \r\n");
                     var requestLogStr = String.Format("{0}#{1}{2} {3} '{4}' from {5} (u: {6}) ret: {7} in {8:0.00}ms", requestLog.StartTime.ToString("HH':'mm':'ss.f"), requestLog.IsError ? "ERROR in " : String.Empty, requestLog.IsHttps ? "HTTPS" : "HTTP", requestLog.Method, requestLog.Path + (String.IsNullOrEmpty(requestLog.QueryString) ? "" : requestLog.QueryString), requestLog.ClientIP, requestLog.ClientUserEmail, requestLog.StatusCode, requestLog.TotalMilliseconds);
                     sb.Append("Request: " + requestLogStr + "\r\n");
                     sb.Append("Exception: '" + requestLog.Exception.ToStringWithShortenedStackTrace(400) + "'\r\n");
-                    HealthMonitorMessage.SendAsync(sb.ToString(), HealthMonitorMessageID.ReportErrorFromSQLabWebsite).RunSynchronously();
+                    await HealthMonitorMessage.SendAsync(sb.ToString(), HealthMonitorMessageID.SqCoreWebError); // await will wait for its completion, so it is the RunSynchronously() way.
                 }
 
             }

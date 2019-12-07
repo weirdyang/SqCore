@@ -6,13 +6,14 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace SqCoreWeb.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class AccountController : Controller
+    public class UserAccountController : Controller
     {
         [HttpGet("[action]")]       // from the Route template "template: "{controller=Home}/{action=Index}/{id?}");" only action is used.
         public async Task Login(string? returnUrl) // (string returnUrl = "/")
@@ -20,7 +21,7 @@ namespace SqCoreWeb.Controllers
             await HttpContext.ChallengeAsync("Google",
                 new AuthenticationProperties()
                 {
-                    RedirectUri = returnUrl ?? "/index.html"      // if http://localhost/api/account/login is called directly, there is no returnURL, which is null. However if we pass Null to GoogleAuth, it will come back to this "/login" which will cause an infinite loop. 
+                    RedirectUri = returnUrl ?? "/index.html"      // if http://localhost/api/UserAccount/login is called directly, there is no returnURL, which is null. However if we pass Null to GoogleAuth, it will come back to this "/login" which will cause an infinite loop. 
             });
         }
 
@@ -34,6 +35,40 @@ namespace SqCoreWeb.Controllers
                 //RedirectUri = Url.Action("Index", "Home")
                 RedirectUri = "/"
             });
+        }
+
+         [HttpGet]
+#if !DEBUG
+        [Authorize]     // we can live without it, because ControllerCommon.CheckAuthorizedGoogleEmail() will redirect to /login anyway, but it is quicker that this automatically redirects without clicking another URL link.
+#endif
+        public ActionResult UserInfo()
+        {
+            var userAuthCheck = WsUtils.CheckAuthorizedGoogleEmail(this.HttpContext);
+            if (userAuthCheck != UserAuthCheckResult.UserKnownAuthOK)   
+            {
+                return Content(@"<HTML><body>Google Authorization Is Required. You are not logged in or your your Google account is not accepted.<br>" +
+                   @"<A href=""/logout"">logout this Google user </a> and login with another one." +
+                    "</body></HTML>", "text/html");
+            }
+
+            StringBuilder sb = new StringBuilder();
+            sb.Append("<html><body>");
+            sb.Append("Hello " + (User.Identity.Name ?? "anonymous") + "<br>");
+            sb.Append("Request.Path '" + (Request.Path.ToString() ?? "Empty") + "'<br>");
+            foreach (var claim in User.Claims)
+            {
+                sb.Append(claim.Type + ": " + claim.Value + "<br>");
+            }
+
+            sb.Append("Tokens:<br>");
+            sb.Append("Access Token: " + HttpContext.GetTokenAsync("access_token").Result + "<br>");
+            sb.Append("Refresh Token: " + HttpContext.GetTokenAsync("refresh_token").Result + "<br>");
+            sb.Append("Token Type: " + HttpContext.GetTokenAsync("token_type").Result + "<br>");
+            sb.Append("expires_at: " + HttpContext.GetTokenAsync("expires_at").Result + "<br>");
+            sb.Append("<a href=\"/logout\">Logout</a><br>");
+            sb.Append("</body></html>");
+
+            return Content(sb.ToString(), "text/html");
         }
 
         [HttpGet("[action]")]

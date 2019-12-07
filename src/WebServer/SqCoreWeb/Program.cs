@@ -68,8 +68,8 @@ namespace SqCoreWeb
             }
             catch (Exception e)
             {
-                gLogger.Error(e, $"CreateHostBuilder(args).Build().Run() exception");
-                //HealthMonitorMessage.SendAsync($"Exception in Website.C#.MainThread. Exception: '{ e.ToStringWithShortenedStackTrace(400)}'", HealthMonitorMessageID.ReportErrorFromSQLabWebsite).RunSynchronously();
+                gLogger.Error(e, $"CreateHostBuilder(args).Build().Run() exception.");
+                HealthMonitorMessage.SendAsync($"Exception in SqCoreWebsite.C#.MainThread. Exception: '{ e.ToStringWithShortenedStackTrace(400)}'", HealthMonitorMessageID.SqCoreWebError).RunSynchronously();
             }
 
             gLogger.Info("****** Main() END");
@@ -138,13 +138,39 @@ namespace SqCoreWeb
         internal static void StrongAssertMessageSendingEventHandler(StrongAssertMessage p_msg)
         {
             gLogger.Info("StrongAssertEmailSendingEventHandler()");
-            HealthMonitorMessage.SendAsync($"Msg from Website.C#.StrongAssert. StrongAssert Warning (if Severity is NoException, it is just a mild Warning. If Severity is ThrowException, that exception triggers a separate message to HealthMonitor as an Error). Severity: {p_msg.Severity}, Message: { p_msg.Message}, StackTrace: { p_msg.StackTrace}", HealthMonitorMessageID.ReportErrorFromSQLabWebsite).FireParallelAndForgetAndLogErrorTask();
+            HealthMonitorMessage.SendAsync($"Msg from SqCore.Website.C#.StrongAssert. StrongAssert Warning (if Severity is NoException, it is just a mild Warning. If Severity is ThrowException, that exception triggers a separate message to HealthMonitor as an Error). Severity: {p_msg.Severity}, Message: { p_msg.Message}, StackTrace: { p_msg.StackTrace.ToStringWithShortenedStackTrace(400)}", HealthMonitorMessageID.SqCoreWebError).FireParallelAndForgetAndLogErrorTask();
         }
 
-        // Occurs when a faulted task's unobserved exception is about to trigger exception which, by default, would terminate the process.
+        // Called by the GC.FinalizerThread. Occurs when a faulted task's unobserved exception is about to trigger exception which, by default, would terminate the process.
         private static void TaskScheduler_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
         {
             gLogger.Error(e.Exception, $"TaskScheduler_UnobservedTaskException()");
+
+            bool isSendable = true;
+            string msg = "Exception in SqCore.Website.C#.TaskScheduler_UnobservedTaskException.";
+            if (e.Exception != null) {
+                isSendable = SqFirewallMiddlewarePreAuthLogger.IsSendableToHealthMonitorForEmailing(e.Exception);
+                if (isSendable)
+                    msg += $" Exception: '{ e.Exception.ToStringWithShortenedStackTrace(400)}'.";
+            }
+
+            if (sender != null)
+            {
+                Task? senderTask = sender as Task;
+                if (senderTask != null)
+                {
+                    msg += $" Sender is a task. TaskId: {senderTask.Id}, IsCompleted: {senderTask.IsCompleted}, IsCanceled: {senderTask.IsCanceled}, IsFaulted: {senderTask.IsFaulted}, TaskToString(): {senderTask.ToString()}.";
+                    msg += (senderTask.Exception == null) ? " SenderTask.Exception is null" : $" SenderTask.Exception {senderTask.Exception.ToStringWithShortenedStackTrace(400)}";
+                }
+                else
+                    msg += " Sender is not a task.";
+            }
+
+            if (isSendable)
+                HealthMonitorMessage.SendAsync(msg, HealthMonitorMessageID.SqCoreWebError).GetAwaiter().GetResult();
+            else 
+                gLogger.Warn(msg);
+            e.SetObserved();        //  preventing it from triggering exception escalation policy which, by default, terminates the process.
         }
 
 

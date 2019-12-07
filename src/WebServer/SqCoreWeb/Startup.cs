@@ -34,6 +34,16 @@ namespace SqCoreWeb
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // Asp.Net DependenciInjection (DI) of Kestrel policy for separating the creation of dependencies (IWebHostEnvironment, Options, Logger) from its actual usage in Controllers.
+            // That way Controllers are light. And if there is 100 Controller classes, repeating the creation of Dependent objects (IWebHostEnvironment) is not in their source code. So, the source code of Controllers are light.
+            // DI is not necessary. DotNet core bases classes doesn't use that for logging or anything. However, Kestrel uses it, which we can honour. It also helps in unit-test. 
+            // But it is perfectly fine to do the Creation of dependencies (Logger, like nLog) to do it in the Controller.
+            // Transient objects are always different; a new instance is provided to every controller and every service.
+            // Scoped objects are the same within a request, but different across different requests
+            // Singleton objects are the same for every object and every request(regardless of whether an instance is provided in ConfigureServices)
+            services.AddSingleton(_ => Utils.Configuration);  // this is the proper DependenciInjection (DI) way of pushing it as a service to Controllers. So you don't have to manage the creation or disposal of instances.
+            services.AddSingleton(_ => Program.g_webAppGlobals);
+
             services.AddHttpsRedirection(options =>
             {
                 options.RedirectStatusCode = StatusCodes.Status307TemporaryRedirect;
@@ -96,10 +106,10 @@ namespace SqCoreWeb
                     options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 })
                 .AddCookie(o => {  // CookieAuth will be the default from the two, GoogleAuth is used only for Challenge
-                    o.LoginPath = "/account/login";
-                    o.LogoutPath = "/account/logout";
+                    o.LoginPath = "/UserAccount/login";
+                    o.LogoutPath = "/UserAccount/logout";
                     //o.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;   // this is the default BTW, so no need to set.
-                    // problem: if Cookie storage works in https://localhost:5001/account/login  but not in HTTP: http://localhost:5000/account/login
+                    // problem: if Cookie storage works in https://localhost:5001/UserAccount/login  but not in HTTP: http://localhost:5000/UserAccount/login
                     // "Note that the http page cannot set an insecure cookie of the same name as the secure cookie."
                     // Solution: Manually delete the cookie from Chrome. see here.  https://bugs.chromium.org/p/chromium/issues/detail?id=843371
                     // in Production, only HTTPS is allowed anyway, so it will work. Best is not mix development in both HTTP/HTTPS (just stick to one of them). 

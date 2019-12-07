@@ -7,6 +7,8 @@ using SqCommon;
 
 namespace SqCoreWeb
 {
+    public enum UserAuthCheckResult { UserKnownAuthOK, UserKnownAuthNotEnugh, UserUnknown };
+    
     public static partial class WsUtils
     {
         public static string GetRequestUser(HttpContext p_httpContext)
@@ -53,8 +55,6 @@ namespace SqCoreWeb
             }
             return default(T);
         }
-
-        public enum UserAuthCheckResult { UserKnownAuthOK, UserKnownAuthNotEnugh, UserUnknown };
 
         public static UserAuthCheckResult CheckAuthorizedGoogleEmail(HttpContext p_httpContext)
         {

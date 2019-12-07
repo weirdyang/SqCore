@@ -47,7 +47,7 @@ namespace SqCoreWeb
                         isAllowedRequest = true;
                 } else if (String.IsNullOrEmpty(ext))  // 2. API requests
                 {
-                    if (httpContext.Request.Path.Value.Equals("/account/login", StringComparison.OrdinalIgnoreCase))   // if it is an API call only allow '/account/login' through. 
+                    if (httpContext.Request.Path.Value.Equals("/UserAccount/login", StringComparison.OrdinalIgnoreCase))   // if it is an API call only allow '/UserAccount/login' through. 
                         isAllowedRequest = true;
                 }
                 else 

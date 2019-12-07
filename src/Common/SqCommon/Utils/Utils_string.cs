@@ -27,6 +27,13 @@ namespace SqCommon
             return Regex.Split(str, @"(,\s)+");
         }
 
+        public static string ToStringWithShortenedStackTrace(this string s, int p_maxLength)
+        {
+            if (s.Length <= p_maxLength)
+                return s;
+            else
+                return s.Substring(0, p_maxLength) + "...";
+        }
         public static string ToStringWithShortenedStackTrace(this Exception e, int p_maxLength)
         {
             string s = (e == null ? null : e.ToString()) ?? String.Empty;
