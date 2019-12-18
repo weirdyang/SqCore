@@ -53,20 +53,25 @@ namespace SqCoreWeb
             // https://docs.microsoft.com/en-us/aspnet/core/performance/caching/response?view=aspnetcore-3.0
             services.AddResponseCaching(); // DI: these services could be used in MVC control/Razor pages (either as [Attributes], or in code)
             services.AddMvc(options =>     // AddMvc() equals AddControllersWithViews() + AddRazorPages()
-            {
-                options.CacheProfiles.Add("NoCache",      // this CashProfile is given once here, and if it changes, we only have to change here, not in all Controllers.
+            { // this CashProfile is given once here, and if it changes, we only have to change here, not in all Controllers.
+                options.CacheProfiles.Add("NoCache",
                     new CacheProfile()
                     {
                         Duration = 0,
                         Location = ResponseCacheLocation.None,
                         NoStore = true
                     });
-                options.CacheProfiles.Add("DefaultMidDuration",      // this CashProfile is given once here, and if it changes, we only have to change here, not in all Controllers.
-                new CacheProfile()
-                {
-                    //Duration = (int)TimeSpan.FromHours(12).TotalSeconds
-                    Duration = 100000   // 100,000 seconds = 27 hours
-                });
+                options.CacheProfiles.Add("DefaultShortDuration",
+                    new CacheProfile()
+                    {
+                        Duration = 60 * 1   // 1 min for real-time price data
+                    });
+                options.CacheProfiles.Add("DefaultMidDuration",
+                    new CacheProfile()
+                    {
+                        //Duration = (int)TimeSpan.FromHours(12).TotalSeconds
+                        Duration = 100000   // 100,000 seconds = 27 hours
+                    });
             }).SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
             //services.AddControllersWithViews();        // AddMvc() equals AddControllersWithViews() + AddRazorPages(), so we don't use Razor pages now.
             // In production, the Angular files (index.html) will be served from this directory, but actually we don't use UseSpaStaticFiles(), so we don't need this here.
@@ -169,8 +174,8 @@ namespace SqCoreWeb
             }
             else
             {
-                // app.UseDeveloperExceptionPage();     // a very detailed Exception page can be used even in Production to catch the error quicker.
-                app.UseExceptionHandler("/error.html"); // it hides the crash totally. There is no browser redirection. It returns error.html with status: 200 (OK). Maybe 500 (Error) would be better to return, but then the Browser might not display that page to the user.
+                app.UseDeveloperExceptionPage();     // it is more useful in the first years of development. A very detailed Exception page can be used even in Production to catch the error quicker.
+                //app.UseExceptionHandler("/error.html"); // it hides the crash totally. There is no browser redirection. It returns 'error.html' with status: 200 (OK). Maybe 500 (Error) would be better to return, but then the Browser might not display that page to the user.
                 
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
@@ -192,7 +197,7 @@ namespace SqCoreWeb
 
             app.Use(async (context, next) =>
             {
-                Utils.Logger.Info($"After SqFirewallMiddlewarePostAuth(). These URLs should be legit to serve. Request.Path: '{context.Request.Path.Value}'");
+                Utils.Logger.Info($"Serving '{context.Request.Path.Value}'");
                 await next();
             });
 
@@ -203,7 +208,15 @@ namespace SqCoreWeb
             // So, while developing browser caching on localhost: Either:
             // 1. Test HTTPS on port 5001 in Edge, https://localhost:5001/HealthMonitor/   OR
             // 2. Test HTTP on PORT 5000 in Chrome, http://localhost:5000/HealthMonitor/  (disable UseHttpsRedirection()) not HTTPS  (but note that Chrome can be slow on http://localhost)
+            
+            // because when we do Ctrl-R in Chrome, the Request header contains: "cache-control: no-cache". Then ResponseCaching will not use entry, and places this log:
+            // dbug: Microsoft.AspNetCore.ResponseCaching.ResponseCachingMiddleware[9]
+            //     The age of the entry is 00:05:23.2291902 and has exceeded the maximum age of 00:00:00 specified by the 'max-age' cache directive.
+            // So, if we want to test responseCaching, open the same '/WeatherForecast' in a different tab.
+            // GET '/WeatherForecast' from 127.0.0.1 (gyantal@gmail.com) in 63.35ms can decrease to 
+            // GET '/WeatherForecast' from 127.0.0.1 (gyantal@gmail.com) in 4.21ms
             app.UseResponseCaching();       // this fills up the Response header Cache-Control, but only for MVC Controllers (classes, methods), Razor Page handlers (classes)
+            
             app.Use(async (context, next) =>    // this fills up the Response header Cache-Control for everything else, like static files.
             {
                 if (!env.IsDevelopment())   // in development, don't use browser caching at all.

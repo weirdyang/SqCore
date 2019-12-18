@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using NLog.Web;
 using SqCommon;
 
 namespace SqCoreWeb
@@ -101,7 +102,7 @@ namespace SqCoreWeb
                             // from here https://docs.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel?view=aspnetcore-3.0#endpoint-configuration  (find: SNI)
                             // listenOptions.UseHttps(httpsOptions =>
                             // {
-                                
+
                             //     // see 'certmgr.msc'
                             //     // https://localhost:5005/ with this turns out to be 'valid' in Chrome. Cert is issued by 'localhost', issued to 'localhost'. 
                             //     // https://127.0.0.1:5005/ will say: invalid. (as the 'name' param is null in the callback down)
@@ -132,7 +133,25 @@ namespace SqCoreWeb
 
                         });
                     })
-                    .UseStartup<Startup>();
+                    .UseStartup<Startup>()
+                    .ConfigureLogging(logging =>
+                    {
+                        // for very detailed logging:
+                        // set "Microsoft": "Trace" in appsettings.json or appsettings.dev.json
+                        // set set this ASP logging.SetMinimumLevel to Trace, 
+                        // set minlevel="Trace" in NLog.config
+                        logging.ClearProviders();   // this deletes the Console logger which is a default in ASP.net
+                        if (String.Equals(Utils.RuntimeConfig(), "DEBUG", StringComparison.OrdinalIgnoreCase)) 
+                        {
+                            logging.AddConsole();   // in vscode at F5, launching a web browser works by finding a pattern in Console
+                            logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
+                        } else 
+                        {
+                            // in production, logging slows down.
+                            logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Warning);
+                        }
+                    })
+                    .UseNLog();  // NLog: Setup NLog for Dependency injection; LoggerProvider under the ASP.NET Core platform.
                 });
 
         internal static void StrongAssertMessageSendingEventHandler(StrongAssertMessage p_msg)
