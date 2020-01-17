@@ -19,8 +19,8 @@ namespace SqCommon
     // because of all multi-threads use the same lastTime. But it can be solved by looking at the CurrentThreadId, and having a Dictionary<threadId, lastTime>.
     public static class SqLogger
     {
-    
-         public static void ProfiledInfoToConsole(this NLog.Logger logger, string message, Stopwatch watch)
+
+        public static void ProfiledInfoToConsole(this NLog.Logger logger, string message, Stopwatch watch)
         {
             logger.ProfiledInfo(message, watch, true);
         }
@@ -30,7 +30,7 @@ namespace SqCommon
         {
             watch.Stop();
             var msgEx = $"{message} takes {watch.Elapsed.TotalMilliseconds:f3}ms";
-            
+
             logger.Info(msgEx);
             if (isToConsole)
                 Console.WriteLine(msgEx);
@@ -39,7 +39,7 @@ namespace SqCommon
         }
 
 
-        
+
         private static DateTime? g_lastTimeStamp;
 
         // GProfiling means Global Profiling
@@ -53,14 +53,14 @@ namespace SqCommon
             logger.GProfiledInfo(message, true);
         }
 
-        
-        
+
+
         public static void GProfiledInfo(this NLog.Logger logger, string message, bool isToConsole = false)  // Profiled info can go silently to log files
         {
             var lastTimeStamp = g_lastTimeStamp ?? DateTime.Now;
             var elapsedTime = DateTime.Now - lastTimeStamp;
             var msgEx = $"{message} takes {elapsedTime.TotalMilliseconds:f3}ms";
-            
+
             logger.Info(msgEx);
             if (isToConsole)
                 Console.WriteLine(msgEx);
@@ -69,7 +69,7 @@ namespace SqCommon
         }
 
 
-       
+
     }
 
 }

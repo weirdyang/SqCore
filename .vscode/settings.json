@@ -8,5 +8,5 @@
     "python.jediEnabled": false,
     "python.terminal.activateEnvironment": false,
     "html.format.wrapLineLength": 0,
-    "diffEditor.ignoreTrimWhitespace": true
+    "diffEditor.ignoreTrimWhitespace": false
 }

@@ -5,6 +5,10 @@
 		}
 	],
 	"settings": {
-		"typescript.reportStyleChecksAsWarnings": false
+		"typescript.reportStyleChecksAsWarnings": false,
+		"files.associations": {
+			"**/src/WebServer/SqCoreWeb/tslint.json": "jsonc",		// treat json files as jsonc (JSON with Comments), so tslint.json can contain line comments
+			"**/src/WebServer/SqCoreWeb/wwwroot/ts/sq-ngx-logger/tslint.json": "jsonc"
+		}
 	}
 }

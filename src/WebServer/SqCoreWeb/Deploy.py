@@ -28,7 +28,7 @@ else:   # TODO: Laci, Balazs, you have to add your IF here (based on the 'name' 
     serverRsaKeyFile = "d:\SVN\HedgeQuant\src\Server\AmazonAWS\AwsMTrader\AwsMTrader,sq-vnc-client.pem"  # server
 
 serverHost = "ec2-34-251-1-119.eu-west-1.compute.amazonaws.com"         # MTrader server
-serverPort = 22
+serverPort = 122    # on MTraderServer, port 22 bandwidth throttled, because of VNC viewer usage, a secondary SSH port 122 has no bandwith limit
 serverUser = "sq-vnc-client"
 rootRemoteDir = "/home/" + serverUser + "/SQ/WebServer/SqCoreWeb/src"
 acceptedSubTreeRoots = ["WebServer\\SqCoreWeb", "Common\\SqCommon", "Common\\DbCommon"]        # everything under these relPaths is traversed: files or folders too

@@ -12,7 +12,7 @@ rootLocalDir = "g:/work/Archi-data/GitHubRepos/SqCore/src"       #os.walk() give
 acceptedSubTreeRoots = ["Tools\\BenchmarkDB", "Common\\SqCommon", "Common\\DbCommon"]        # everything under these relPaths is traversed: files or folders too
 
 serverHost = "ec2-34-251-1-119.eu-west-1.compute.amazonaws.com"  # ManualTradingServer
-serverPort = 22
+serverPort = 122    # on MTraderServer, port 22 bandwidth throttled, because of VNC viewer usage, a secondary SSH port 122 has no bandwith limit
 serverUser = "sq-vnc-client"
 serverRsaKeyFile = "g:\work\Archi-data\HedgeQuant\src\Server\AmazonAWS\AwsMTrader\AwsMTrader,sq-vnc-client.pem"
 rootRemoteDir = "/home/sq-vnc-client/SQ/Tools/BenchmarkDB/src"

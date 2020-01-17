@@ -29,6 +29,8 @@ obj/
 Obj/
 dist/
 **/ts/*.js
+**/ts/*/*.js
+**/ts/*/*/*.js
 
 #Typescript compiled JS files. There is no other way than to list them one by one. Otherwise, legit JS files would not be commited
 **/webapps/BalazsTest/BalazsTest.js

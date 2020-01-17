@@ -1,0 +1,7 @@
+{
+  "rules": {
+    "variable-name": [
+      false   // disable variable name checks
+    ]
+  }
+}

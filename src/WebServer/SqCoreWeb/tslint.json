@@ -59,6 +59,10 @@
       true,
       "single"
     ],
-    "trailing-comma": false
+    "trailing-comma": false,
+    "variable-name": [
+      true,
+      "allow-leading-underscore"    // allow variable names like '_config'
+    ]
   }
 }

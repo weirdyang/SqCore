@@ -1,14 +1,17 @@
-{
+{ // In contrary to tslint.json, tsconfig.json cannot be 'nested'. So, subfolders will not overwrite main folders.  https://stackoverflow.com/questions/52709947/specific-tsconfig-json-rules-inside-folder
   "compileOnSave": true,
   "compilerOptions": {
     "strict": true,       // strict = true is the default
     "alwaysStrict": true, // emit "use strict" in all JS files. Strict mode execution is 50-80% faster for specific cases
+    "strictPropertyInitialization": true, // it is On by default anyway.
     "noUnusedLocals": true,
     "noImplicitAny": false,
     "noEmitOnError": true,
     "removeComments": false,
     "sourceMap": true,
     "target": "es2015",
+    "moduleResolution": "Node", // Node is the default now
+    "module": "ESNext", // import() expressions are understood in esnext, but not in es2015
     "typeRoots": [
       "node_modules/@types"
     ],
