@@ -1,4 +1,4 @@
-import {LoggerConfig} from './logger.config';
+import {LoggerConfig} from './logger.config.js';
 
 export class NGXLoggerConfigEngine {
 

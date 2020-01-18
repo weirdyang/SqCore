@@ -10,6 +10,28 @@ using System.Collections.Generic;
 
 namespace SqCoreWeb.Controllers
 {
+    public enum NgxLoggerLevel
+    {
+        TRACE = 0,
+        DEBUG,
+        INFO,
+        LOG,
+        WARN,
+        ERROR,
+        FATAL,
+        OFF
+    }
+
+    public class NGXLogInterface
+    {
+        public NgxLoggerLevel level { get; set; }
+        public string timestamp { get; set; } = String.Empty;
+        public string fileName { get; set; }  = String.Empty;
+        public string lineNumber { get; set; }  = String.Empty;
+        public string message { get; set; }  = String.Empty;
+        public object[] additional { get; set; } = new object[] { };
+    }
+
     // Logger for Javascript code. This can notify Healthmonitor if Crash occurs in HTML JS in the client side.
     public class JsLogController : Controller
     {
@@ -20,7 +42,7 @@ namespace SqCoreWeb.Controllers
             string jsLogMessage = String.Empty;
             using (var reader = new StreamReader(Request.Body))
             {
-                // This will equal to "charset = UTF-8 & param1 = val1 & param2 = val2 & param3 = val3 & param4 = val4"
+                // example: '{"message":"A simple error() test message to NGXLogger","additional":[],"level":5,"timestamp":"2020-01-18T00:46:47.740Z","fileName":"ExampleNonRealtime.js","lineNumber":"52"}'
                 jsLogMessage = await reader.ReadToEndAsync();
             }
 
@@ -34,12 +56,20 @@ namespace SqCoreWeb.Controllers
             Utils.Logger.Info(jsLogMsgWithOrigin);
 
             // 2. interpret the log and if it is an error, notify HealthMonitor
-            var jsLogObj = JsonSerializer.Deserialize(jsLogMessage, typeof(Dictionary<string, string>)) as Dictionary<string, string>;  
-            string logLevel = (jsLogObj != null) ? jsLogObj["level"] : String.Empty;
-            if (logLevel == "ERROR" || logLevel == "FATAL")
-            {   // notify HealthMonitor to send an email
-                HealthMonitorMessage.SendAsync(jsLogMsgWithOrigin, HealthMonitorMessageID.ReportErrorFromSQLabWebsite).RunSynchronously();
+            try
+            {
+                var jsLogObj = JsonSerializer.Deserialize<NGXLogInterface>(jsLogMessage);
+                if (jsLogObj.level == NgxLoggerLevel.ERROR || jsLogObj.level == NgxLoggerLevel.FATAL)
+                {   // notify HealthMonitor to send an email
+                    HealthMonitorMessage.SendAsync(jsLogMsgWithOrigin, HealthMonitorMessageID.ReportErrorFromSQLabWebsite).FireParallelAndForgetAndLogErrorTask();
+                }
             }
+            catch (Exception e)
+            {
+                Utils.Logger.Error(e, "JsLogController(). Probably serialization problem. JsLogMessage: " + jsLogMessage);
+                throw;  // if we don't rethrow it, Kestrel will not send HealthMonitor message. Although we should fix this error.
+            }
+
             return NoContent(); // The common use case is to return 204 (NoContent) as a result of a PUT request, updating a resource
         }
     }

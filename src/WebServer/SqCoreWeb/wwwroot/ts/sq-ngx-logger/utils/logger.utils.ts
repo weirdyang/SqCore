@@ -1,5 +1,5 @@
 // @ts-nocheck
-import {NgxLoggerLevel} from '../types/logger-level.enum';
+import {NgxLoggerLevel} from '../types/logger-level.enum.js';
 
 export class NGXLoggerUtils {
 
@@ -68,7 +68,7 @@ export class NGXLoggerUtils {
     return message;
   }
 
-  static prepareAdditionalParameters(additional: any[]) {
+  static prepareAdditionalParameters(additional: any[]) : any[] {
     if (additional === null || additional === undefined) {
       return null;
     }

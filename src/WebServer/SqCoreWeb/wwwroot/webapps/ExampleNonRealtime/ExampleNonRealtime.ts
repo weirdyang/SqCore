@@ -1,5 +1,6 @@
 
-import {NGXLogger} from '../../ts/sq-ngx-logger/sq.logger.service.js';
+import {NGXLogger} from '../../ts/sq-ngx-logger/logger.service.js';
+import {NgxLoggerLevel} from '../../ts/sq-ngx-logger/types/logger-level.enum.js';
 
 // export {}; // TS convention: To avoid top level duplicate variables, functions. This file should be treated as a module (and have its own scope). A file without any top-level import or export declarations is treated as a script whose contents are available in the global scope.
 
@@ -36,8 +37,10 @@ document.addEventListener('DOMContentLoaded', (event) => {
 window.onload = function onLoadWindow() {
     console.log('SqCore: window.onload() BEGIN. All CSS, and images were downloaded.'); // images are loaded at this time, so their sizes are known
 
-    const logger: NGXLogger = new NGXLogger();  // settings should be: in Development, it should log Info to server and console. In Production: only log Error or Fatal to server and console.
-    logger.info('A simple test message to NGXLogger');
+    const logger: NGXLogger = new NGXLogger({ level: NgxLoggerLevel.INFO, serverLogLevel: NgxLoggerLevel.ERROR, serverLoggingUrl: '/JsLog'});
+    logger.trace('A simple trace() test message to NGXLogger');
+    logger.log('A simple log() test message to NGXLogger');
+    logger.error('A simple error() test message to NGXLogger');
 
     AsyncStartDownloadAndExecuteCbLater('/ExampleNonRealtime', (json: any) => {
         // const jsonToStr = JSON.stringify(json).substr(0, 60) + '...';
