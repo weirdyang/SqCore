@@ -70,7 +70,11 @@ namespace SqCoreWeb
             catch (Exception e)
             {
                 gLogger.Error(e, $"CreateHostBuilder(args).Build().Run() exception.");
-                HealthMonitorMessage.SendAsync($"Exception in SqCoreWebsite.C#.MainThread. Exception: '{ e.ToStringWithShortenedStackTrace(400)}'", HealthMonitorMessageID.SqCoreWebError).RunSynchronously();
+                if (e is System.Net.Sockets.SocketException)
+                {
+                    gLogger.Error("Linux. See 'Allow non-root process to bind to port under 1024.txt'. If Dotnet.exe was updated, it lost privilaged port. Try 'whereis dotnet','sudo setcap 'cap_net_bind_service=+ep' /usr/share/dotnet/dotnet'.");
+                }
+                HealthMonitorMessage.SendAsync($"Exception in SqCoreWebsite.C#.MainThread. Exception: '{ e.ToStringWithShortenedStackTrace(1200)}'", HealthMonitorMessageID.SqCoreWebError).GetAwaiter().GetResult();
             }
 
             gLogger.Info("****** Main() END");
