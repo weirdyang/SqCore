@@ -1,6 +1,6 @@
 
-import {NGXLogger} from '../../ts/sq-ngx-logger/logger.service.js';
-import {NgxLoggerLevel} from '../../ts/sq-ngx-logger/types/logger-level.enum.js';
+import {NGXLogger} from '../../../ts/sq-ngx-logger/logger.service.js';
+import {NgxLoggerLevel} from '../../../ts/sq-ngx-logger/types/logger-level.enum.js';
 
 // export {}; // TS convention: To avoid top level duplicate variables, functions. This file should be treated as a module (and have its own scope). A file without any top-level import or export declarations is treated as a script whose contents are available in the global scope.
 
@@ -42,7 +42,7 @@ window.onload = function onLoadWindow() {
     logger.log('A simple log() test message to NGXLogger');
     logger.error('A simple error() test message to NGXLogger');
 
-    AsyncStartDownloadAndExecuteCbLater('/ExampleNonRealtime', (json: any) => {
+    AsyncStartDownloadAndExecuteCbLater('/ExampleJsClientGet', (json: any) => {
         // const jsonToStr = JSON.stringify(json).substr(0, 60) + '...';
         getDocElementById('DebugDataArrivesHere').innerText = '***"' + json[0].stringData + '"***';
     });

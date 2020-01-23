@@ -11,7 +11,7 @@
             "preLaunchTask": "SqCoreWeb predebugBuildAndTscWatchTask",
             "postDebugTask": "SqCoreWeb postdebugKillVsCodeTask",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/src/WebServer/SqCoreWeb/bin/Debug/netcoreapp3.0/SqCoreWeb.dll",
+            "program": "${workspaceFolder}/src/WebServer/SqCoreWeb/bin/Debug/netcoreapp3.1/SqCoreWeb.dll",
             "args": [],
             "cwd": "${workspaceFolder}/src/WebServer/SqCoreWeb",
             "stopAtEntry": false,
@@ -35,7 +35,7 @@
             //"preLaunchTask": "WebServer/SqCoreWeb publish",
             "program": "SqCoreWeb.exe",
             "args": [],
-            "cwd": "${workspaceFolder}/src/WebServer/SqCoreWeb/bin/Release/netcoreapp3.0/publish",
+            "cwd": "${workspaceFolder}/src/WebServer/SqCoreWeb/bin/Release/netcoreapp3.1/publish",
             "console": "externalTerminal",
             "stopAtEntry": false
         },
@@ -44,7 +44,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "RedisManager build Debug",
-            "program": "${workspaceFolder}/src/Tools/RedisManager/bin/Debug/netcoreapp3.0/RedisManager.dll",
+            "program": "${workspaceFolder}/src/Tools/RedisManager/bin/Debug/netcoreapp3.1/RedisManager.dll",
             "args": [],
             "cwd": "${workspaceFolder}/src/Tools/RedisManager",
             "console": "externalTerminal",
@@ -55,7 +55,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "BenchmarkDB build Debug",
-            "program": "${workspaceFolder}/src/Tools/BenchmarkDB/bin/Debug/netcoreapp3.0/BenchmarkDB.dll",
+            "program": "${workspaceFolder}/src/Tools/BenchmarkDB/bin/Debug/netcoreapp3.1/BenchmarkDB.dll",
             "args": [],
             "cwd": "${workspaceFolder}/src/Tools/BenchmarkDB",
             "console": "externalTerminal",
@@ -67,14 +67,14 @@
                 "browserStdOut": false,
                 "elapsedTiming": false,
                 "programOutput": true
-            },
+            }
         },
         {
             "name": "PerfTestExperiment (RELEASE), run without Debugger Attached (Ctrl-F5, not F5)",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build Release PerfTestExperiment",
-            "program": "${workspaceFolder}/test/PerfTestExperiment/bin/Release/netcoreapp3.0/PerfTestExperiment.exe",
+            "program": "${workspaceFolder}/test/PerfTestExperiment/bin/Release/netcoreapp3.1/PerfTestExperiment.exe",
             "args": [],
             "cwd": "${workspaceFolder}/test/PerfTestExperiment",
             "console": "externalTerminal",

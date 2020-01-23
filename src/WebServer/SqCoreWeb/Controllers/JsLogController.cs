@@ -42,7 +42,7 @@ namespace SqCoreWeb.Controllers
             string jsLogMessage = String.Empty;
             using (var reader = new StreamReader(Request.Body))
             {
-                // example: '{"message":"A simple error() test message to NGXLogger","additional":[],"level":5,"timestamp":"2020-01-18T00:46:47.740Z","fileName":"ExampleNonRealtime.js","lineNumber":"52"}'
+                // example: '{"message":"A simple error() test message to NGXLogger","additional":[],"level":5,"timestamp":"2020-01-18T00:46:47.740Z","fileName":"ExampleJsClientGet.js","lineNumber":"52"}'
                 jsLogMessage = await reader.ReadToEndAsync();
             }
 

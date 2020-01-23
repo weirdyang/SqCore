@@ -10,7 +10,7 @@ namespace SqCoreWeb.Controllers
     [ApiController]
     [Route("[controller]")]
     [ResponseCache(CacheProfileName = "DefaultMidDuration")]
-    public class ExampleNonRealtimeController : ControllerBase
+    public class ExampleJsClientGetController : ControllerBase
     {
         public class ExampleMessage
         {
@@ -25,7 +25,7 @@ namespace SqCoreWeb.Controllers
         }
         private readonly ILogger<WeatherForecastController> _logger;
 
-        public ExampleNonRealtimeController(ILogger<WeatherForecastController> logger)
+        public ExampleJsClientGetController(ILogger<WeatherForecastController> logger)
         {
             _logger = logger;
         }

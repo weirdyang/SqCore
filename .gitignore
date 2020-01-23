@@ -32,10 +32,11 @@ dist/
 **/ts/*/*.js
 **/ts/*/*/*.js
 
-#Typescript compiled JS files. There is no other way than to list them one by one. Otherwise, legit JS files would not be commited
-**/webapps/BalazsTest/BalazsTest.js
-**/webapps/ExampleNonRealtime/ExampleNonRealtime.js
-**/webapps/ExampleNonRealtime_youtube/ExampleNonRealtime.js
+#Typescript compiled JS files. Webapps' Legit JS files should be commited. So put TS files into the 'ts' folder. So, we don't have to gitIgnore every JS files one by one
+# **/webapps/BalazsTest/BalazsTest.js
+# **/webapps/ExampleNonExampleJsClientGetRealtime/ExampleJsClientGet.js
+# **/webapps/ExampleJsClientGet_youtube/ExampleJsClientGet.js
+**/webapps/*/ts/*.js
 
 # Visual Studio 2015 cache/options directory
 .vs/

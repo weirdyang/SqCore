@@ -1,4 +1,4 @@
-export {}; // TS convention: To avoid top level duplicate variables, functions. This file should be treated as a module (and have its own scope). A file without any top-level import or export declarations is treated as a script whose contents are available in the global scope.
+export {  }; // TS convention: To avoid top level duplicate variables, functions. This file should be treated as a module (and have its own scope). A file without any top-level import or export declarations is treated as a script whose contents are available in the global scope.
 
 // 1. Declare some global variables and hook on DOMContentLoaded() and window.onload()
 console.log('SqCore: Script BEGIN4');
@@ -48,7 +48,7 @@ window.onload = function onLoadWindow() {
         getDocElementById('MainDivOverVidBkg').style.color = '#0000FF'; // on black background, font is blue, so something is visible in the black video
     }
 
-    AsyncStartDownloadAndExecuteCbLater('/ExampleNonRealtime', (json: any) => {
+    AsyncStartDownloadAndExecuteCbLater('/ExampleJsClientGet', (json: any) => {
         // const jsonToStr = JSON.stringify(json).substr(0, 60) + '...';
         getDocElementById('DebugDataArrivesHere').innerText = '***"' + json[0].stringData + '"***';
     });
@@ -92,6 +92,8 @@ function onYouTubeIframeAPIReady() {
         }
     });
 }
+// @ts-ignore This is how to expose an es-module function into the global scope
+window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
 
 // 4. The YT API will call this function when the video player is ready.
 function onPlayerReady(event) {
@@ -128,5 +130,7 @@ function video_selector_onchange() {
         getDocElementById('MainDivOverVidBkg').style.color = '#0000FF'; // on black background, font is blue, so something is visible in the black video
     }
 }
+// @ts-ignore This is how to expose an es-module function into the global scope
+window.video_selector_onchange = video_selector_onchange;
 
 console.log('SqCore: Script END');
