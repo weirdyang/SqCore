@@ -32,11 +32,14 @@ dist/
 **/ts/*/*.js
 **/ts/*/*/*.js
 
+#Non-Webpack based static webapps:
 #Typescript compiled JS files. Webapps' Legit JS files should be commited. So put TS files into the 'ts' folder. So, we don't have to gitIgnore every JS files one by one
-# **/webapps/BalazsTest/BalazsTest.js
-# **/webapps/ExampleNonExampleJsClientGetRealtime/ExampleJsClientGet.js
-# **/webapps/ExampleJsClientGet_youtube/ExampleJsClientGet.js
 **/webapps/*/ts/*.js
+
+#Webpack based webapps: Webpack generated files
+**/wwwroot/webapps/*/index.html
+**/wwwroot/webapps/*/main*.js
+**/wwwroot/webapps/*/css/main*.css
 
 # Visual Studio 2015 cache/options directory
 .vs/

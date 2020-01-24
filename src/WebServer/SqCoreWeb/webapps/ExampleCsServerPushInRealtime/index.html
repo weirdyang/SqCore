@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>ASP.NET Core SignalR</title>
+</head>
+
+<body>
+    <div id="divMessages" class="messages">
+    </div>
+    <div class="input-zone">
+        <label id="lblMessage" for="tbMessage">Message:</label>
+        <input id="tbMessage" class="input-zone-input" type="text" />
+        <button id="btnSend">Send</button>
+    </div>
+    <hr>
+    <div style="margin-left: 2.5em;padding: 0 7em 2em 0;border-width: 2px; border-color: black; border-style:solid;">
+        Streaming realtime info from server (E.g. For 10 seconds, new price quote in every 1 sec)
+        <button id="btnStartStreaming">Start Streaming</button><br/>
+        This message is from C# server to JS client. <span style="color: #0900C4; background-color: orange" id="divStreaming">...[No data yet]...</span>
+    </div>
+</body>
+
+</html>

@@ -114,8 +114,7 @@ function stopVideo() {
     player.stopVideo();
 }
 
-// @ts-ignore error TS6133: '*' is declared but its value is never read.
-function video_selector_onchange() {
+(getDocElementById('video-selector-1') as HTMLSelectElement).onchange = function video_selector_onchange() {
     const vdBkgSelector: HTMLSelectElement = getDocElementById('video-selector-1') as HTMLSelectElement;
     const selectedOption: string = vdBkgSelector.value;
     console.log('video-selector-onchange(). You selected: ' + selectedOption);
@@ -129,8 +128,6 @@ function video_selector_onchange() {
     } else {
         getDocElementById('MainDivOverVidBkg').style.color = '#0000FF'; // on black background, font is blue, so something is visible in the black video
     }
-}
-// @ts-ignore This is how to expose an es-module function into the global scope
-window.video_selector_onchange = video_selector_onchange;
+};
 
 console.log('SqCore: Script END');

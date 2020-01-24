@@ -42,7 +42,7 @@
           <br />
           <span class="sqDeveloperInfo"><a href="/index_dev.html">Developer Dashboard</a></span><br />
           Change background video: &nbsp; &nbsp;
-          <select name="video-selector" id="video-selector-1" onchange="video_selector_onchange()">
+          <select name="video-selector" id="video-selector-1">
             <option value="iss">ISS Timelapse - The English Channel</option>
             <option value="minority">Minority report UI</option>
             <option value="stocks3d">3D stock market</option>
@@ -267,7 +267,7 @@
         player.stopVideo();
       }
 
-      function video_selector_onchange() {
+      document.getElementById('video-selector-1').onchange = function video_selector_onchange() {
         const vdBkgSelector = document.getElementById('video-selector-1');
         const selectedOption = vdBkgSelector.value;
         console.log('video-selector-onchange(). You selected: ' + selectedOption);
