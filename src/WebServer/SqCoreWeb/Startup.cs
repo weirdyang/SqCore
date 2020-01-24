@@ -261,8 +261,8 @@ namespace SqCoreWeb
             });
 
 
-            AddAngularSpaHandlingMiddleware(app, env, "HealthMonitor");
-            AddAngularSpaHandlingMiddleware(app, env, "MarketDashboard");
+            //AddAngularSpaHandlingMiddleware(app, env, "HealthMonitor");
+            //AddAngularSpaHandlingMiddleware(app, env, "MarketDashboard");
 
             app.UseResponseCompression();       // this is on the fly, just-in-time (JIT) compression. CompressionLevel.Optimal takes 250ms, but CompressionLevel.Fastest takes 4ms time on CPU, but still worth it.
 
