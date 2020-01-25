@@ -8,8 +8,8 @@
             "name": "WebServer/SqCoreWeb (DEBUG)",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "SqCoreWeb predebugBuildAndTscWatchTask",
-            "postDebugTask": "SqCoreWeb postdebugKillVsCodeTask",
+            "preLaunchTask": "SqCoreWeb-BuildWatchDebug",
+            "postDebugTask": "SqCoreWeb-BuildWatchOneDevPostDebug.py",
             // If you have changed target frameworks, make sure to update the program path.
             "program": "${workspaceFolder}/src/WebServer/SqCoreWeb/bin/Debug/netcoreapp3.1/SqCoreWeb.dll",
             "args": [],

@@ -8,7 +8,44 @@
             "problemMatcher": "$tsc"
         },
         {
-            "label": "SqCoreWeb build Debug",       // the official predebugBuild       
+            "label": "SqCoreWeb-BuildWatchDebug",
+            "dependsOn": [
+                "SqCoreWeb-BuildDevPreDebug.py",    // this will be waited until finished as 'process' in VsCode Terminal window
+                "SqCoreWeb-WatchDevPreDebug.py"     // this will return immediately as it starts a shell CMD external window.
+            ]
+        },
+        {
+            "label": "SqCoreWeb-BuildDevPreDebug.py",
+            "type": "process",      // process is run inside terminal and it waits until it is finished.
+            "command": "python",
+            "args": [
+                "${workspaceFolder}/src/WebServer/SqCoreWeb/BuildDevPreDebug.py"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/src/WebServer/SqCoreWeb"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "SqCoreWeb-WatchDevPreDebug.py",
+            "type": "shell",    // shell will not wait, but return immediately to the caller.
+            "command": "${workspaceFolder}/src/WebServer/SqCoreWeb/WatchDevPreDebug.py",
+            "options": {
+                "cwd": "${workspaceFolder}/src/WebServer/SqCoreWeb"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "SqCoreWeb-BuildWatchOneDevPostDebug.py",
+            "type": "shell",
+            "command": "${workspaceFolder}/src/WebServer/SqCoreWeb/BuildWatchOneDevPostDebug.py",
+            "options": {
+                "cwd": "${workspaceFolder}/src/WebServer/SqCoreWeb"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "SqCoreWeb build Debug",
             "command": "dotnet",
             "type": "process",
             "args": [
@@ -23,11 +60,7 @@
             "label": "SqCoreWeb predebugBuildAndTscWatchTask",
             "type": "shell",
             "isBackground": true,
-            // if 'tsc --watch' fails by 'PSSecurityException', run 'Set-ExecutionPolicy -Scope "CurrentUser" -ExecutionPolicy "RemoteSigned"' in Powershell. Choose: Yes.
             "command": "dotnet build \"${workspaceFolder}/src/WebServer/SqCoreWeb/SqCoreWeb.csproj\" \"/property:GenerateFullPaths=true\"  \"/consoleloggerparameters:NoSummary\"; tsc --watch -p \"${workspaceFolder}/src/WebServer/SqCoreWeb/tsconfig.json\"",
-            // This task is run before some debug tasks.
-            // Problem is, it's a watch script, and since it never exits, VSCode
-            // complains. All this is needed so VSCode just lets it run.
             "problemMatcher": [
                 {
                     "pattern": [
@@ -50,8 +83,8 @@
             "label": "SqCoreWeb postdebugKillVsCodeTask",
             "type": "process",
             "command": [
-                "${command:workbench.action.tasks.terminate}", // The first "${command:workbench.action.tasks.terminate}" will bring up a panel asking you to select which task to terminate. So if you had multiple running tasks and wanted to choose one you would use this command only.
-                "${command:workbench.action.acceptSelectedQuickOpenItem}" // will terminate the selected task in that panel mentioned above. 2019-10-17: it doesn't seem to work. However, manual termination is fine. Maybe it is good that it doesn't work, intentional, so we accidentally don't delete wrong tasks.
+                "${command:workbench.action.tasks.terminate}",
+                "${command:workbench.action.acceptSelectedQuickOpenItem}"
             ]
         },
         {
