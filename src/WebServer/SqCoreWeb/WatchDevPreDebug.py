@@ -30,7 +30,7 @@ else:
 def threaded_function(commandStr):
      print("Executing in separate thread: " + commandStr)
      os.system(commandStr)    # works like normal, loads ./tsconfig.json, which contains "include": ["wwwroot"]. 
-     #process = subprocess.run("tsc --watch", shell=True, stdout=subprocess.PIPE)  # This will run the command and return any output into process.output
+     #processObj = subprocess.run("tsc --watch", shell=True, stdout=subprocess.PIPE)  # This will run the command and return any output into process.output
 
 # 3.1 Non-Webpack webapps in ./wwwroot/webapps should be transpiled from TS to JS
 #os.system("tsc --watch")    # works like normal, loads ./tsconfig.json, which contains "include": ["wwwroot"]. 
@@ -49,7 +49,18 @@ thread2.start()  #thread2.join()
 
 # # 4. Wait for Python message to terminate all threads.
 print("User break (Control-C, or closing CMD) is expected. Or Wait and Watch Port communication from another Python thread to ending this thread.")
-# time.sleep(60*60*20)   # 20h watch should be enough. User can break it.
+time.sleep(5)   # 5 sec waiting time
+print("Main thread exits now, but those additional threads (processObj = subprocess.run()) still running. Kill them somehow.")
 # #quit()
 sys.exit()  # these doesn't kill the started threads, so you should program killing the threads separately.
 
+# TODO: 1. As a first thread sleep() here 
+# time.sleep(5)   # 5 sec
+# then prove that threads can be killed. Program a logic that gets the thread1... and kills their process. 
+# By either killing the thread OR taking processObj = subprocess.run() and send Control-C to it OR killing processOjb
+
+# TODO: 2. instead of sleep(), before killing the threads, wait for a message from another Python program. Ideally 
+# > some inteprocess communication (named semaphor) OR
+# > listening via IP port OR
+# > deleting a time-stamp file and polling every 1-2 seconds if it is created. Whenewer that file IsExist() terminate threads. File watching is the slowest. 
+# example before: if os.path.isfile(nodeTouchFile):
