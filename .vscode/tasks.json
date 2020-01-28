@@ -8,18 +8,18 @@
             "problemMatcher": "$tsc"
         },
         {
-            "label": "SqCoreWeb-BuildWatchDebug",
+            "label": "SqCoreWeb-PreDebugBuildWatchDev",
             "dependsOn": [
-                "SqCoreWeb-BuildDevPreDebug.py",    // this will be waited until finished as 'process' in VsCode Terminal window
-                "SqCoreWeb-WatchDevPreDebug.py"     // this will return immediately as it starts a shell CMD external window.
+                "SqCoreWeb-PreDebugBuildDev.py",    // this will be waited until finished as 'process' in VsCode Terminal window
+                "SqCoreWeb-PreDebugWatchDev.py"     // this will return immediately as it starts a shell CMD external window.
             ]
         },
         {
-            "label": "SqCoreWeb-BuildDevPreDebug.py",
+            "label": "SqCoreWeb-PreDebugBuildDev.py",
             "type": "process",      // process is run inside terminal and it waits until it is finished.
             "command": "python",
             "args": [
-                "${workspaceFolder}/src/WebServer/SqCoreWeb/BuildDevPreDebug.py"
+                "${workspaceFolder}/src/WebServer/SqCoreWeb/PreDebugBuildDev.py"
             ],
             "options": {
                 "cwd": "${workspaceFolder}/src/WebServer/SqCoreWeb"
@@ -27,18 +27,18 @@
             "problemMatcher": []
         },
         {
-            "label": "SqCoreWeb-WatchDevPreDebug.py",
+            "label": "SqCoreWeb-PreDebugWatchDev.py",
             "type": "shell",    // shell will not wait, but return immediately to the caller.
-            "command": "${workspaceFolder}/src/WebServer/SqCoreWeb/WatchDevPreDebug.py",
+            "command": "${workspaceFolder}/src/WebServer/SqCoreWeb/PreDebugWatchDev.py",
             "options": {
                 "cwd": "${workspaceFolder}/src/WebServer/SqCoreWeb"
             },
             "problemMatcher": []
         },
         {
-            "label": "SqCoreWeb-BuildWatchOneDevPostDebug.py",
+            "label": "SqCoreWeb-PostDebugWatchDev.py",
             "type": "shell",
-            "command": "${workspaceFolder}/src/WebServer/SqCoreWeb/BuildWatchOneDevPostDebug.py",
+            "command": "${workspaceFolder}/src/WebServer/SqCoreWeb/PostDebugWatchDev.py",
             "options": {
                 "cwd": "${workspaceFolder}/src/WebServer/SqCoreWeb"
             },

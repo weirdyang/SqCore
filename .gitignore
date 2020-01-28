@@ -5,6 +5,7 @@
 *.sqlog
 *.map
 *.br
+*.7z
 
 # User-specific files
 *.suo

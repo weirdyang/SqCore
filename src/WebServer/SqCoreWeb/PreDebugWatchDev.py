@@ -17,7 +17,7 @@ else:
     nodeRetCode = os.system("node --version")   # don't want to run 'node --version' all the times. If stamp file exists, assume node.exe is installed
     if (nodeRetCode != 0) :
         sys.exit("Node.js is required to build and run this project. To continue, please install Node.js from https://nodejs.org/")
-    sys.exit("BuildDevPreDebug.py checks /node_modules in parallel. And we don't want that both processes start to download that huge folder. Exit now. It only happens once per year.")
+    sys.exit("PreDebugBuildDev.py checks /node_modules in parallel. And we don't want that both processes start to download that huge folder. Exit now. It only happens once per year.")
     # os.system("npm install")
     # Path(nodeTouchFile).touch()
 
