@@ -261,8 +261,8 @@ namespace SqCoreWeb
             });
 
 
-            //AddAngularSpaHandlingMiddleware(app, env, "HealthMonitor");
-            //AddAngularSpaHandlingMiddleware(app, env, "MarketDashboard");
+            AddAngularSpaHandlingMiddleware(app, env, "HealthMonitor");
+            AddAngularSpaHandlingMiddleware(app, env, "MarketDashboard");
 
             app.UseResponseCompression();       // this is on the fly, just-in-time (JIT) compression. CompressionLevel.Optimal takes 250ms, but CompressionLevel.Fastest takes 4ms time on CPU, but still worth it.
 
@@ -507,43 +507,44 @@ namespace SqCoreWeb
             var rwOptions = new RewriteOptions();
             if (env.IsDevelopment())
             {
-                rwOptions
-                .AddRedirect(@"^"+spaName, @"dev/DeveloperWarningForServingAngularSPA.html");  // Redirect() forces client to query again.
+                // rwOptions
+                // .AddRedirect(@"^webapps/"+spaName, @"dev/DeveloperWarningForServingAngularSPA.html")  // Redirect() forces client to query again.
+                // .AddRewrite(@"^webapps/forced/"+spaName, "webapps/" + spaName + @"/index.html", skipRemainingRules: true);  // just in case Developer in Debug wants to access the Prod version of the Angular app
             }
             else
             {
                 rwOptions
-                .AddRedirect(@"^" + spaName +"$", spaName + @"/");  // Redirect("HealthMonitor" to "HealthMonitor/") forces client to query again (needed for base URL to be the SPA folder)
+                .AddRedirect(@"^" + spaName +"$", "webapps/" + spaName + @"/");  // Redirect("HealthMonitor" to "webapps/HealthMonitor/") forces client to query again (needed for base URL to be the SPA folder)
                 //.AddRewrite(@"^" + spaName + "/$", spaName + @"/index.html", skipRemainingRules: true);   // Rewrite("HealthMonitor/" to "HealthMonitor/index.html") is hidden from the Client. Helps to find it by UseStaticFiles()
             }
             app.UseRewriter(rwOptions);
 
-            app.Map(new PathString("/" + spaName), client =>
-            {
-                // In Development, when we do 'ng serve' the 'index.hml' should be in the root folder, and all other files (main, pollyfill) should be in the root too. So, only <base href=""> is possible
-                // Therefor, in Production, index.html should be in the HealthMonitor folder, so browser should ask 'https://localhost:5001/HealthMonitor/' and NOT 'https://localhost:5001/HealthMonitor'
-                // If browser asks 'https://localhost:5001/HealthMonitor', we should redirect to 'https://localhost:5001/HealthMonitor/'
-                client.Use(async (context, next) =>
-                {
-                    Console.WriteLine($"Map.Use({"/" + spaName}): context.Request.Path.Value: '{context.Request.Path.Value}'");
+            // app.Map(new PathString("/" + spaName), client =>
+            // {
+            //     // In Development, when we do 'ng serve' the 'index.hml' should be in the root folder, and all other files (main, pollyfill) should be in the root too. So, only <base href=""> is possible
+            //     // Therefor, in Production, index.html should be in the HealthMonitor folder, so browser should ask 'https://localhost:5001/HealthMonitor/' and NOT 'https://localhost:5001/HealthMonitor'
+            //     // If browser asks 'https://localhost:5001/HealthMonitor', we should redirect to 'https://localhost:5001/HealthMonitor/'
+            //     client.Use(async (context, next) =>
+            //     {
+            //         Console.WriteLine($"Map.Use({"/" + spaName}): context.Request.Path.Value: '{context.Request.Path.Value}'");
 
-                    // if (String.IsNullOrEmpty(context.Request.Path.Value))    // turn https://localhost:5001/HealthMonitor   to // turn https://localhost:5001/HealthMonitor/index.html
-                    // {
-                    //     context.Request.Path = "/index.html";
-                    // }
-                    // else if (String.Equals(context.Request.Path.Value, "/index.html", StringComparison.OrdinalIgnoreCase))
-                    //     context.Request.Path = "";
+            //         // if (String.IsNullOrEmpty(context.Request.Path.Value))    // turn https://localhost:5001/HealthMonitor   to // turn https://localhost:5001/HealthMonitor/index.html
+            //         // {
+            //         //     context.Request.Path = "/index.html";
+            //         // }
+            //         // else if (String.Equals(context.Request.Path.Value, "/index.html", StringComparison.OrdinalIgnoreCase))
+            //         //     context.Request.Path = "";
 
-                    await next();
-                });
+            //         await next();
+            //     });
 
-                StaticFileOptions clientAppDist = new StaticFileOptions()
-                {
-                    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"Angular/dist/" + spaName))   // "Angular\dist\" is Windows like, not good. Use forward slash for Linux.
-                };
-                //client.UseStaticFiles(clientAppDist);
-                client.UseCompressedStaticFiles(clientAppDist);
-            });
+            //     StaticFileOptions clientAppDist = new StaticFileOptions()
+            //     {
+            //         FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"Angular/dist/" + spaName))   // "Angular\dist\" is Windows like, not good. Use forward slash for Linux.
+            //     };
+            //     //client.UseStaticFiles(clientAppDist);
+            //     client.UseCompressedStaticFiles(clientAppDist);
+            // });
         }
     }
 }

@@ -33,6 +33,7 @@
     By default, files matching the patterns wwwroot\**, **\*.config, and **\*.json are included in the Content item list.
      https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/visual-studio-publish-profiles?view=aspnetcore-3.1 -->
     <!-- Don't publish the SPA source files, but do show them in the project files list -->
+    <Content Remove="projects\**" />
     <!-- <Content Remove="$(SpaRoot)**" />
     <None Remove="$(SpaRoot)**" />
     <None Include="$(SpaRoot)**" Exclude="$(SpaRoot)node_modules\**" /> -->

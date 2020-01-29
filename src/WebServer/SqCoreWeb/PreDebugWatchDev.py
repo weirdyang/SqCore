@@ -30,22 +30,34 @@ def threaded_function(commandStr):
      os.system(commandStr)    # works like normal, loads ./tsconfig.json, which contains "include": ["wwwroot"]. 
      #processObj = subprocess.run("tsc --watch", shell=True, stdout=subprocess.PIPE)  # This will run the command and return any output into process.output
 
+def startShellCallingThread(pCommandStr):
+    thread = Thread(target = threaded_function, args = (pCommandStr,))
+    thread.setDaemon(True)  # daemon = true didn't help. Main thread exited, but watchers were left alive.
+    thread.start()  #thread1.join()
+
 # 2.1 Non-Webpack webapps in ./wwwroot/webapps should be transpiled from TS to JS
 # os.system("tsc --watch")    # works like normal, loads ./tsconfig.json, which contains "include": ["wwwroot"]. 
 # subprocess.run(["tsc", "--watch"], stdout=subprocess.PIPE) # This will run the command and return any output
 # subprocess.run("tsc --watch", shell=True, stdout=subprocess.PIPE)
 # subprocess.run("tsc --watch", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)  # This will run the command and return any output
-thread1 = Thread(target = threaded_function, args = ("tsc --watch",))
-thread1.setDaemon(True)  # daemon = true didn't help. Main thread exited, but watchers were left alive.
-thread1.start()  #thread1.join()
+# thread1 = Thread(target = threaded_function, args = ("tsc --watch",))
+# thread1.setDaemon(True)  # daemon = true didn't help. Main thread exited, but watchers were left alive.
+# thread1.start()  #thread1.join()
+startShellCallingThread("tsc --watch")
 
 
 # 2.2 Webpack webapps in ./webapps should be packed (TS, CSS, HTML)
 # Webpack: 'Multiple output files' are not possible and out of scope of webpack. You can use a build system.
-thread2 = Thread(target = threaded_function, args = ("npx webpack --config webapps/ExampleCsServerPushInRealtime/webpack.config.js --mode=development --watch",))
-thread2.setDaemon(True)
-thread2.start()  #thread2.join()
+# thread2 = Thread(target = threaded_function, args = ("npx webpack --config webapps/ExampleCsServerPushInRealtime/webpack.config.js --mode=development --watch",))
+# thread2.setDaemon(True)
+# thread2.start()  #thread2.join()
+startShellCallingThread("npx webpack --config webapps/ExampleCsServerPushInRealtime/webpack.config.js --mode=development --watch")
 
+# 2.3 Angular webapps in the project folder should be served on different ports. If an Angular app is not developed any more, comment it out to save resources
+# ng serve doesn't create anything into --output-path=wwwroot/webapps/ (it keeps its files temp, maybe in RAM)
+# to create files into wwwroot/weapps, at publish run 'ng build HealthMonitor --prod --output-path=wwwroot/webapps/HealthMonitor --base-href ./'
+startShellCallingThread("ng serve HealthMonitor --port 4201")
+startShellCallingThread("ng serve MarketDashboard --port 4202")
 
 # 3. Wait for Python message to terminate all threads.
 print("SqBuild: User can break (Control-C, or closing CMD) here manually. Or Wait for socket (TCP port) communication from another Python thread to end this thread.")

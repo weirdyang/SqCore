@@ -1,0 +1,281 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1, 
+  "newProjectRoot": "projects",
+  "projects": {
+    "HealthMonitor": {
+      "projectType": "application",
+      "schematics": {},
+      "root": "projects/HealthMonitor",
+      "sourceRoot": "projects/HealthMonitor/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:browser",
+          "options": {
+            "outputPath": "dist/HealthMonitor",
+            "index": "projects/HealthMonitor/src/index.html",
+            "main": "projects/HealthMonitor/src/main.ts",
+            "polyfills": "projects/HealthMonitor/src/polyfills.ts",
+            "tsConfig": "projects/HealthMonitor/tsconfig.app.json",
+            "aot": true,
+            "assets": [
+              "projects/HealthMonitor/src/favicon.ico",
+              "projects/HealthMonitor/src/assets"
+            ],
+            "styles": [
+              "projects/HealthMonitor/src/styles.css"
+            ],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "fileReplacements": [
+                {
+                  "replace": "projects/HealthMonitor/src/environments/environment.ts",
+                  "with": "projects/HealthMonitor/src/environments/environment.prod.ts"
+                }
+              ],
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": false,
+              "extractCss": true,
+              "namedChunks": false,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "buildOptimizer": true,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2mb",
+                  "maximumError": "5mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kb",
+                  "maximumError": "10kb"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "browserTarget": "HealthMonitor:build"
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "HealthMonitor:build:production"
+            }
+          }
+        },
+        "extract-i18n": {
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": {
+            "browserTarget": "HealthMonitor:build"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "projects/HealthMonitor/src/test.ts",
+            "polyfills": "projects/HealthMonitor/src/polyfills.ts",
+            "tsConfig": "projects/HealthMonitor/tsconfig.spec.json",
+            "karmaConfig": "projects/HealthMonitor/karma.conf.js",
+            "assets": [
+              "projects/HealthMonitor/src/favicon.ico",
+              "projects/HealthMonitor/src/assets"
+            ],
+            "styles": [
+              "projects/HealthMonitor/src/styles.css"
+            ],
+            "scripts": []
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "projects/HealthMonitor/tsconfig.app.json",
+              "projects/HealthMonitor/tsconfig.spec.json",
+              "projects/HealthMonitor/e2e/tsconfig.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        },
+        "e2e": {
+          "builder": "@angular-devkit/build-angular:protractor",
+          "options": {
+            "protractorConfig": "projects/HealthMonitor/e2e/protractor.conf.js",
+            "devServerTarget": "HealthMonitor:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "HealthMonitor:serve:production"
+            }
+          }
+        }
+      }
+    },
+    "MarketDashboard": {
+      "projectType": "application",
+      "schematics": {},
+      "root": "projects/MarketDashboard",
+      "sourceRoot": "projects/MarketDashboard/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:browser",
+          "options": {
+            "outputPath": "dist/MarketDashboard",
+            "index": "projects/MarketDashboard/src/index.html",
+            "main": "projects/MarketDashboard/src/main.ts",
+            "polyfills": "projects/MarketDashboard/src/polyfills.ts",
+            "tsConfig": "projects/MarketDashboard/tsconfig.app.json",
+            "aot": true,
+            "assets": [
+              "projects/MarketDashboard/src/favicon.ico",
+              "projects/MarketDashboard/src/assets"
+            ],
+            "styles": [
+              "projects/MarketDashboard/src/styles.css"
+            ],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "fileReplacements": [
+                {
+                  "replace": "projects/MarketDashboard/src/environments/environment.ts",
+                  "with": "projects/MarketDashboard/src/environments/environment.prod.ts"
+                }
+              ],
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": false,
+              "extractCss": true,
+              "namedChunks": false,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "buildOptimizer": true,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2mb",
+                  "maximumError": "5mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kb",
+                  "maximumError": "10kb"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "browserTarget": "MarketDashboard:build"
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "MarketDashboard:build:production"
+            }
+          }
+        },
+        "extract-i18n": {
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": {
+            "browserTarget": "MarketDashboard:build"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "projects/MarketDashboard/src/test.ts",
+            "polyfills": "projects/MarketDashboard/src/polyfills.ts",
+            "tsConfig": "projects/MarketDashboard/tsconfig.spec.json",
+            "karmaConfig": "projects/MarketDashboard/karma.conf.js",
+            "assets": [
+              "projects/MarketDashboard/src/favicon.ico",
+              "projects/MarketDashboard/src/assets"
+            ],
+            "styles": [
+              "projects/MarketDashboard/src/styles.css"
+            ],
+            "scripts": []
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "projects/MarketDashboard/tsconfig.app.json",
+              "projects/MarketDashboard/tsconfig.spec.json",
+              "projects/MarketDashboard/e2e/tsconfig.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        },
+        "e2e": {
+          "builder": "@angular-devkit/build-angular:protractor",
+          "options": {
+            "protractorConfig": "projects/MarketDashboard/e2e/protractor.conf.js",
+            "devServerTarget": "MarketDashboard:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "MarketDashboard:serve:production"
+            }
+          }
+        }
+      }
+    },
+    "sq-ng-common": {
+      "projectType": "library",
+      "root": "projects/sq-ng-common",
+      "sourceRoot": "projects/sq-ng-common/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-ng-packagr:build",
+          "options": {
+            "tsConfig": "projects/sq-ng-common/tsconfig.lib.json",
+            "project": "projects/sq-ng-common/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/sq-ng-common/tsconfig.lib.prod.json"
+            }
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "projects/sq-ng-common/src/test.ts",
+            "tsConfig": "projects/sq-ng-common/tsconfig.spec.json",
+            "karmaConfig": "projects/sq-ng-common/karma.conf.js"
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "projects/sq-ng-common/tsconfig.lib.json",
+              "projects/sq-ng-common/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        }
+      }
+    }},
+  "defaultProject": "HealthMonitor"
+}

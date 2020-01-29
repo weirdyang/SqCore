@@ -43,6 +43,10 @@ dist/
 **/wwwroot/webapps/*/main*.js
 **/wwwroot/webapps/*/css/main*.css
 
+#Angular based webapps: Angular generated files
+**/wwwroot/webapps/HealthMonitor
+**/wwwroot/webapps/MarketDashboard
+
 # Visual Studio 2015 cache/options directory
 .vs/
 
