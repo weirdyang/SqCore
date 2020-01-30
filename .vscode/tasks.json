@@ -24,7 +24,7 @@
             "options": {
                 "cwd": "${workspaceFolder}/src/WebServer/SqCoreWeb"
             },
-            "problemMatcher": []
+            "problemMatcher": "$msCompile"
         },
         {
             "label": "SqCoreWeb-PreDebugWatchDev.py",
@@ -45,71 +45,17 @@
             "problemMatcher": []
         },
         {
-            "label": "SqCoreWeb build Debug",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "build",
-                "${workspaceFolder}/src/WebServer/SqCoreWeb/SqCoreWeb.csproj",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary"
-            ],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "SqCoreWeb predebugBuildAndTscWatchTask",
+            "label": "SqCoreWeb-BuildAllProd.py",
             "type": "shell",
-            "isBackground": true,
-            "command": "dotnet build \"${workspaceFolder}/src/WebServer/SqCoreWeb/SqCoreWeb.csproj\" \"/property:GenerateFullPaths=true\"  \"/consoleloggerparameters:NoSummary\"; tsc --watch -p \"${workspaceFolder}/src/WebServer/SqCoreWeb/tsconfig.json\"",
-            "problemMatcher": [
-                {
-                    "pattern": [
-                        {
-                            "regexp": ".",
-                            "file": 1,
-                            "location": 2,
-                            "message": 3
-                        }
-                    ],
-                    "background": {
-                        "activeOnStart": true,
-                        "beginsPattern": ".",
-                        "endsPattern": "."
-                    }
-                }
-            ]
-        },
-        {
-            "label": "SqCoreWeb postdebugKillVsCodeTask",
-            "type": "process",
-            "command": [
-                "${command:workbench.action.tasks.terminate}",
-                "${command:workbench.action.acceptSelectedQuickOpenItem}"
-            ]
-        },
-        {
-            "label": "SqCoreWeb publish Release",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "publish",
-                "--configuration",
-                "Release",
-                "${workspaceFolder}/src/WebServer/SqCoreWeb/SqCoreWeb.csproj",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary"
-            ],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "SqCoreWeb run (after publish) Release is internalTerminal",
-            "type": "shell",
-            "command": "Start-Process -FilePath \"SqCoreWeb.exe\"",
-            "presentation": {
-                "reveal": "never"
-            },
+            "command": "${workspaceFolder}/src/WebServer/SqCoreWeb/BuildAllProd.py",
             "options": {
-                "cwd": "${workspaceFolder}/src/WebServer/SqCoreWeb/bin/Release/netcoreapp3.0/publish"
+                "cwd": "${workspaceFolder}/src/WebServer/SqCoreWeb",
+                // "shell": {
+                //     "executable": "cmd.exe",
+                //     "args": [
+                //         "/d", "/k"      // It didn't work: It Should: Carries out the command specified by String and continues. (lives on. It will not close the CMD window after finished)
+                //     ]
+                // }
             },
             "problemMatcher": []
         },
@@ -190,10 +136,12 @@
         },
         {
             "label": " All SqCore build Debug",
-            "dependsOn": [
+            "dependsOn": [  // this creates many parallel terminal windows in the Terminal section. One for each subtask.
                 "BenchmarkDB build Debug",
-                "RedisManager build Debug"
-            ]
+                "RedisManager build Debug",
+                "SqCoreWeb-BuildAllProd.py"
+            ],
+            "problemMatcher": []
         }
     ]
 }

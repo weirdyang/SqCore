@@ -1,0 +1,75 @@
+************************* SqCore build system logic.
+
+- build system supports multiple webApps, such as Xcopy based TS (tsc.exe) without webpack, NodeJs based Webpack, Angular (multi-project, also NodeJs+Webpack).
+
+------------ in Release: 
+everything should be Published to Publish folder. (and not Watch) (TSC, NodeJs.Webpack, dotnet publish). In the efficient implementation, only Publish folder is uploaded to Linux. (Deploy.py might have an option to upload only Publish folder (99% of the time) or all source code (1% time when debug), but probably ignore that case. )
+>https://stackoverflow.com/questions/40143357/do-you-put-babel-and-webpack-in-devdependencies-or-dependencies
+""dependencies": {
+    "@microsoft/signalr": "^3.1.0"
+  },
+  "devDependencies": {"
+If I build PROD version on the Linux server from source (sometimes yes), then it is needed in 'dependencies'. But that is very rarely the case, because it would be painful to upload the whole source code to Linux. (plus, we expose the source code). So, conclusion: everything can go to "devDependencies". In production, there are only webpack-made static *.js file.
+
+------------ in Debug: 
+>in VsCode: F5 + launch should work. Pre/post build tasks should be PY scripts as a start. 
+>First idea was: Which WebApp to watch: should be a parameter of WatchDevPreDebug.py, and we should create as many 'WatchDevPreDebug.py_WebApp_i', as many WebApp exists. Only one webApp should be watched, either: All Xcopy based TS (tsc.exe) without webpack OR NodeJs based Webpack OR Angular. Every moment we only develop, debug 1 webApp, so no need to watch all. 
+>But the second idea: it is not CPU intensive at all to Watch as many folders as we want. Because watchers just wait for the op.sys callback, but do nothing. They don't poll the file system. So, we can watch all the WebApp folders, not only one. It helps because there will be no confusion of the developers, who will forget to switch on/off what one webApp to watch, and in GitHub we would always overwrite each other's preference.
+> In theory, if we wanted to, we could do the TSC.exe compilations (just compile once, not watch) from PreDebugWatchDev.py to PreDebugBuildDev.py as well. But we decided to not do it.
+	>But then in a parallel thread, the PreDebugWatchDev.py watcher would also compile those files. So, both would compile the same files, which would be unnecessary, and they may conflict.
+	>we only TSC once, therefore it is faster for the webserver to start after user pressed the F5 button. (we don't wait for TSC compilations to be ready)
+	>we should keep the possibility that the Webserver C# code can rund and be debugged (F5), even though there are some bad TS files (and missing JS files). It is a good feature, that we can debug the C# webserver even in that case if one of the colleague uploaded a TS file which doesn't compile.
+	
+
+------------ Notes:
+- https://developers.google.com/web/fundamentals/performance/optimizing-javascript/tree-shaking/
+"Tree shaking is a form of dead code elimination." and therefore important to change in code 'import * as utils from "utils/utils";' to 'import { simpleSort } from "utils/utils";'. Only import what is used. Otherwise tree shaking cannot work properly. 
+
+- calling external (DOS, shell) commands from Python (in its own thread, not in separate thread):
+https://stackoverflow.com/questions/89228/calling-an-external-command-from-python
+http://queirozf.com/entries/python-3-subprocess-examples
+
+
+******************* 1. Build scripts: traditionally these are the used config files:
+
+1. package.json: (NodeJs)
+can have nodeJs build scripts (npm), NodeJS only. like 'npm run release',  'Webpack publish', 'webpack --watch'.
+This would be platform independent (Lnx,Win). Which would be good for Release Publish.
+However, for F5-Debug pre/post build tasks, we need platform independency, therefore Python.
+
+2. Csproj:  (C#, DotNet)
+SqCoreWeb.csproj can have build scripts.  (this is Dotnet (C#) specific build scripts, like 'dotnet build'
+'dotnet publish -c Release'  (but that can  be also called from 'scripts' in package.json
+
+3. .vscode/tasks.json  (and launch.json) can have build scripts.   
+(this is IDE specific, however, we should work even without IDE. E.g. on Linux. So, try to not to put too much build logic here.
+Except the F5-debugging, launch.json. 
+Originally, it contained parts as:
+' <!-- Ensure Node.js is installed -->'
++ 'Restoring Npm packages, if folder node_modules are empty'
+
+
+************** Build process
+
+- For only the webserver C# app (not the Tools/Crawlers): Deploy.py copies only the Publish folder (prepare that it can 7zip it before, with comment). For tools, crawlers etc. Deploy.py copies the whole /src folder 
+
+- SqCoreWeb/ BuildAllProd.py: 
+	//Basic checks: Ensure Node.js is installed. If node_modules folder is empty, it should restore Npm packages. 
+	//Build static Non-Webpack webapps (only TSC.exe)
+	//Build Webpack webapps
+	//Build Angular webapps
+	//Dotnet build Release + DotNet publish
+	//BuildAllProdAndPublish.py idea: discarded. This would call the previous BuildAllProd.py, + Ask user: everything went well, scroll back, Do you want to start deploy to overwrite server files? (Y/N). User should explicitely hit Y + Enter to deploy.
+	Maybe I don't want that. It is too dangerous that colleagues Deploy wrongly published folder. Safer if we have to Deploy separately. It is not too many times that we deploy.
+	
+- SqCoreWeb/ PreDebugBuildDev.py, PreDebugWatchDev.py (PreF5-tasks)
+	//Do checks: Ensure Node.js is installed, Restoring Npm packages, if folder node_modules are empty	
+	//Dotnet Build Debug
+	//Build+ Watch: static webapp ((only TSC.exe)), webpack webapp, Angular webapp.
+	//Prove that threads can be killed.
+	//Instead of sleep(), before killing the threads, wait for a message from another Python program (IPC socket)
+	
+- SqCoreWeb/ PostDebugWatchDev.py (PostF5-task)
+	//Search Watch process and kill or better: send interprocess IPC message to PreDebugWatchDev.py python program
+
+- We have to bring the Angular monorepo's 'project' folder into the root folder. Angular and Webpack webapps should share the same 'node_modules' folder in the root. Otherwise, we have 400 out of 800 node_modules duplicated

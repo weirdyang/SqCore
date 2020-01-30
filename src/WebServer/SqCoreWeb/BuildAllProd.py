@@ -17,6 +17,9 @@ else:
     nodeRetCode = os.system("node --version")   # don't want to run 'node --version' all the times. If stamp file exists, assume node.exe is installed
     if (nodeRetCode != 0) :
         sys.exit("SqBuild: Node.js is required to build and run this project. To continue, please install Node.js from https://nodejs.org/")
+    angularRetCode = os.system("ng --version")
+    if (angularRetCode != 0) :
+        sys.exit("SqBuild: NodeJs's AngularCLI is required to build and run this project. To continue, please install 'npm install -g @angular/cli@9.0.0-rc.10' on (2020-01-29) ")
     os.system("npm install")
     Path(nodeTouchFile).touch()
 
@@ -58,3 +61,6 @@ print("\nSqBuild: Modifying NLog.config for Linux logs folder.")
 with fileinput.FileInput("bin/Release/netcoreapp3.1/publish/NLog.config", inplace=True, backup='.bak') as file:
     for line in file:
         print(line.replace("{basedir}/../../../../../../logs", "{basedir}/../logs"), end='')
+
+print("\nScroll up to check that all build parts were succesful! We pause to prevent VsCode tasks.json to close the CMD.")
+os.system("pause")  # To prevent tasks.json to close the CMD window. This will generate a pause and will ask user to press any key to continue.

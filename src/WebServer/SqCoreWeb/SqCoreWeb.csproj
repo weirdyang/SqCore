@@ -7,14 +7,12 @@
     <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
     <TypeScriptToolsVersion>Latest</TypeScriptToolsVersion>
     <IsPackable>false</IsPackable>
-    <!-- <SpaRoot>Angular\</SpaRoot>
-    <DefaultItemExcludes>$(DefaultItemExcludes);node_modules\**;$(SpaRoot)node_modules\**</DefaultItemExcludes> -->
+    <!-- <DefaultItemExcludes>$(DefaultItemExcludes);node_modules\**</DefaultItemExcludes>  it is not used now. -->
 
     <!-- Set this to true if you enable server-side prerendering -->
     <BuildServerSideRenderer>false</BuildServerSideRenderer>
     <!-- File with modifytime of last successful npm install -->
     <NpmInstallStampFile>node_modules/.install-stamp</NpmInstallStampFile>
-    <!-- <NpmInstallStampFileAngular>Angular/node_modules/.install-stamp</NpmInstallStampFileAngular> -->
   </PropertyGroup>
 
   <ItemGroup>
@@ -32,10 +30,9 @@
     <!-- The Content item list contains files that are published in addition to the build outputs. 
     By default, files matching the patterns wwwroot\**, **\*.config, and **\*.json are included in the Content item list.
      https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/visual-studio-publish-profiles?view=aspnetcore-3.1 -->
-    <!-- Don't publish the SPA source files, but do show them in the project files list -->
+    <!-- Don't publish the Angular source json files, but do show them in the project files list in VsCode. So, don't remove it from <None>, just remove it from <Content> -->
     <Content Remove="projects\**" />
-    <!-- <Content Remove="$(SpaRoot)**" />
-    <None Remove="$(SpaRoot)**" />
+    <!-- <None Remove="$(SpaRoot)**" />
     <None Include="$(SpaRoot)**" Exclude="$(SpaRoot)node_modules\**" /> -->
   </ItemGroup>
 
@@ -43,30 +40,8 @@
   https://docs.microsoft.com/en-us/visualstudio/msbuild/target-build-order -->
   <!-- The "dotnet build" command is equivalent to "dotnet msbuild -restore -target:Build". The "dotnet msbuild" gives you more control.  -->
 
-
-  <!-- This will only run if '$(Configuration)' == 'Debug', so not in Release. -->
-  <!-- <Target Name="DebugServe1Angular" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug'">
-    <Message Importance="high" Text="SqBuild: Target: DebugServe1Angular...skipping serving Angular temporary now, because it never returns, and F5 Debug cannot be run." /> -->
-    <!-- <Exec WorkingDirectory="$(SpaRoot)" Command="ServeOnly1ProjectInMonorepo.cmd" /> -->   <!-- This never returns, so tsc -watch cannot be called after. A Pypthon solution is needed. -->
-  <!-- </Target> -->
-
   <Target Name="PublishSqCoreWeb" AfterTargets="ComputeFilesToPublish" Condition=" '$(Configuration)' == 'Release'">
     <Message Importance="high" Text="SqBuild:PublishSqCoreWeb...(runs after Build+ComputeFilesToPublish targets finished, but before Publish). Do nothing." />
-    <!-- As part of publishing, ensure the JS resources are freshly built in production mode -->
-    <!-- <Exec WorkingDirectory="" Command="npm install" /> -->
-    <!-- <Exec WorkingDirectory="$(SpaRoot)" Command="npm install" /> -->
-    <!-- <Exec WorkingDirectory="$(SpaRoot)" Command="BuildAllProjectsInMonorepo.py" /> -->
-
-    <!-- Include the newly-built files in the publish output -->
-    <!-- <ItemGroup>
-      <DistFiles Include="$(SpaRoot)dist\**; $(SpaRoot)dist-server\**" />
-      <DistFiles Include="$(SpaRoot)node_modules\**" Condition="'$(BuildServerSideRenderer)' == 'true'" />
-      <ResolvedFileToPublish Include="@(DistFiles->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
-        <RelativePath>%(DistFiles.Identity)</RelativePath>
-        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      </ResolvedFileToPublish>
-    </ItemGroup> -->
   </Target>
 
   <!-- https://stackoverflow.com/questions/35435041/run-npm-install-only-when-needed-and-or-partially -->
@@ -81,11 +56,5 @@
     <Exec Command="npm install" />
     <Touch Files="$(NpmInstallStampFile)" AlwaysCreate="true" />
   </Target>
-
-  <!-- <Target Name="NpmInstallAngular" BeforeTargets="BeforeBuild" Inputs="$(SpaRoot)package.json" Outputs="$(NpmInstallStampFileAngular)">
-    <Message Importance="high" Text="SqBuild: Restoring Angular npm packages..." />    
-    <Exec WorkingDirectory="$(SpaRoot)" Command="npm install" />
-    <Touch Files="$(NpmInstallStampFileAngular)" AlwaysCreate="true" />
-  </Target> -->
 
 </Project>
