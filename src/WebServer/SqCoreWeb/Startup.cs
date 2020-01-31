@@ -196,6 +196,13 @@ namespace SqCoreWeb
 
             app.UseMiddleware<SqFirewallMiddlewarePostAuth>();  // For this to catch Exceptions, it should come after UseExceptionHadlers(), because those will swallow exceptions and generates nice ErrPage.
 
+            // Request "dashboard.sqcore.net/index.html" should be converted to "sqcore.net/webapps/MarketDashboard/index.html"
+            // But Authentication (and user check) should be done BEFORE that, because we will lose the subdomain 'dashboard' prefix from the host. 
+            // And the browser keeps separate cookies for the subdomain and main domain. dashboard.sqcore.net has different cookies than sqcore.net
+            var options = new RewriteOptions();
+            options.Rules.Add(new SubdomainRewriteOptionsRule());
+            app.UseRewriter(options);
+
             app.Use(async (context, next) =>
             {
                 Utils.Logger.Info($"Serving '{context.Request.Path.Value}'");

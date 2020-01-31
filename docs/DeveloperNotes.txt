@@ -46,7 +46,7 @@ QuickTester (https://www.sqcore.net/QuickTester), 							(folder /angular/QuickT
 HealthMonitor (https://www.sqcore.net/HealthMonitor), 						
 
 It is not necessary, but later, on the user side, we can do subdomains like that:
-https://MarketDashboard.sqcore.net   it is just a synthetic sugar to https://www.sqcore.net/MarketDashboard
+https://Dashboard.sqcore.net   it is just a synthetic sugar to https://www.sqcore.net/Dashboard
 https://HealthMonitor.sqcore.net
 https://QuickTester.sqcore.net
 (this is how to do it https://timdows.com/projects/host-multiple-spas-with-aps-net-core/)

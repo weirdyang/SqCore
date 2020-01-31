@@ -119,7 +119,7 @@ namespace SqCoreWeb
                             //     var certs = new Dictionary<string, X509Certificate2>(StringComparer.OrdinalIgnoreCase);
                             //     certs["localhost"] = localhostCert;
                             //     certs["sqcore.net"] = letsEncryptCert;
-                            //     certs["desktop.sqcore.net"] = letsEncryptCert;  // it seems the same certificate is used for the root and the sub-domain.
+                            //     certs["dashboard.sqcore.net"] = letsEncryptCert;  // it seems the same certificate is used for the root and the sub-domain.
                             //     //certs["example.com"] = exampleCert;
                             //     //certs["sub.example.com"] = subExampleCert;
 

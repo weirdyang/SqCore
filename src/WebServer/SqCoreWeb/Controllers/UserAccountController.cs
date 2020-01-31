@@ -21,7 +21,8 @@ namespace SqCoreWeb.Controllers
             await HttpContext.ChallengeAsync("Google",
                 new AuthenticationProperties()
                 {
-                    RedirectUri = returnUrl ?? "/index.html"      // if http://localhost/api/UserAccount/login is called directly, there is no returnURL, which is null. However if we pass Null to GoogleAuth, it will come back to this "/login" which will cause an infinite loop. 
+                    // subdomain https://healthmonitor.sqcore.net/UserAccount/login should redirect back to https://healthmonitor.sqcore.net/
+                    RedirectUri = returnUrl ?? "/"      //  better in a short form, so don't do "/index.html" if http://localhost/api/UserAccount/login is called directly, there is no returnURL, which is null. However if we pass Null to GoogleAuth, it will come back to this "/login" which will cause an infinite loop. 
             });
         }
 
@@ -32,8 +33,9 @@ namespace SqCoreWeb.Controllers
             // TODO: redirect user to a nicer page that shows: ""You have been logged out. Goodbye " + context.User.Identity.Name + "<br>""
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme, new AuthenticationProperties
             {
-                //RedirectUri = Url.Action("Index", "Home")
-                RedirectUri = "/"
+                // RedirectUri = Url.Action("Index", "Home")
+                // subdomain https://healthmonitor.sqcore.net/UserAccount/logout should NOT redirect back to https://healthmonitor.sqcore.net/  because that requires user login and will automatically login back auto on Edge Browser.
+                RedirectUri = "//sqcore.net"
             });
         }
 
