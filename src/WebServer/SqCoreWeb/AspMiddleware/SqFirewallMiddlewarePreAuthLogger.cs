@@ -85,7 +85,18 @@ namespace SqCoreWeb
                 var clientIP = WsUtils.GetRequestIP(httpContext);
                 var clientUserEmail = WsUtils.GetRequestUser(httpContext);
 
-                var requestLog = new HttpRequestLog() { StartTime = DateTime.UtcNow, IsHttps = httpContext.Request.IsHttps, Method = httpContext.Request.Method, Path = httpContext.Request.Path, QueryString = httpContext.Request.QueryString.ToString(), ClientIP = clientIP, ClientUserEmail = clientUserEmail, StatusCode = statusCode, TotalMilliseconds = sw.Elapsed.TotalMilliseconds, IsError = exception != null || (level == Microsoft.Extensions.Logging.LogLevel.Error), Exception = exception };
+                var requestLog = new HttpRequestLog() { 
+                    StartTime = DateTime.UtcNow, 
+                    IsHttps = httpContext.Request.IsHttps, 
+                    Method = httpContext.Request.Method, 
+                    Path = httpContext.Request.Path, 
+                    QueryString = httpContext.Request.QueryString.ToString(), 
+                    ClientIP = clientIP, 
+                    ClientUserEmail = clientUserEmail, 
+                    StatusCode = statusCode, 
+                    TotalMilliseconds = sw.Elapsed.TotalMilliseconds, 
+                    IsError = exception != null || (level == Microsoft.Extensions.Logging.LogLevel.Error), 
+                    Exception = exception };
                 lock (Program.g_webAppGlobals.HttpRequestLogs)  // prepare for multiple threads
                 {
                     Program.g_webAppGlobals.HttpRequestLogs.Enqueue(requestLog);
@@ -110,7 +121,7 @@ namespace SqCoreWeb
                     StringBuilder sb = new StringBuilder("Exception in SqCore.Website.C#.SqFirewallMiddleware. \r\n");
                     var requestLogStr = String.Format("{0}#{1}{2} {3} '{4}' from {5} (u: {6}) ret: {7} in {8:0.00}ms", requestLog.StartTime.ToString("HH':'mm':'ss.f"), requestLog.IsError ? "ERROR in " : String.Empty, requestLog.IsHttps ? "HTTPS" : "HTTP", requestLog.Method, requestLog.Path + (String.IsNullOrEmpty(requestLog.QueryString) ? "" : requestLog.QueryString), requestLog.ClientIP, requestLog.ClientUserEmail, requestLog.StatusCode, requestLog.TotalMilliseconds);
                     sb.Append("Request: " + requestLogStr + "\r\n");
-                    sb.Append("Exception: '" + requestLog.Exception.ToStringWithShortenedStackTrace(400) + "'\r\n");
+                    sb.Append("Exception: '" + requestLog.Exception.ToStringWithShortenedStackTrace(600) + "'\r\n");
                     await HealthMonitorMessage.SendAsync(sb.ToString(), HealthMonitorMessageID.SqCoreWebError); // await will wait for its completion, so it is the RunSynchronously() way.
                 }
 

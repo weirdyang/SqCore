@@ -161,7 +161,7 @@ namespace SqCoreWeb
         internal static void StrongAssertMessageSendingEventHandler(StrongAssertMessage p_msg)
         {
             gLogger.Info("StrongAssertEmailSendingEventHandler()");
-            HealthMonitorMessage.SendAsync($"Msg from SqCore.Website.C#.StrongAssert. StrongAssert Warning (if Severity is NoException, it is just a mild Warning. If Severity is ThrowException, that exception triggers a separate message to HealthMonitor as an Error). Severity: {p_msg.Severity}, Message: { p_msg.Message}, StackTrace: { p_msg.StackTrace.ToStringWithShortenedStackTrace(400)}", HealthMonitorMessageID.SqCoreWebError).FireParallelAndForgetAndLogErrorTask();
+            HealthMonitorMessage.SendAsync($"Msg from SqCore.Website.C#.StrongAssert. StrongAssert Warning (if Severity is NoException, it is just a mild Warning. If Severity is ThrowException, that exception triggers a separate message to HealthMonitor as an Error). Severity: {p_msg.Severity}, Message: { p_msg.Message}, StackTrace: { p_msg.StackTrace.ToStringWithShortenedStackTrace(600)}", HealthMonitorMessageID.SqCoreWebError).FireParallelAndForgetAndLogErrorTask();
         }
 
         // Called by the GC.FinalizerThread. Occurs when a faulted task's unobserved exception is about to trigger exception which, by default, would terminate the process.
@@ -174,7 +174,7 @@ namespace SqCoreWeb
             if (e.Exception != null) {
                 isSendable = SqFirewallMiddlewarePreAuthLogger.IsSendableToHealthMonitorForEmailing(e.Exception);
                 if (isSendable)
-                    msg += $" Exception: '{ e.Exception.ToStringWithShortenedStackTrace(400)}'.";
+                    msg += $" Exception: '{ e.Exception.ToStringWithShortenedStackTrace(600)}'.";
             }
 
             if (sender != null)
@@ -183,7 +183,7 @@ namespace SqCoreWeb
                 if (senderTask != null)
                 {
                     msg += $" Sender is a task. TaskId: {senderTask.Id}, IsCompleted: {senderTask.IsCompleted}, IsCanceled: {senderTask.IsCanceled}, IsFaulted: {senderTask.IsFaulted}, TaskToString(): {senderTask.ToString()}.";
-                    msg += (senderTask.Exception == null) ? " SenderTask.Exception is null" : $" SenderTask.Exception {senderTask.Exception.ToStringWithShortenedStackTrace(400)}";
+                    msg += (senderTask.Exception == null) ? " SenderTask.Exception is null" : $" SenderTask.Exception {senderTask.Exception.ToStringWithShortenedStackTrace(600)}";
                 }
                 else
                     msg += " Sender is not a task.";
