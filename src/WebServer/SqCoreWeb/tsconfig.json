@@ -23,6 +23,7 @@
     ],
     "paths": {
       "sq-ng-common": [
+        "wwwroot/webapps/sq-ng-common/sq-ng-common",
         "wwwroot/webapps/sq-ng-common"
       ]
     },
