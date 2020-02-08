@@ -1,7 +1,16 @@
 {
 	"folders": [
 		{
+			"name": "All SqCore",
 			"path": "."
+		},
+		{
+		  "name": "RedisManager",
+		  "path": "./src/Tools/RedisManager"
+		},
+		{
+		  "name": "SqCoreWeb",
+		  "path": "./src/WebServer/SqCoreWeb"
 		}
 	],
 	"settings": {
@@ -9,6 +18,7 @@
 		"files.associations": {
 			"**/src/WebServer/SqCoreWeb/tslint.json": "jsonc",		// treat json files as jsonc (JSON with Comments), so tslint.json can contain line comments
 			"**/src/WebServer/SqCoreWeb/wwwroot/ts/sq-ngx-logger/tslint.json": "jsonc"
-		}
+		},
+		"html.mirrorCursorOnMatchingTag": true
 	}
 }
