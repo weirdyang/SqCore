@@ -5,7 +5,11 @@
   "projects": {
     "HealthMonitor": {
       "projectType": "application",
-      "schematics": {},
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        }
+      },
       "root": "projects/HealthMonitor",
       "sourceRoot": "projects/HealthMonitor/src",
       "prefix": "app",
@@ -24,7 +28,7 @@
               "projects/HealthMonitor/src/assets"
             ],
             "styles": [
-              "projects/HealthMonitor/src/styles.css"
+              "projects/HealthMonitor/src/styles.scss"
             ],
             "scripts": []
           },
@@ -88,7 +92,7 @@
               "projects/HealthMonitor/src/assets"
             ],
             "styles": [
-              "projects/HealthMonitor/src/styles.css"
+              "projects/HealthMonitor/src/styles.scss"
             ],
             "scripts": []
           }
@@ -122,7 +126,11 @@
     },
     "MarketDashboard": {
       "projectType": "application",
-      "schematics": {},
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        }
+      },
       "root": "projects/MarketDashboard",
       "sourceRoot": "projects/MarketDashboard/src",
       "prefix": "app",
@@ -141,7 +149,7 @@
               "projects/MarketDashboard/src/assets"
             ],
             "styles": [
-              "projects/MarketDashboard/src/styles.css"
+              "projects/MarketDashboard/src/styles.scss"
             ],
             "scripts": []
           },
@@ -205,7 +213,7 @@
               "projects/MarketDashboard/src/assets"
             ],
             "styles": [
-              "projects/MarketDashboard/src/styles.css"
+              "projects/MarketDashboard/src/styles.scss"
             ],
             "scripts": []
           }

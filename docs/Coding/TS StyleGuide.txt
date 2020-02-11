@@ -38,6 +38,14 @@ So, this is more efficient use of CPU:
 (document.getElementById('MainDivOverVidBkg') as HTMLElement).style.color = '#ffffff';
 So, if possible, avoid jQuery, but do DOM manipulation direct. (or write tiny utility function). That way you learn DOM  manipulation better.
 
+4.
+Use 2 spaces Tab (instead of 4) in HTML, CSS, JS, TS.
+This is the standard TS formatter in Vscode anyway. Also SCSS formatter in Prettier does 2 spaces too.
+In C# VsCode does 4 spaces. Keep that standard.
+https://www.reddit.com/r/javascript/comments/5rjrcy/why_is_twospace_tab_indent_becoming_the_standard/
+"in recent years there has been a massive switch from four to two spaces as the standard across JavaScript which seems to have crept into other languages like HTML, CSS/Sass, JSON, etc."
+"Two spaces is popular in JS because "callback hell""
+
 
 
 
