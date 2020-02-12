@@ -13,9 +13,9 @@ namespace SqCoreWeb
         }
         public async Task StartStreaming(string message)
         {
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 15; i++) {
                 await Clients.Caller.SendAsync("priceQuoteFromServer", "AAPL price is: $" + (new Random().NextDouble()*1000.0).ToString("0.00"));
-                Thread.Sleep(1000);
+                Thread.Sleep(2000);
             }
         }
     }

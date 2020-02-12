@@ -8,9 +8,7 @@ const tbMessage: HTMLInputElement | null = document.querySelector('#tbMessage');
 const btnSend: HTMLButtonElement | null = document.querySelector('#btnSend');
 const gUsername = new Date().getTime();
 
-const connection = new HubConnectionBuilder()
-    .withUrl('/hub/exsvpush')
-    .build();
+const connection = new HubConnectionBuilder().withUrl('/hub/exsvpush').build();
 
 connection.on('messageReceived', (username: string, message: string) => {
     const m = document.createElement('div');

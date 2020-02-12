@@ -36,7 +36,9 @@ namespace SqCoreWeb
                 // After the redirection, keep the login, logout links, otherwise CheckAuthorizedGoogleEmail() email is '', and login is not possible.
                 if (req.Path.ToString().EndsWith("UserAccount/login", StringComparison.OrdinalIgnoreCase) || // https://healthmonitor.sqcore.net/UserAccount/login should work with its subdomain. Don't redirect that.
                     req.Path.ToString().EndsWith("UserAccount/logout", StringComparison.OrdinalIgnoreCase) ||
-                    req.Path.ToString().EndsWith("signin-google", StringComparison.OrdinalIgnoreCase))  // Google calls back on https://healthmonitor.sqcore.net/signin-google
+                    req.Path.ToString().EndsWith("signin-google", StringComparison.OrdinalIgnoreCase) || // Google calls back on https://healthmonitor.sqcore.net/signin-google
+                    req.Path.ToString().StartsWith("/hub/", StringComparison.OrdinalIgnoreCase) || // SignalR WebSocket listeners listen on "/hub/" from root
+                    req.Path.ToString().StartsWith("/api/", StringComparison.OrdinalIgnoreCase)) // some controllers listen on /api
                     return;
 
                 Utils.Logger.Info("SubdomainRewriteOptionsRule(): Request with host: " + (req.IsHttps ? "https://" : "http://") + currentHost + req.PathBase + req.Path + req.QueryString);

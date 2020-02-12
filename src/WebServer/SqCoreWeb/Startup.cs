@@ -381,7 +381,7 @@ namespace SqCoreWeb
                 endpoints.MapHub<ExSvPushHub>("/hub/exsvpush");
                 endpoints.MapControllerRoute(
                     name: "default",
-                    pattern: "{controller}/{action=Index}/{id?}");
+                    pattern: "{controller}/{action=Index}/{id?}");  // controllers should listen on "/api/" so SubdomainRewriteOptionsRule() can differentiate what to leave as from root and what path to extend
             });
 
             app.Use(async (context, next) =>

@@ -3,10 +3,18 @@ import { NgModule } from '@angular/core';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
+import { MarketHealthComponent } from './market-health/market-health.component';
+import { CatalystSnifferComponent } from './catalyst-sniffer/catalyst-sniffer.component';
+import { QuickfolioNewsComponent } from './quickfolio-news/quickfolio-news.component';
+import { TooltipSandpitComponent } from './tooltip-sandpit/tooltip-sandpit.component';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    MarketHealthComponent,
+    CatalystSnifferComponent,
+    QuickfolioNewsComponent,
+    TooltipSandpitComponent
   ],
   imports: [
     BrowserModule,
