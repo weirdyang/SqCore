@@ -15,6 +15,7 @@ namespace SqCoreWeb
         public DateTime StartTime;
         public bool IsHttps;  // HTTP or HTTPS
         public string Method = String.Empty; // GET, PUT
+        public HostString Host = new HostString(String.Empty);
         public string Path = String.Empty;
         public string QueryString = String.Empty;  // it is not part of the path
         public string ClientIP = String.Empty;
@@ -88,7 +89,8 @@ namespace SqCoreWeb
                 var requestLog = new HttpRequestLog() { 
                     StartTime = DateTime.UtcNow, 
                     IsHttps = httpContext.Request.IsHttps, 
-                    Method = httpContext.Request.Method, 
+                    Method = httpContext.Request.Method,
+                    Host =httpContext.Request.Host,
                     Path = httpContext.Request.Path, 
                     QueryString = httpContext.Request.QueryString.ToString(), 
                     ClientIP = clientIP, 
@@ -107,8 +109,8 @@ namespace SqCoreWeb
                 // $"{DateTime.UtcNow.ToString("MMdd'T'HH':'mm':'ss.fff")}#
 
                 // string.Format("Value is {0}", someValue) which will check for a null reference and replace it with an empty string. It will however throw an exception if you actually pass  null like this string.Format("Value is {0}", null)
-                string msg = String.Format("{0}#{1}{2} {3} '{4}' from {5} (u: {6}) ret: {7} in {8:0.00}ms", requestLog.StartTime.ToString("HH':'mm':'ss.f"), requestLog.IsError ? "ERROR in " : String.Empty, requestLog.IsHttps ? "HTTPS" : "HTTP", requestLog.Method, requestLog.Path, requestLog.ClientIP, requestLog.ClientUserEmail, requestLog.StatusCode, requestLog.TotalMilliseconds);
-                string shortMsg = String.Format("{0}#{1} {2} '{3}' from {4} ({5}) in {6:0.00}ms", requestLog.StartTime.ToString("HH':'mm':'ss.f"), requestLog.IsError ? "ERROR in " : String.Empty, requestLog.Method, requestLog.Path, requestLog.ClientIP, requestLog.ClientUserEmail, requestLog.TotalMilliseconds);
+                string msg = String.Format("PreAuth.Postprocess: Returning {0}#{1}{2} {3} '{4} {5}' from {6} (u: {7}) ret: {8} in {9:0.00}ms", requestLog.StartTime.ToString("HH':'mm':'ss.f"), requestLog.IsError ? "ERROR in " : String.Empty, requestLog.IsHttps ? "HTTPS" : "HTTP", requestLog.Method, requestLog.Host, requestLog.Path, requestLog.ClientIP, requestLog.ClientUserEmail, requestLog.StatusCode, requestLog.TotalMilliseconds);
+                string shortMsg = String.Format("{0}#{1} {2} '{3} {4}' from {5} ({6}) in {7:0.00}ms", requestLog.StartTime.ToString("HH':'mm':'ss.f"), requestLog.IsError ? "ERROR in " : String.Empty, requestLog.Method, requestLog.Host, requestLog.Path, requestLog.ClientIP, requestLog.ClientUserEmail, requestLog.TotalMilliseconds);
                 Console.WriteLine(shortMsg);
                 gLogger.Info(msg);
 
@@ -118,10 +120,10 @@ namespace SqCoreWeb
                 // at the moment, send only raised Exceptions to HealthMonitor, not general IsErrors, like wrong statusCodes
                 if (requestLog.Exception != null && IsSendableToHealthMonitorForEmailing(requestLog.Exception))
                 {
-                    StringBuilder sb = new StringBuilder("Exception in SqCore.Website.C#.SqFirewallMiddleware. \r\n");
+                    StringBuilder sb = new StringBuilder("Exception in SqCore.Website.C#.SqFirewallMiddlewarePreAuthLogger. \r\n");
                     var requestLogStr = String.Format("{0}#{1}{2} {3} '{4}' from {5} (u: {6}) ret: {7} in {8:0.00}ms", requestLog.StartTime.ToString("HH':'mm':'ss.f"), requestLog.IsError ? "ERROR in " : String.Empty, requestLog.IsHttps ? "HTTPS" : "HTTP", requestLog.Method, requestLog.Path + (String.IsNullOrEmpty(requestLog.QueryString) ? "" : requestLog.QueryString), requestLog.ClientIP, requestLog.ClientUserEmail, requestLog.StatusCode, requestLog.TotalMilliseconds);
                     sb.Append("Request: " + requestLogStr + "\r\n");
-                    sb.Append("Exception: '" + requestLog.Exception.ToStringWithShortenedStackTrace(600) + "'\r\n");
+                    sb.Append("Exception: '" + requestLog.Exception.ToStringWithShortenedStackTrace(800) + "'\r\n");
                     await HealthMonitorMessage.SendAsync(sb.ToString(), HealthMonitorMessageID.SqCoreWebError); // await will wait for its completion, so it is the RunSynchronously() way.
                 }
 

@@ -39,9 +39,7 @@ namespace SqCoreWeb
                 // Otherwise, we redirect user to https://sqcore.net/UserAccount/login
 
                 // if user is unknown or not allowed: log it but allow some files (jpeg) through, but not html or APIs
-                string msg = String.Format($"{DateTime.UtcNow.ToString("HH':'mm':'ss.f")}#Uknown or not allowed user request should be redirected to Login: {httpContext.Request.Method} '{httpContext.Request.Path}' from {WsUtils.GetRequestIP(httpContext)}");
-                Console.WriteLine(msg);
-                gLogger.Info(msg);
+                
 
                 string ext = Path.GetExtension(httpContext.Request.Path.Value) ?? String.Empty;
                 bool isAllowedRequest = false;
@@ -63,11 +61,22 @@ namespace SqCoreWeb
 
                 if (!isAllowedRequest)
                 {
+                    string msg = String.Format($"PostAuth.PreProcess: {DateTime.UtcNow.ToString("HH':'mm':'ss.f")}#Uknown or not allowed user request: {httpContext.Request.Method} '{httpContext.Request.Host} {httpContext.Request.Path}' from {WsUtils.GetRequestIP(httpContext)}. Redirecting to '/UserAccount/login'.");
+                    Console.WriteLine(msg);
+                    gLogger.Info(msg);
+
                     httpContext.Response.Redirect("/UserAccount/login", true);  // forced login. Even for main /index.html
                     // raw Return in Kestrel chain would give client a response header: status: 200 (OK), Data size: 0. Browser will present a blank page. Which is fine now.
                     // httpContext.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
                     // await httpContext.Response.WriteAsync("Unauthorized request! Login on the main page with an authorized user."); // text response is quick and doesn't consume too much resource
+
                     return;
+                }
+                else 
+                {
+                    string msg = String.Format($"PostAuth.PreProcess: {DateTime.UtcNow.ToString("HH':'mm':'ss.f")}#Uknown or not allowed user request: {httpContext.Request.Method} '{httpContext.Request.Host} {httpContext.Request.Path}' from {WsUtils.GetRequestIP(httpContext)}. Falling through to further Kestrel middleware without redirecting to '/UserAccount/login'.");
+                    Console.WriteLine(msg);
+                    gLogger.Info(msg);
                 }
             }
 
