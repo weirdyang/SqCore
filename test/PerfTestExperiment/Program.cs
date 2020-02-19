@@ -71,13 +71,13 @@ namespace MyBenchmarks
         [Benchmark]
         public void SplitStringByString()
         {
-            SqCommon.Utils.SplitStringByCharArray(splitThisStr);       // mean run:  103.7 ns, allocated: 336 Byte
+            SqCommon.Utils.SplitStringByCommaWithCharArray(splitThisStr);       // mean run:  103.7 ns, allocated: 336 Byte
         }
 
         [Benchmark]
         public void SplitStringByRegex()
         {
-            SqCommon.Utils.SplitStringByRegex(splitThisStr);        // mean run:  1,592.2 ns  (15x more).  allocated: 2,832 Byte. (x8 more) Try to avoid RegEx!!!
+            SqCommon.Utils.SplitStringByCommaWithRegex(splitThisStr);        // mean run:  1,592.2 ns  (15x more).  allocated: 2,832 Byte. (x8 more) Try to avoid RegEx!!!
         }
 
 
