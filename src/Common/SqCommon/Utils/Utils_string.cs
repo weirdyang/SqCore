@@ -17,12 +17,12 @@ namespace SqCommon
             return str.Substring(0, maxLengthAllowed - "...".Length) + "...";
         }
 
-        public static string[] SplitStringByString(this string str)
+        public static string[] SplitStringByCommaWithCharArray(this string str)
         {
             return str.Split(new char[] {','}, StringSplitOptions.RemoveEmptyEntries);
         }
 
-        public static string[] SplitStringByRegex(this string str)
+        public static string[] SplitStringByCommaWithRegex(this string str)
         {
             return Regex.Split(str, @"(,\s)+");
         }

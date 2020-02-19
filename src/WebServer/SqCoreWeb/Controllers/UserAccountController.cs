@@ -21,6 +21,9 @@ namespace SqCoreWeb.Controllers
             await HttpContext.ChallengeAsync("Google",
                 new AuthenticationProperties()
                 {
+                    // IsPersistent = true,
+                    // AllowRefresh = true,
+                    // ExpiresUtc = ? Leave them as default.
                     // subdomain https://healthmonitor.sqcore.net/UserAccount/login should redirect back to https://healthmonitor.sqcore.net/
                     RedirectUri = returnUrl ?? "/"      //  better in a short form, so don't do "/index.html" if http://localhost/api/UserAccount/login is called directly, there is no returnURL, which is null. However if we pass Null to GoogleAuth, it will come back to this "/login" which will cause an infinite loop. 
                 });
@@ -35,7 +38,7 @@ namespace SqCoreWeb.Controllers
             {
                 // RedirectUri = Url.Action("Index", "Home")
                 // subdomain https://healthmonitor.sqcore.net/UserAccount/logout should NOT redirect back to https://healthmonitor.sqcore.net/  because that requires user login and will automatically login back auto on Edge Browser.
-                RedirectUri = "//sqcore.net"
+                RedirectUri = (Program.g_webAppGlobals.KestrelEnv?.EnvironmentName == "Development") ? "https://localhost:5001/" : "//sqcore.net"
             });
         }
 

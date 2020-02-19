@@ -71,7 +71,7 @@ namespace MyBenchmarks
         [Benchmark]
         public void SplitStringByString()
         {
-            SqCommon.Utils.SplitStringByString(splitThisStr);       // mean run:  103.7 ns, allocated: 336 Byte
+            SqCommon.Utils.SplitStringByCharArray(splitThisStr);       // mean run:  103.7 ns, allocated: 336 Byte
         }
 
         [Benchmark]

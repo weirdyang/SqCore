@@ -132,7 +132,7 @@ namespace SqCoreWeb
         }
 
         // "/robots.txt", "/ads.txt": just don't want to handle search engines. Consume resources.
-        static string[] m_blacklistStarts = { "/robots.txt", "/ads.txt", "//", "/index.php", "/user/register", "/latest/dynamic", "/ws/stats", "/corporate/", "/imeges", "/remote"};
+        static string[] m_blacklistStarts = {"/private/", "/local/","/git/", "/app/", "/core/", "/rest/", "/.env","/robots.txt", "/ads.txt", "//", "/index.php", "/user/register", "/latest/dynamic", "/ws/stats", "/corporate/", "/imeges", "/remote"};
         // hackers always try to break the server by typical vulnerability queries. It is pointless to process them. Most of the time it raises an exception.
         static bool IsHttpRequestOnBlacklist(HttpContext p_httpContext)
         {

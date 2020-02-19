@@ -129,11 +129,27 @@ namespace SqCoreWeb
                 {
                     options.ClientId = googleClientId;
                     options.ClientSecret = googleClientSecret;
+                    // Note: Once logged in to Google Ecosystem (and once allowed Sqcore website), the Google login prompt (offering different users) does not even display.
+                    // Do we want it displayed? Probably NOT. Because this is good and fast:
+                    // "the Google login prompt does not even display. From the app I get redirected to Google, 
+                    // and because I am already signed in with a user with that domain, Google immediately returns that as the authenticated user to your app."
+                    // If you really want to logout that Guser from SqCore: sign out of your Google account (in Gmail, GDrive or any G.app), or open an Incognito browser window.
+                    // >e.g. go do GoogleDrive: log-out as user. After that SqCore will ask the user login user only once. But that login will login to ALL Google services.
+                    // Which is actually fine. That is what I want. Once user logged in to his Gmail, he can enjoy SqCore without logging in again.
+                    // So, the same way, why GoogleDrive doesn't re-ask the password every time, the same applies here too.
                     options.Events = new OAuthEvents
                     {
+                        // https://www.jerriepelser.com/blog/forcing-users-sign-in-gsuite-domain-account/
+                        OnRedirectToAuthorizationEndpoint = context =>
+                        {
+                            Utils.Logger.Info("GoogleAuth.OnRedirectToAuthorizationEndpoint()");
+                            //context.Response.Redirect(context.RedirectUri + "&hd=" + System.Net.WebUtility.UrlEncode("jerriepelser.com"));
+                            context.Response.Redirect(context.RedirectUri);
+                            return Task.CompletedTask;
+                        },
                         OnCreatingTicket = context =>
                         {
-                            Console.WriteLine(context.User);
+                            Utils.Logger.Info("GoogleAuth.OnCreatingTicket(), User: " + context.User);
                             // string email = context.User.Value<Newtonsoft.Json.Linq.JArray>("emails")[0]["value"].ToString();
                             // Utils.Logger.Debug($"[Authorize] attribute forced Google auth. Email:'{email ?? "null"}', RedirectUri: '{context.Properties.RedirectUri ?? "null"}'");
 
@@ -148,6 +164,7 @@ namespace SqCoreWeb
                         },
                         OnTicketReceived = context =>
                         {
+                            Utils.Logger.Info("GoogleAuth.OnTicketReceived()");
                             // if this is not set, then the cookie in the browser expires, even though the validation-info in the cookie is still valid. By default, cookies expire: "When the browsing session ends" Expires: 'session'
                             // https://www.jerriepelser.com/blog/managing-session-lifetime-aspnet-core-oauth-providers/
                             context.Properties.IsPersistent = true;
@@ -169,6 +186,8 @@ namespace SqCoreWeb
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            Program.g_webAppGlobals.KestrelEnv = env;
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();        // in DEBUG it returns a nice webpage that shows the stack trace and everything of the crash.
@@ -232,30 +251,37 @@ namespace SqCoreWeb
                     // we have to add header Before filling up the response with 'await next();', otherwise 
                     // if we try to add After StaticFiles(), we got exception: "System.InvalidOperationException: Headers are read-only, response has already started."
                     Console.WriteLine($"Adding Cache-control to header '{context.Request.Path}'");
-                    string ext = Path.GetExtension(context.Request.Path.Value) ?? String.Empty;
-                    if (ext != String.Empty)    // If has any extension, then it is not a Controller (but probably a StaticFile()). If it is "/", then it is already converted to "index.htmL". Controllers will handle its own cacheAge with attributes. 
+                    TimeSpan maxBrowserCacheAge = TimeSpan.Zero;
+                    if (context.Request.Path.Value.Equals("/index.html", StringComparison.OrdinalIgnoreCase))   // main index.html has Login/username on it. After Login, the page should be refreshed. So, ignore CacheControl for that
                     {
-                        // UseResponseCaching() will fill up headers, if MVC controllers or Razor pages, we don't want to use this caching, because the Controller will specify it in an attribute.
-                        // probably no cache for API calls like "https://localhost:5001/WeatherForecast"  (they probably get RT data), Controllers will handle it.
-                        TimeSpan maxBrowserCacheAge = (ext) switch
+                        maxBrowserCacheAge = TimeSpan.Zero;
+                    }
+                    else
+                    {
+                        string ext = Path.GetExtension(context.Request.Path.Value) ?? String.Empty;
+                        if (ext != String.Empty)    // If has any extension, then it is not a Controller (but probably a StaticFile()). If it is "/", then it is already converted to "index.htmL". Controllers will handle its own cacheAge with attributes. 
                         {
-                            ".html" => TimeSpan.FromDays(8),
-                            var xt when xt == ".html" || xt == ".htm" => TimeSpan.FromHours(8),    // short cache time for html files (like index.html or when no  that contains the URL links for other JS, CSS files)                            
-                            var xt when xt == ".css" => TimeSpan.FromDays(7),   // mediam time frames for CSS and JS files. Angular only changes HTML files.
-                            var xt when xt == ".js" => TimeSpan.FromDays(7),
-                            var xt when xt == ".jpg" || xt == ".jpeg" || xt == ".ico" => TimeSpan.FromDays(300),      // images files are very long term, long cache time for *.jpg files. assume a year, 31536000 seconds, typically used. They will never change
-                            _ => TimeSpan.FromDays(350)
-                        };
-                       
-                        if (maxBrowserCacheAge.TotalSeconds > 0)    // if Duration = 0, it will raise exception of "The relative expiration value must be positive. (Parameter 'AbsoluteExpirationRelativeToNow')"
-                        {
-                            context.Response.GetTypedHeaders().CacheControl =
-                                new Microsoft.Net.Http.Headers.CacheControlHeaderValue()
-                                {
-                                    Public = true,
-                                    MaxAge = maxBrowserCacheAge
-                                };
+                            // UseResponseCaching() will fill up headers, if MVC controllers or Razor pages, we don't want to use this caching, because the Controller will specify it in an attribute.
+                            // probably no cache for API calls like "https://localhost:5001/WeatherForecast"  (they probably get RT data), Controllers will handle it.
+                            maxBrowserCacheAge = (ext) switch
+                            {
+                                ".html" => TimeSpan.FromDays(8),
+                                var xt when xt == ".html" || xt == ".htm" => TimeSpan.FromHours(8),    // short cache time for html files (like index.html or when no  that contains the URL links for other JS, CSS files)                            
+                                var xt when xt == ".css" => TimeSpan.FromDays(7),   // median time frames for CSS and JS files. Angular only changes HTML files.
+                                var xt when xt == ".js" => TimeSpan.FromDays(7),
+                                var xt when xt == ".jpg" || xt == ".jpeg" || xt == ".ico" => TimeSpan.FromDays(300),      // images files are very long term, long cache time for *.jpg files. assume a year, 31536000 seconds, typically used. They will never change
+                                _ => TimeSpan.FromDays(350)
+                            };
                         }
+                    }
+                    if (maxBrowserCacheAge.TotalSeconds > 0)    // if Duration = 0, it will raise exception of "The relative expiration value must be positive. (Parameter 'AbsoluteExpirationRelativeToNow')"
+                    {
+                        context.Response.GetTypedHeaders().CacheControl =
+                            new Microsoft.Net.Http.Headers.CacheControlHeaderValue()
+                            {
+                                Public = true,
+                                MaxAge = maxBrowserCacheAge
+                            };
                     }
                 }
                 // Vary: User-Agent or Vary: Accept-Encoding is used by intermediate CDN caches (if used, we don't.) It is not necessary to set in direct server to client connection.

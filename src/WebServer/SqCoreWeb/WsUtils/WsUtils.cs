@@ -58,9 +58,9 @@ namespace SqCoreWeb
 
         public static UserAuthCheckResult CheckAuthorizedGoogleEmail(HttpContext p_httpContext)
         {
-#if DEBUG
-              return UserAuthCheckResult.UserKnownAuthOK;
-#else
+// #if DEBUG  // try to force User login even in Development. To catch login errors, we have to debug it the same way as he Production one.
+//               return UserAuthCheckResult.UserKnownAuthOK;
+// #else
             var email = WsUtils.GetRequestUser(p_httpContext);
             if (String.IsNullOrEmpty(email))
                 return UserAuthCheckResult.UserUnknown;
@@ -69,7 +69,7 @@ namespace SqCoreWeb
                 return UserAuthCheckResult.UserKnownAuthOK;
             else
                 return UserAuthCheckResult.UserKnownAuthNotEnugh;               
-#endif
+//#endif
         }
 
         static List<string>? g_authorizedGoogleUsers = null;

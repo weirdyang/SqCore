@@ -21,6 +21,8 @@ namespace SqCoreWeb
     {
         DateTime WebAppStartTime { get; set; }
 
+        IWebHostEnvironment? KestrelEnv { get; set; }   // instead of the 3 member variables separately, store the container p_env
+
         Queue<HttpRequestLog> HttpRequestLogs { get; set; }     // Fast Insert, limited size. Better that List
     }
 
@@ -29,6 +31,9 @@ namespace SqCoreWeb
         DateTime m_webAppStartTime = DateTime.UtcNow;
         DateTime IWebAppGlobals.WebAppStartTime { get => m_webAppStartTime; set => m_webAppStartTime = value; }
 
+        IWebHostEnvironment? m_kestrelEnv = null;
+        IWebHostEnvironment? IWebAppGlobals.KestrelEnv { get => m_kestrelEnv; set => m_kestrelEnv = value; }
+        
         Queue<HttpRequestLog> m_httpRequestLogs = new Queue<HttpRequestLog>();
         Queue<HttpRequestLog> IWebAppGlobals.HttpRequestLogs { get => m_httpRequestLogs; set => m_httpRequestLogs = value; }
     }
@@ -41,8 +46,8 @@ namespace SqCoreWeb
         public static void Main(string[] args)
         {
             string appName = System.Reflection.MethodBase.GetCurrentMethod()?.ReflectedType?.Namespace ?? "UnknownNamespace";
-            Console.Title = $"{appName} v1.0.14";
-            string systemEnvStr = $"(v1.0.14, {Utils.RuntimeConfig() /* Debug | Release */}, CLR: {System.Environment.Version}, {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription},  OS: {System.Environment.OSVersion}, user: {System.Environment.UserName}, CPU: {System.Environment.ProcessorCount}, ThId-{Thread.CurrentThread.ManagedThreadId})";
+            Console.Title = $"{appName} v1.0.15";
+            string systemEnvStr = $"(v1.0.15, {Utils.RuntimeConfig() /* Debug | Release */}, CLR: {System.Environment.Version}, {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription},  OS: {System.Environment.OSVersion}, user: {System.Environment.UserName}, CPU: {System.Environment.ProcessorCount}, ThId-{Thread.CurrentThread.ManagedThreadId})";
             Console.WriteLine($"Hello {appName}. {systemEnvStr}");
             gLogger.Info($"********** Main() START {systemEnvStr}");
 
