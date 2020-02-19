@@ -22,6 +22,8 @@
 		"html.mirrorCursorOnMatchingTag": true,
 		"javascript.implicitProjectConfig.experimentalDecorators": true,
 		"html.format.wrapAttributes": "auto",  // Nested HTML elements are always wrapped. wrap 'attributes' only when line length is exceeded
-		"html.format.wrapLineLength": 0	// disable max chars per line
+		"html.format.wrapLineLength": 0,	// disable max chars per line
+		"workbench.editor.limit.enabled": true,
+		"workbench.editor.limit.value": 8
 	}
 }

@@ -64,6 +64,8 @@ namespace SqCoreWeb
                 {
                     if (httpContext.Request.Path.Value.Equals("/UserAccount/login", StringComparison.OrdinalIgnoreCase))   // if it is an API call only allow '/UserAccount/login' through. 
                         isAllowedRequest = true;
+                    if ((Program.g_webAppGlobals.KestrelEnv?.EnvironmentName == "Development") && httpContext.Request.Path.Value.StartsWith("/hub/", StringComparison.OrdinalIgnoreCase))
+                        isAllowedRequest = true;    // in Development, when 'ng served'-d with proxy redirection from http://localhost:4202 to https://localhost:5001 , Don't force Google Auth, because 
                 }
                 else 
                     isAllowedRequest = true;    // 3. allow jpeg files and other resources, like favicon.ico
