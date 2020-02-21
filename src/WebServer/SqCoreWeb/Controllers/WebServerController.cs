@@ -41,7 +41,7 @@ namespace SqCoreWeb.Controllers
 #if !DEBUG
         [Authorize]     // we can live without it, because ControllerCommon.CheckAuthorizedGoogleEmail() will redirect to /login anyway, but it is quicker that this automatically redirects without clicking another URL link.
 #endif
-        public ActionResult HttpRequestAcitivityLog()
+        public ActionResult HttpRequestActivityLog()
         {
             HttpRequestLog[] logsPointerArr = new HttpRequestLog[0];
             lock (m_webAppGlobals.HttpRequestLogs)  // prepare for multiple threads
@@ -59,6 +59,19 @@ namespace SqCoreWeb.Controllers
 
             return Content(@"<HTML><body><h1>HttpRequests Activity Log</h1><br />" + sb.ToString() + "</body></HTML>", "text/html");
         }
+
+         [HttpGet]
+#if !DEBUG
+        [Authorize]     // we can live without it, because ControllerCommon.CheckAuthorizedGoogleEmail() will redirect to /login anyway, but it is quicker that this automatically redirects without clicking another URL link.
+#endif
+        public ActionResult ServerDiagnostics()
+        {
+            StringBuilder sb = new StringBuilder(@"<HTML><body><h1>ServerDiagnostics</h1>");
+            DashboardPushHub.ServerDiagnostic(sb);
+
+            return Content(sb.Append("</body></HTML>").ToString(), "text/html");
+        }
+
 
         [HttpGet]
         public ActionResult HttpRequestHeader()

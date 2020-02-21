@@ -181,6 +181,8 @@ namespace SqCoreWeb
                 //Utils.Logger.Warn("A_G_CId and A_G_CSe from Config has NOT been found. Cannot initialize GoogelAuthentication.");
             }
 
+            services.AddHostedService<DashboardPushHubKestrelBckgrndSrv>();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -201,6 +203,17 @@ namespace SqCoreWeb
                 app.UseHsts();
                 app.UseHttpsRedirection();     // Chrome Caching warning! If you are developing using a self-signed certificate over https and there is an issue with the certificate then google will not cache the response
             }
+
+            // TODO: experiment with this later. Currently default works fine, because 'ng serve proxy' redirect
+            // The protections provided by CORS don't apply to WebSockets. Browsers do not: Perform CORS pre-flight requests. Respect the restrictions specified in Access-Control headers when making WebSocket requests.
+            // var webSocketOptions = new WebSocketOptions()
+            // {
+            //     KeepAliveInterval = TimeSpan.FromSeconds(120),
+            //     ReceiveBufferSize = 4 * 1024
+            // };
+            // webSocketOptions.AllowedOrigins.Add("https://localhost:5001");
+            // webSocketOptions.AllowedOrigins.Add("https://localhost:4202");
+            // app.UseWebSockets(webSocketOptions);
 
             //app.UseDefaultFiles();      // "UseDefaultFiles is a URL rewriter (default.htm, default.html, index.htm, index.html whichever first, 4 file queries to find the file) that doesn't actually serve the file. "
             app.UseRewriter(new RewriteOptions()
@@ -405,6 +418,7 @@ namespace SqCoreWeb
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapHub<ExSvPushHub>("/hub/exsvpush");
+                endpoints.MapHub<DashboardPushHub>("/hub/dashboardpush");
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller}/{action=Index}/{id?}");  // controllers should listen on "/api/" so SubdomainRewriteOptionsRule() can differentiate what to leave as from root and what path to extend

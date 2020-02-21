@@ -1,4 +1,11 @@
 import { Component, OnInit } from '@angular/core';
+import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
+
+class HandshakeMessage {
+  public email = '';
+  public param2  = '';
+}
+
 
 @Component({
   selector: 'app-root',
@@ -16,10 +23,27 @@ export class AppComponent implements OnInit {
   toolSelectionMsg = 'Click red arrow in toolbar! isToolSelectionVisible is set to ' + this.isToolSelectionVisible;
   activeTool = 'MarketHealth';
 
+    // http://localhost:4202/hub/exsvpush/negotiate?negotiateVersion=1 404 (Not Found), if it is not served on port 4202 on ng serve (proxy)
+    public _hubConnection: HubConnection = new HubConnectionBuilder().withUrl('/hub/dashboardpush').build();
+
   // called after Angular has initialized all data-bound properties before any of the view or content children have been checked. Handle any additional initialization tasks.
   ngOnInit() {
     console.log('Sq: ngOnInit()');
     this.onSetTheme('light');
+
+    this._hubConnection
+      .start()
+      .then(() => {
+        console.log('ws: Connection started!');
+        this._hubConnection.send('startStreaming', 'message body')  // Error: Cannot send data if the connection is not in the 'Connected' State.
+          .then(() => console.log('ws: Connection sent message!'));
+      })
+      .catch(err => console.log('Error while establishing connection :('));
+
+    this._hubConnection.on('OnConnected', (message: HandshakeMessage) => {
+      console.log('ws: OnConnected Message arrived:' + message.email);
+      this.user.email = message.email;
+    });
   }
 
   onSetTheme(theme: string) {
