@@ -259,13 +259,22 @@ namespace SqCoreWeb
             
             app.Use(async (context, next) =>    // this fills up the Response header Cache-Control for everything else, like static files.
             {
+                // main Index.html cache is controlled in SqFirewallMiddlewarePostAuth(), because to differentiate based on Login/Logout
+                if (((Program.g_webAppGlobals.KestrelEnv?.EnvironmentName == "Development") || context.Request.Host.Host.StartsWith("sqcore.net")) 
+                    && context.Request.Path.Value.Equals("/index.html", StringComparison.OrdinalIgnoreCase))
+                {
+                    await next();
+                    return;
+                }
+
                 if (!env.IsDevelopment())   // in development, don't use browser caching at all.
                 {
                     // we have to add header Before filling up the response with 'await next();', otherwise 
                     // if we try to add After StaticFiles(), we got exception: "System.InvalidOperationException: Headers are read-only, response has already started."
-                    Console.WriteLine($"Adding Cache-control to header '{context.Request.Path}'");
                     TimeSpan maxBrowserCacheAge = TimeSpan.Zero;
-                    if (context.Request.Path.Value.Equals("/index.html", StringComparison.OrdinalIgnoreCase))   // main index.html has Login/username on it. After Login, the page should be refreshed. So, ignore CacheControl for that
+                    if (context.Request.Path.Value.Equals("/index.html", StringComparison.OrdinalIgnoreCase)   // main index.html has Login/username on it. After Login, the page should be refreshed. So, ignore CacheControl for that
+                        || context.Request.Path.Value.StartsWith("/hub/")   // WebSockets should not be cached
+                    )  
                     {
                         maxBrowserCacheAge = TimeSpan.Zero;
                     }
@@ -289,6 +298,8 @@ namespace SqCoreWeb
                     }
                     if (maxBrowserCacheAge.TotalSeconds > 0)    // if Duration = 0, it will raise exception of "The relative expiration value must be positive. (Parameter 'AbsoluteExpirationRelativeToNow')"
                     {
+                        Console.WriteLine($"Adding Cache-control to header '{context.Request.Host} {context.Request.Path}'");
+                        Utils.Logger.Info($"Adding Cache-control to header '{context.Request.Host} {context.Request.Path}'");
                         context.Response.GetTypedHeaders().CacheControl =
                             new Microsoft.Net.Http.Headers.CacheControlHeaderValue()
                             {

@@ -57,10 +57,26 @@ namespace SqCoreWeb
                 {
                     // Allow without user login only for the main domain's index.html ("sqcore.net/index.html"),  
                     // For subdomains, like "dashboard.sqcore.net/index.html" require UserLogin
-                    if (((Program.g_webAppGlobals.KestrelEnv?.EnvironmentName == "Development") || httpContext.Request.Host.Host.StartsWith("sqcore.net")) &&   
-                        httpContext.Request.Path.Value.Equals("/index.html", StringComparison.OrdinalIgnoreCase))   // if it is HTML only allow '/index.html' through
+                    if (((Program.g_webAppGlobals.KestrelEnv?.EnvironmentName == "Development") || httpContext.Request.Host.Host.StartsWith("sqcore.net")) &&
+                        httpContext.Request.Path.Value.Equals("/index.html", StringComparison.OrdinalIgnoreCase))
+                    { // if it is HTML only allow '/index.html' through
                         isAllowedRequest = true;    // don't replace raw main index.html file by in-memory. Let it through. A brotli version will be delivered, which is better then in-memory non-compressed.
-                } else if (String.IsNullOrEmpty(ext))  // 2. API requests
+                        
+                        // Problem: after Logout/Login Chrome takes index(Logout version).html from disk-cache, instead of reload.
+                        // Because when it is read from 'index.html.br' brottli, it adds etag, and last-modified headers.
+                        // So, the index(Logout version).html should NOT be cached, while the index(Login version).html should be cached.
+                        Console.WriteLine($"Adding CacheControl NoCache to header '{httpContext.Request.Host} {httpContext.Request.Path}'");
+                        Utils.Logger.Info($"Adding CacheControl NoCache to header '{httpContext.Request.Host} {httpContext.Request.Path}'");
+                        httpContext.Response.GetTypedHeaders().CacheControl =
+                            new Microsoft.Net.Http.Headers.CacheControlHeaderValue()
+                            {
+                                NoCache = true,
+                                NoStore = true,
+                                MustRevalidate = true
+                            };
+                    }
+                }
+                else if (String.IsNullOrEmpty(ext))  // 2. API requests
                 {
                     if (httpContext.Request.Path.Value.Equals("/UserAccount/login", StringComparison.OrdinalIgnoreCase))   // if it is an API call only allow '/UserAccount/login' through. 
                         isAllowedRequest = true;
@@ -101,7 +117,22 @@ namespace SqCoreWeb
                     //await context.Response.WriteAsync($"Hello {CultureInfo.CurrentCulture.DisplayName}");
                     //return Content(mainIndexHtmlCached, "text/html");
 
-                    var mainIndexHtmlCachedReplaced = mainIndexHtmlCached[0] + WsUtils.GetRequestUser(httpContext) + @"&nbsp; <a href=""/UserAccount/logout"">Logout</a>" + mainIndexHtmlCached[2];
+                    // This solution has some Non-refresh problems after Logout, which happens almost never. 
+                    // After UserAccount/logout server redirect goes to => Index.html. Reloads, and it comes from the cach (shows userName), which is bad.
+                    // (But one simple manual Browser.Refresh() by the user solves it).
+                    // >write to the user in a tooltip: "After Logout, Refresh the browser. That is the price of quick page load, when the user is logged in (99% of the time)"
+                    Console.WriteLine($"Adding CacheControl MaxAge to header '{httpContext.Request.Host} {httpContext.Request.Path}'");
+                    Utils.Logger.Info($"Adding CacheControl MaxAge to header '{httpContext.Request.Host} {httpContext.Request.Path}'");
+                    httpContext.Response.GetTypedHeaders().CacheControl =
+                        new Microsoft.Net.Http.Headers.CacheControlHeaderValue()
+                        {
+                            Public = true,
+                            MaxAge = TimeSpan.FromDays(8)
+                        };
+
+                    var mainIndexHtmlCachedReplaced = mainIndexHtmlCached[0] + WsUtils.GetRequestUser(httpContext) +
+                        @"&nbsp; <a href=""/UserAccount/logout"" title=""After Logout, Ctrl-Refresh the browser. That is the price of quick page load, when the user is logged in (99% of the time)"">Logout</a>"
+                        + mainIndexHtmlCached[2];
                     await httpContext.Response.WriteAsync(mainIndexHtmlCachedReplaced);
                     return;
                 }
