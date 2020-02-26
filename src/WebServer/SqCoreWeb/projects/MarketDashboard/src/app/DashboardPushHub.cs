@@ -70,7 +70,8 @@ namespace SqCoreWeb
             lock (g_clients)
                 g_clients.Add(client);
 
-            OnConnectedAsync_MktSummary();
+            OnConnectedAsync_MktHealth();
+            OnConnectedAsync_QuickfNews();
 
             var handshakeMsg = new HandshakeMessage() { Email = client.UserEmail };
             //Clients.Caller.SendCoreAsync("OnConnected", handshakeMsg);    // this sends an array of objects
@@ -94,7 +95,8 @@ namespace SqCoreWeb
                 }
             }
 
-            OnDisconnectedAsync_MktSummary(exception);
+            OnDisconnectedAsync_MktHealth(exception);
+            OnDisconnectedAsync_QuickfNews(exception);
 
             return base.OnDisconnectedAsync(exception);
         }

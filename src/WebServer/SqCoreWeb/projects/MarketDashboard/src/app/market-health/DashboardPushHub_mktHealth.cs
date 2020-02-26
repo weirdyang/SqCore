@@ -36,7 +36,7 @@ namespace SqCoreWeb
             new MktSummaryStock() { Ticker = "USO"}};
         static DateTime g_mktSummaryPreviousClosePrChecked = DateTime.MinValue; // UTC
 
-        public void OnConnectedAsync_MktSummary()
+        public void OnConnectedAsync_MktHealth()
         {
             lock (m_mktSummaryTimerLock)
             {
@@ -48,7 +48,7 @@ namespace SqCoreWeb
             }
         }
 
-        public void OnDisconnectedAsync_MktSummary(Exception exception)
+        public void OnDisconnectedAsync_MktHealth(Exception exception)
         {
             if (g_clients.Count == 0)
             {

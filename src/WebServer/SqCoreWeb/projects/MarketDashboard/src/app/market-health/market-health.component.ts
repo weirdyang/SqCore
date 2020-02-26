@@ -15,9 +15,9 @@ class MktSummaryStock {
 })
 export class MarketHealthComponent implements OnInit {
 
-  mktSummaryFullStr = '';
-
   @Input() _parentHubConnection?: HubConnection = undefined;    // this property will be input from above parent container
+
+  mktSummaryFullStr = '';
 
   constructor() { }
 
