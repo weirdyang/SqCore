@@ -1,2 +1,50 @@
-<p>quickfolio-news works!</p>
-{{testStr}}
+<!-- <p>quickfolio-news does work somehow 123!</p> -->
+
+<!-- <select name="sometext" size="3" width="100"> -->
+  
+  <!-- <div class="news-item" *ngFor="let news of generalNews"> -->
+    <!-- <option>
+      AAAPL -->
+      <!-- <a title="gfhjkaghjk" href="">AAPL</a> -->
+      <!-- {{news.Title}} -->
+      <!-- <div> -->
+      <!-- <span>{{ news.PublishDate}} </span> -->
+
+      <!-- <a [title] = "news.Summary" [href]="news.LinkUrl">
+        {{news.Title}} -->
+      <!-- </a> -->
+      <!-- <span>{{ news.DownloadTime}} </span> -->
+      <!-- </div> -->
+    <!-- </option> -->
+  <!-- </div> -->
+<!-- </select> -->
+<p>Common news downloaded from CNBC</p>
+<div style="overflow-y: scroll; height:80px;">
+  <ul>
+    <div class="news-item" *ngFor="let news of generalNews">
+      <li>
+        <span>{{ news.publishDate}} </span>
+
+        <a [title] = "news.summary" [href]="news.linkUrl">
+          {{news.title}}
+        </a>
+        <!-- <span>{{ news.DownloadTime}} </span> -->
+      </li>
+    </div>
+  </ul>
+</div>
+<p>Quickfolio specific news</p>
+<div style="overflow-y: scroll; height:80px;">
+  <ul>
+    <!-- <div class="news-item" *ngFor="let news of generalNews">
+      <li>
+        <span>{{ news.PublishDate}} </span>
+
+        <a [title] = "news.Summary" [href]="news.LinkUrl">
+          {{news.Title}}
+        </a>
+        <span>{{ news.DownloadTime}} </span>
+      </li>
+    </div> -->
+  </ul>
+</div>

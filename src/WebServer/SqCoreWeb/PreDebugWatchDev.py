@@ -67,7 +67,7 @@ print("SqBuild: User can break (Control-C, or closing CMD) here manually. Or Wai
 # Named pipes are nothing but mechanisms that allow IPC communication through the use of file descriptors associated with special files
 # Let's use the be basic socket, because it is platform-independent. (and it is not file based), and we can use it easily in C# interop to Python (even under Linux).
 serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # versus AF_LOCAL, reliable, bidirectional
-serversocket.bind(('localhost', 8389)) # bind the “server” socket to 'localhost'. On most platforms, this will take a shortcut around a couple of layers of network code and be quite a bit faster.
+serversocket.bind(('localhost', 8389)) # bind the server socket to 'localhost'. On most platforms, this will take a shortcut around a couple of layers of network code and be quite a bit faster.
 serversocket.listen(5) # become a server socket, maximum 5 connections, queue up as many as 5 connect requests (the normal max) before refusing outside connections. 
 while True:
     connection, address = serversocket.accept()
