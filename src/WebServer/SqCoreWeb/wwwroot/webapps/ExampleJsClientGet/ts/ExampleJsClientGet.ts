@@ -37,10 +37,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
 window.onload = function onLoadWindow() {
     console.log('SqCore: window.onload() BEGIN. All CSS, and images were downloaded.'); // images are loaded at this time, so their sizes are known
 
+    getDocElementById('testLoggerErrorId').onclick = raiseClientLoggerError;
+
     const logger: NGXLogger = new NGXLogger({ level: NgxLoggerLevel.INFO, serverLogLevel: NgxLoggerLevel.ERROR, serverLoggingUrl: '/JsLog'});
     logger.trace('A simple trace() test message to NGXLogger');
     logger.log('A simple log() test message to NGXLogger');
-    logger.error('A simple error() test message to NGXLogger');
 
     AsyncStartDownloadAndExecuteCbLater('/ExampleJsClientGet', (json: any) => {
         // const jsonToStr = JSON.stringify(json).substr(0, 60) + '...';
@@ -49,5 +50,12 @@ window.onload = function onLoadWindow() {
 
     console.log('SqCore: window.onload() END.');
 };
+
+function raiseClientLoggerError() {
+    getDocElementById('testLoggerErrorId').style.backgroundColor = 'red';
+
+    const logger: NGXLogger = new NGXLogger({ level: NgxLoggerLevel.INFO, serverLogLevel: NgxLoggerLevel.ERROR, serverLoggingUrl: '/JsLog'});
+    logger.error('A simple error() test message to NGXLogger');
+}
 
 console.log('SqCore: Script END');

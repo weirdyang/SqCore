@@ -19,7 +19,8 @@
     ],
     "lib": [
       "es2018",
-      "dom"
+      "dom",
+      "dom.iterable"  // otherwise in for-of on HTMLCollectionOf<Element>: error TS2488: Type 'HTMLCollectionOf<Element>' must have a '[Symbol.iterator]()' method
     ],
     "paths": {
       "sq-ng-common": [

@@ -79,7 +79,7 @@ namespace SqCoreWeb
                 {
                     gLogger.Error("Linux. See 'Allow non-root process to bind to port under 1024.txt'. If Dotnet.exe was updated, it lost privilaged port. Try 'whereis dotnet','sudo setcap 'cap_net_bind_service=+ep' /usr/share/dotnet/dotnet'.");
                 }
-                HealthMonitorMessage.SendAsync($"Exception in SqCoreWebsite.C#.MainThread. Exception: '{ e.ToStringWithShortenedStackTrace(1200)}'", HealthMonitorMessageID.SqCoreWebError).GetAwaiter().GetResult();
+                HealthMonitorMessage.SendAsync($"Exception in SqCoreWebsite.C#.MainThread. Exception: '{ e.ToStringWithShortenedStackTrace(1200)}'", HealthMonitorMessageID.SqCoreWebCsError).GetAwaiter().GetResult();
             }
 
             gLogger.Info("****** Main() END");
@@ -166,7 +166,7 @@ namespace SqCoreWeb
         internal static void StrongAssertMessageSendingEventHandler(StrongAssertMessage p_msg)
         {
             gLogger.Info("StrongAssertEmailSendingEventHandler()");
-            HealthMonitorMessage.SendAsync($"Msg from SqCore.Website.C#.StrongAssert. StrongAssert Warning (if Severity is NoException, it is just a mild Warning. If Severity is ThrowException, that exception triggers a separate message to HealthMonitor as an Error). Severity: {p_msg.Severity}, Message: { p_msg.Message}, StackTrace: { p_msg.StackTrace.ToStringWithShortenedStackTrace(800)}", HealthMonitorMessageID.SqCoreWebError).FireParallelAndForgetAndLogErrorTask();
+            HealthMonitorMessage.SendAsync($"Msg from SqCore.Website.C#.StrongAssert. StrongAssert Warning (if Severity is NoException, it is just a mild Warning. If Severity is ThrowException, that exception triggers a separate message to HealthMonitor as an Error). Severity: {p_msg.Severity}, Message: { p_msg.Message}, StackTrace: { p_msg.StackTrace.ToStringWithShortenedStackTrace(800)}", HealthMonitorMessageID.SqCoreWebCsError).FireParallelAndForgetAndLogErrorTask();
         }
 
         // Called by the GC.FinalizerThread. Occurs when a faulted task's unobserved exception is about to trigger exception which, by default, would terminate the process.
@@ -195,7 +195,7 @@ namespace SqCoreWeb
             }
 
             if (isSendable)
-                HealthMonitorMessage.SendAsync(msg, HealthMonitorMessageID.SqCoreWebError).GetAwaiter().GetResult();
+                HealthMonitorMessage.SendAsync(msg, HealthMonitorMessageID.SqCoreWebCsError).GetAwaiter().GetResult();
             else 
                 gLogger.Warn(msg);
             e.SetObserved();        //  preventing it from triggering exception escalation policy which, by default, terminates the process.

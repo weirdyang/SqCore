@@ -47,9 +47,13 @@ p {
   margin: 1rem;
   display: flex;
   align-items: center;
-  background-color: #232f3e;
   color: white;
   font-weight: 600;
+  background-image: url('~/assets/images/glass.theme.brightness-80.qlt95.webp');
+  background-color: #232f3e; /* Used if the image is unavailable */
+  background-position: center; /* Center the image */
+  background-repeat: no-repeat; /* Do not repeat the image */
+  background-size: 100% 100%; /* Resize the background image to cover the entire container */
 }
 
 .toolbar img {

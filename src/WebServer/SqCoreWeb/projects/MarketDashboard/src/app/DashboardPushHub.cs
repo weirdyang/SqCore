@@ -111,7 +111,7 @@ namespace SqCoreWeb
             {
                 p_sb.Append($"#WebSocket Clients: {g_clients.Count}: {String.Join(",", g_clients.Select(r => "'" + r.UserEmail + "'"))}<br>");
             }
-            p_sb.Append($"mktSummaryTimerRunning: {m_mktSummaryTimerRunning}<br>");
+            p_sb.Append($"mktSummaryTimerRunning: {m_rtMktSummaryTimerRunning}<br>");
         }
     }
 }
