@@ -10,10 +10,12 @@ using System.Text;
 using System.Net;
 using YahooFinanceAPI;
 using YahooFinanceAPI.Models;
+using System.Diagnostics;
 
 namespace SqCoreWeb
 {
     class RtMktSummaryStock {
+        public uint SecID { get; set; } = 0; // invalid value is best to be 0. If it is Uint32.MaxValue is the invalid, then problems if extending to Uint64
         public String Ticker { get; set; } = String.Empty;
         public double PreviousCloseIex { get; set; } = -100.0;     // obtained only once per day
         public double LastPriceIex { get; set; } = -100.0;     // real-time last price
@@ -22,33 +24,42 @@ namespace SqCoreWeb
         public List<HistoryPrice> SplitAdjHistory { get; set; } = new List<HistoryPrice>(); // from YF
     }
 
-    class RtMktSummaryStockToClient     // this is sent usually just once per day, or when the PeriodStartDate changes at the client
+    class RtMktSummaryPrevClose     // this is sent usually just once per day
     {
+        public uint SecID { get; set; } = 0;
         public String Ticker { get; set; } = String.Empty;
-        public double LastPrice { get; set; } = -100.0;     // real-time last price
-        public double PreviousClose { get; set; } = -100.0;     // obtained only once per day
-        public double PreviousCloseIex { get; set; } = -100.0;     // obtained only once per day
+        public double PrevClose { get; set; } = -100.0;
+        public double PrevCloseIex { get; set; } = -100.0;
+    }
 
-        // public DateTime PeriodStartDate { get; set; } = DateTime.MinValue;
-        // public double PeriodOpen { get; set; } = -100.0;
-        // public double PeriodHigh { get; set; } = -100.0;
-        // public double PeriodLow { get; set; } = -100.0;
+    class RtMktSummaryRtQuote
+    {
+        public uint SecID { get; set; } = 0;
+        public String Ticker { get; set; } = String.Empty;
+        public double Last { get; set; } = -100.0;     // real-time last price
+    }
+
+    class RtMktSummaryPeriodStat     // this is sent usually just once per day, OR when the PeriodStartDate changes at the client
+    {
+        public uint SecID { get; set; } = 0;
+        public String Ticker { get; set; } = String.Empty;
+        public DateTime PeriodStart { get; set; } = DateTime.MinValue;
+        public double PeriodOpen { get; set; } = -100.0;
+        public double PeriodHigh { get; set; } = -100.0;
+        public double PeriodLow { get; set; } = -100.0;
     }
 
 
-    class RtMktSummaryStockToClient2  // After first record is sent, later only send the real-time Lastprice
-    {
-        public String Ticker { get; set; } = String.Empty;
-        public double LastPrice { get; set; } = -100.0;     // real-time last price
-    }
-
+    // The knowledge 'WHEN to send what' should be programmed on the server. When server senses that there is an update, then it broadcast to clients. 
+    // Do not implement the 'intelligence' of WHEN to change data on the client. It can be too complicated, like knowing if there was a holiday, a half-trading day, etc. 
+    // Clients should be slim programmed. They should only care, that IF they receive a new data, then Refresh.
     public partial class DashboardPushHub : Hub
     {
         static Timer m_rtMktSummaryTimer = new System.Threading.Timer(new TimerCallback(RtMktSummaryTimer_Elapsed), null, TimeSpan.FromMilliseconds(-1.0), TimeSpan.FromMilliseconds(-1.0));
         static bool m_rtMktSummaryTimerRunning = false;
         static object m_rtMktSummaryTimerLock = new Object();
 
-        static int m_rtMktSummaryTimerFrequencyMs = 2000;    // as a demo go with 2sec, later change it to 5sec, do decrease server load.
+        static int m_rtMktSummaryTimerFrequencyMs = 3000;    // as a demo go with 3sec, later change it to 5sec, do decrease server load.
 
         static List<RtMktSummaryStock> g_mktSummaryStocks = new List<RtMktSummaryStock>() {
             new RtMktSummaryStock() { Ticker = "QQQ"},
@@ -66,10 +77,46 @@ namespace SqCoreWeb
             {
                 if (!m_rtMktSummaryTimerRunning)
                 {
+                    Utils.Logger.Info("OnConnectedAsync_MktHealth(). Starting m_rtMktSummaryTimer.");
                     m_rtMktSummaryTimer.Change(TimeSpan.FromMilliseconds(0), TimeSpan.FromMilliseconds(-1.0));    // runs only once. To avoid that it runs parallel, if first one doesn't finish
                     m_rtMktSummaryTimerRunning = true;
                 }
             }
+
+            List<string> failedDownloads = new List<string>();
+            DateTime now = DateTime.UtcNow;
+            DateTime utcMorningCutoffTime = new DateTime(now.Year, now.Month, now.Day, 8, 0, 0);
+            TimeSpan spanNowFromCutoff = now - utcMorningCutoffTime;
+            TimeSpan spanCheckedFromCutoff = g_rtMktSummaryPreviousClosePrChecked - utcMorningCutoffTime;
+            if (((now - g_rtMktSummaryPreviousClosePrChecked) > TimeSpan.FromHours(24)) || // either data is stale: older than 24h (if it was not run for a week)
+                (spanNowFromCutoff > TimeSpan.Zero && spanCheckedFromCutoff < TimeSpan.Zero))
+            {     // or if now is after 8:00, but checking was done before 8:00
+                Utils.Logger.Info("OnConnectedAsync_MktHealth(): DownloadPreviousClose ");
+
+                Stopwatch watch = Stopwatch.StartNew();
+                DownloadPreviousCloseIex(g_mktSummaryStocks, failedDownloads);  // 500ms. These can run in parallel, but IEX is probably not needed
+                Utils.Logger.ProfiledInfo("DownloadPreviousCloseIex", watch);
+                DownloadHistoricalYF(g_mktSummaryStocks, failedDownloads);     // 1900ms
+                Utils.Logger.ProfiledInfo("DownloadHistoricalYF", watch);    // both together takes 2265ms
+
+                g_rtMktSummaryPreviousClosePrChecked = DateTime.UtcNow;
+            }
+
+            IEnumerable<RtMktSummaryPrevClose> rtMktSummaryToClient = g_mktSummaryStocks.Select(r =>
+                {
+                    double yfPreviousClose = r.SplitAdjHistory[^1].AdjClose;    // last item with C# 8.0, System.Index
+                    var rtStock = new RtMktSummaryPrevClose()
+                    {
+                        SecID = r.SecID,
+                        Ticker = r.Ticker,
+                        PrevClose = yfPreviousClose,
+                        PrevCloseIex = r.PreviousCloseIex
+                    };
+                    return rtStock;
+                });
+
+            Utils.Logger.Info("Clients.All.SendAsync: rtMktSummary_prevClose");
+            DashboardPushHubKestrelBckgrndSrv.HubContext?.Clients.All.SendAsync("rtMktSummary_prevClose", rtMktSummaryToClient);
         }
 
         public void OnDisconnectedAsync_MktHealth(Exception exception)
@@ -91,41 +138,28 @@ namespace SqCoreWeb
         {
             try
             {
-                Utils.Logger.Info("RtMktSummaryTimer_Elapsed().");
+                Utils.Logger.Info("RtMktSummaryTimer_Elapsed(). BEGIN");
                 if (!m_rtMktSummaryTimerRunning)
                     return; // if it was disabled by another thread in the meantime, we should not waste resources to execute this.
 
-                // Get data...
+                Stopwatch watch = Stopwatch.StartNew();
                 List<string> failedDownloads = new List<string>();
-                DateTime now = DateTime.UtcNow;
-                DateTime utcMorningCutoffTime = new DateTime(now.Year, now.Month, now.Day, 8, 0, 0);
-                TimeSpan spanNowFromCutoff = now - utcMorningCutoffTime;
-                TimeSpan spanCheckedFromCutoff = g_rtMktSummaryPreviousClosePrChecked - utcMorningCutoffTime;
-                if (((now - g_rtMktSummaryPreviousClosePrChecked) > TimeSpan.FromHours(24)) || // either data is stale: older than 24h (if it was not run for a week)
-                    (spanNowFromCutoff > TimeSpan.Zero && spanCheckedFromCutoff < TimeSpan.Zero)) {     // or if now is after 8:00, but checking was done before 8:00
-                    Utils.Logger.Info("RtMktSummaryTimer_Elapsed() ");
-                    DownloadPreviousCloseIex(g_mktSummaryStocks, failedDownloads);
-                    DownloadHistoricalYF(g_mktSummaryStocks, failedDownloads);
-                    
-                    g_rtMktSummaryPreviousClosePrChecked = DateTime.UtcNow;
-                }
+                DownloadLastPriceIex(g_mktSummaryStocks, failedDownloads);
+                Utils.Logger.ProfiledInfo("DownloadLastPriceIex", watch);
 
-                DownloadLastPrice(g_mktSummaryStocks, failedDownloads);
-
-                IEnumerable<RtMktSummaryStockToClient> rtMktSummaryToClient = g_mktSummaryStocks.Select(r =>
+                IEnumerable<RtMktSummaryRtQuote> rtMktSummaryToClient = g_mktSummaryStocks.Select(r =>
                 {
-                    double yfPreviousClose = r.SplitAdjHistory[^1].AdjClose;    // last item with C# 8.0, System.Index
-                    var rtStock = new RtMktSummaryStockToClient()
+                    var rtStock = new RtMktSummaryRtQuote()
                     {
+                        SecID = r.SecID,
                         Ticker = r.Ticker,
-                        LastPrice = r.LastPriceIex,
-                        PreviousClose = yfPreviousClose,
-                        PreviousCloseIex = r.PreviousCloseIex
+                        Last = r.LastPriceIex,
                     };
                     return rtStock;
                 });
 
-                DashboardPushHubKestrelBckgrndSrv.HubContext?.Clients.All.SendAsync("rtMktSummaryUpdate", rtMktSummaryToClient);
+                Utils.Logger.Info("Clients.All.SendAsync: rtMktSummary_rtQuote");
+                DashboardPushHubKestrelBckgrndSrv.HubContext?.Clients.All.SendAsync("rtMktSummary_rtQuote", rtMktSummaryToClient);
 
                 lock (m_rtMktSummaryTimerLock)
                 {
@@ -134,6 +168,7 @@ namespace SqCoreWeb
                         m_rtMktSummaryTimer.Change(TimeSpan.FromMilliseconds(m_rtMktSummaryTimerFrequencyMs), TimeSpan.FromMilliseconds(-1.0));    // runs only once. To avoid that it runs parallel, if first one doesn't finish
                     }
                 }
+                Utils.Logger.Info("RtMktSummaryTimer_Elapsed(). END");
             }
             catch (Exception e)
             {
@@ -142,7 +177,7 @@ namespace SqCoreWeb
             }
         }
 
-        static void DownloadPreviousCloseIex(List<RtMktSummaryStock> p_stocks, /* DateOnly p_targetDate, */ List<string> p_failedDownloads)
+        static void DownloadPreviousCloseIex(List<RtMktSummaryStock> p_stocks, /* DateOnly p_targetDate, */ List<string> p_failedDownloads) // takes 500ms
         {
             if (String.IsNullOrEmpty(Utils.Configuration["iexapisToken"])) {
                 Utils.Logger.Error("The 'iexapisToken' key is missing from SensitiveData file.");
@@ -155,12 +190,29 @@ namespace SqCoreWeb
             using (var reader = new System.IO.StreamReader(response.GetResponseStream(), ASCIIEncoding.ASCII))
             {
                 string responseText = reader.ReadToEnd();
-                Utils.Logger.Info("DownloadPreviousClose() str = '{0}'", responseText);
-                ExtractAttribute(responseText, "previousClose", p_stocks);
+                Utils.Logger.Info("DownloadPreviousCloseIex() str = '{0}'", responseText);
+                ExtractAttributeIex(responseText, "previousClose", p_stocks);
             }
             response.Close();
         }
 
+
+// ***** Plan: Historical and RT quote data
+// - the Website, once a day, gets historical price data from YF. Get all history.
+// - during market-hours use IEX 'top', because it is free (and YF might ban our IP if we query too many times, IB has rate limit per minute, and VBroker need that bandwidth)
+// - pre/postmarket, also use YF, but with very-very low frequency. Once per every 5 sec. (only if any user is connected). We don't need to use IB Markprice, because YF pre-market is very quickly available at 9:00, 5.5h before open.
+// - code should know whether it is pre/postmarket hours, so we have to implement the same logic as in VBroker. (with the holiday days, and DB).
+// - Call AfterMarket = PostMarket, because shorter and tradingview.com also calls "post-market" (YF calls: After hours)
+
+// ***************************************************
+// YF, IB, IEX preMarket, postMarket behaviour
+// >UTC-7:50: YF:  no pre-market price. IB: there is no ask-bid, but there is an indicative value somehow, because Dashboard bar shows QQQ: 216.13 (+0.25%). I checked, that is the 'Mark price'. IB estimates that (probably for pre-market margin calls). YF and others will never have that, because it is sophisticated.
+// >UTC-8:50: YF:  no pre-market price. IB: there is no ask-bid, but previously good indicative value went back to PreviousClose, so ChgPct = 0%, so in PreMarket that far away from Open, this MarkPrice is not very useful. IB did reset the price, because preparing for pre-market open in 10min.
+// >UTC-9:10: YF (started at 9:00, there is premarket price: "Pre-Market: 4:03AM EST"), IB: There is Ask-bid spread. This is 5.5h before market open. That should be enough. So, I don't need IB indicative MarkPrice. IB AccInfo website is also good, showing QQQ change. IEX: IEX shows some false data, which is not yesterday close, but probably last day postMarket lastPrice sometime, which is not useful. So, in pre-market this IEX 'top' cannot be used. But maybe IEX cloud can be used in pre-market. Investigate.
+// >UTC-0:50: (at night).
+
+// ***************************************************
+// IEX specific only
 // https://github.com/iexg/IEX-API
 // https://cloud.iexapis.com/stable/stock/market/batch?symbols=QQQ&types=quote&token=<...>  takes about 250ms, so it is quite fast.
 // >08:20: "previousClose":215.37, !!! that is wrong. So IEX, next day at 8:20, it still gives back PreviousClose as 2 days ago. Wrong., ""latestPrice":216.48, "latestSource":"Close","latestUpdate":1582750800386," is the correct one, "iexRealtimePrice":216.44 is the 1 second earlier.
@@ -182,17 +234,14 @@ namespace SqCoreWeb
 // >Use /stock/aapl/quote, this will return extended hours data (8AM - 5PM), "on Feb 26, 2019"
 // "I have built a pretty solid scanner and research platform on IEX, but for live trading IEX is obviously not suitable (yet?). I hope one day IEX will provide truly real-time data. Otherwise, I am pretty happy with IEX so far. Been using it for 2 years now/"
 // "We offer true real time IEX trades and quotes. IEX is the only exchange that provides free market data."
+// >"// Paid account: $1 per 1 million messages/mo: 1000000/30/20/60 = 28 messages per minute." But maybe it is infinite. Just every 1M messages is $1. The next 1M messages is another $1. Etc. that is likely. Good. So, we don't have to throttle it, just be careful than only download data if it is needed.
 // --------------------------------------------------------------
 // ------------------ Problems of IEX:
 // - pre/Postmarket only: 8am-9:30am and 4pm-5pm, when Yahoo has it from 9:00 UTC. So, it is not enough.
 // - cut-off time is too late. Until 14:30 asking PreviousDay, it still gives the price 2 days ago. When YF will have premarket data at 9:00. Although "latestPrice" can be used as close.
 // - the only good thing: in market-hours, RT prices are free, and very quick to obtain and batched.
 
-// - So, I don't see any other way, but Website (once a day, should get historical price data for these quotes). Get all history.
-// - pre/postmarket, also use YF, but with very low frequency. Once per every 5 sec. (only if any user is connected)
-// - code should know whether it is pre/postmarket hours, so we have to implement the same logic as in VBroker. (with the holiday days, and DB).
-
-        static void DownloadLastPrice(List<RtMktSummaryStock> p_stocks, List<string> p_failedDownloads)
+        static void DownloadLastPriceIex(List<RtMktSummaryStock> p_stocks, List<string> p_failedDownloads)  // takes 450-540ms from WinPC
         {
             if (!Request_api_iextrading_com(string.Format("https://api.iextrading.com/1.0/tops?symbols={0}", String.Join(", ", p_stocks.Select(r => r.Ticker))), out HttpWebResponse? response) || (response == null))
                 return;
@@ -200,12 +249,13 @@ namespace SqCoreWeb
             using (var reader = new System.IO.StreamReader(response.GetResponseStream(), ASCIIEncoding.ASCII))
             {
                 string responseText = reader.ReadToEnd();
-                ExtractAttribute(responseText, "lastSalePrice", p_stocks);
+                Utils.Logger.Info("DownloadLastPriceIex() str = '{0}'", responseText);
+                ExtractAttributeIex(responseText, "lastSalePrice", p_stocks);
             }
             response.Close();
         }
 
-        private static void ExtractAttribute(string responseText, string p_attribute, List<RtMktSummaryStock> p_stocks)
+        private static void ExtractAttributeIex(string responseText, string p_attribute, List<RtMktSummaryStock> p_stocks)
         {
             int iStr = 0;   // this is the fastest. With IndexOf(). Not using RegEx, which is slow.
             while (iStr < responseText.Length)
@@ -296,7 +346,7 @@ namespace SqCoreWeb
         }
 
 
-        static void DownloadHistoricalYF(List<RtMktSummaryStock> p_stocks, /* DateOnly p_targetDate, */ List<string> p_failedDownloads)
+        static void DownloadHistoricalYF(List<RtMktSummaryStock> p_stocks, /* DateOnly p_targetDate, */ List<string> p_failedDownloads) // takes 1900ms
         {
             // 2. Obtain Token.Cookie and Crumb (maybe from cache until 12 hours) that is needed for Y!F API from 2017-05
             // after 2017-05: https://query1.finance.yahoo.com/v7/finance/download/VXX?period1=1492941064&period2=1495533064&interval=1d&events=history&crumb=VBSMphmA5gp

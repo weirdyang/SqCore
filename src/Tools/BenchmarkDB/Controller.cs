@@ -66,8 +66,8 @@ namespace BenchmarkDB
             conn.Open();
             watch0.Stop();
             Console.WriteLine($"Connection takes {watch0.Elapsed.TotalMilliseconds:0.00}ms");   // first connection: 360-392ms, later: 0, so connections are cached
-            gLogger.GProfiledInfoToConsole("CONNECTION");
-            gLogger.ProfiledInfoToConsole("CONNECTION", watch);
+            gLogger.GProfiledInfo("CONNECTION", true);
+            gLogger.ProfiledInfo("CONNECTION", watch, true);
 
             // Insert some data
             Stopwatch watch1 = Stopwatch.StartNew();
@@ -80,8 +80,8 @@ namespace BenchmarkDB
             }
             watch1.Stop();
             Console.WriteLine($"INSERT takes {watch1.Elapsed.TotalMilliseconds:0.00}ms");    // "INSERT takes 27,33,30,37,29,30 ms". If I do it from pgAdmin, it says: 50msec
-            gLogger.GProfiledInfoToConsole("INSERT");
-            gLogger.ProfiledInfoToConsole("INSERT", watch);
+            gLogger.GProfiledInfo("INSERT", true);
+            gLogger.ProfiledInfo("INSERT", watch, true);
 
             // Retrieve all rows
             Stopwatch watch2 = Stopwatch.StartNew();
@@ -91,8 +91,8 @@ namespace BenchmarkDB
                     Console.WriteLine(reader.GetString(0));
             watch2.Stop();
             Console.WriteLine($"SELECT takes {watch2.Elapsed.TotalMilliseconds:0.00}ms");    // "SELECT takes 22,29,32,37,43,47,45 ms", If I do it from pgAdmin, it says: 64msec
-            gLogger.GProfiledInfoToConsole("SELECT");
-            gLogger.ProfiledInfoToConsole("SELECT", watch);
+            gLogger.GProfiledInfo("SELECT", true);
+            gLogger.ProfiledInfo("SELECT", watch, true);
 
             // Delete inserted data
             Stopwatch watch3 = Stopwatch.StartNew();
@@ -106,8 +106,8 @@ namespace BenchmarkDB
             watch3.Stop();
             Console.WriteLine($"DELETE takes {watch3.Elapsed.TotalMilliseconds:0.00}ms");    // "INSERT takes 27,33,30,37,29,30 ms". If I do it from pgAdmin, it says: 50msec
                                                                                              // pgAdmin running on local webserver reports worse numbers. maybe because pgAdmin first access local webserver + implemented badly. And that overhead is also calculated.
-            gLogger.GProfiledInfoToConsole("DELETE");
-            gLogger.ProfiledInfoToConsole("DELETE", watch);
+            gLogger.GProfiledInfo("DELETE", true);
+            gLogger.ProfiledInfo("DELETE", watch, true);
         }
 
 

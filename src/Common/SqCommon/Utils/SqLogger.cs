@@ -19,20 +19,15 @@ namespace SqCommon
     // because of all multi-threads use the same lastTime. But it can be solved by looking at the CurrentThreadId, and having a Dictionary<threadId, lastTime>.
     public static class SqLogger
     {
-
-        public static void ProfiledInfoToConsole(this NLog.Logger logger, string message, Stopwatch watch)
-        {
-            logger.ProfiledInfo(message, watch, true);
-        }
-
         // this works in multithreaded environment, but a local instance of watch is always needed. It profiles inside one function, not  between different callstack levels
-        public static void ProfiledInfo(this NLog.Logger logger, string message, Stopwatch watch, bool isToConsole = false)  // Profiled info can go silently to log files
+        public static void ProfiledInfo(this NLog.Logger logger, string message, Stopwatch watch, bool forceConsoleTarget = false)  // Profiled info can go silently to log files
         {
             watch.Stop();
             var msgEx = $"{message} takes {watch.Elapsed.TotalMilliseconds:f3}ms";
 
             logger.Info(msgEx);
-            if (isToConsole)
+
+            if (forceConsoleTarget)
                 Console.WriteLine(msgEx);
 
             watch.Restart();
@@ -48,21 +43,16 @@ namespace SqCommon
         {
             g_lastTimeStamp = DateTime.Now;
         }
-        public static void GProfiledInfoToConsole(this NLog.Logger logger, string message)
-        {
-            logger.GProfiledInfo(message, true);
-        }
 
-
-
-        public static void GProfiledInfo(this NLog.Logger logger, string message, bool isToConsole = false)  // Profiled info can go silently to log files
+        public static void GProfiledInfo(this NLog.Logger logger, string message, bool forceConsoleTarget = false)  // Profiled info can go silently to log files
         {
             var lastTimeStamp = g_lastTimeStamp ?? DateTime.Now;
             var elapsedTime = DateTime.Now - lastTimeStamp;
             var msgEx = $"{message} takes {elapsedTime.TotalMilliseconds:f3}ms";
 
             logger.Info(msgEx);
-            if (isToConsole)
+
+            if (forceConsoleTarget)
                 Console.WriteLine(msgEx);
 
             g_lastTimeStamp = DateTime.Now;

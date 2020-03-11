@@ -24,6 +24,12 @@
 		"html.format.wrapAttributes": "auto",  // Nested HTML elements are always wrapped. wrap 'attributes' only when line length is exceeded
 		"html.format.wrapLineLength": 0,	// disable max chars per line
 		"workbench.editor.limit.enabled": true,
-		"workbench.editor.limit.value": 8
+		"workbench.editor.limit.value": 8,
+		"workbench.colorCustomizations": {
+			"activityBar.activeBorder": "#8A2BE2",
+			"activityBar.activeBackground": "#061b5f",
+			"minimap.background": "#00000055"
+		},
+		"timeline.showView": true,
 	}
 }
