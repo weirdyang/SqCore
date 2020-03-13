@@ -19,13 +19,13 @@
   <!-- </div> -->
 <!-- </select> -->
 <p>Common news downloaded from CNBC</p>
-<div style="overflow-y: scroll; height:80px;">
+<div style="overflow-y: scroll; height:160px;">
   <ul>
     <div class="news-item" *ngFor="let news of generalNews">
       <li>
-        <span>{{ news.publishDate}} </span>
+        <span>{{ news.publishDate | date:'yyyy-MM-dd hh:mm'}} </span>
 
-        <a [title] = "news.summary" [href]="news.linkUrl">
+        <a [title]="news.summary" [href]="news.linkUrl">
           {{news.title}}
         </a>
         <!-- <span>{{ news.DownloadTime}} </span> -->
@@ -34,17 +34,18 @@
   </ul>
 </div>
 <p>Quickfolio specific news</p>
-<div style="overflow-y: scroll; height:80px;">
+<div style="overflow-y: scroll; height:400px;">
   <ul>
-    <!-- <div class="news-item" *ngFor="let news of generalNews">
+    <div class="news-item" *ngFor="let news of stockNews">
       <li>
-        <span>{{ news.PublishDate}} </span>
+        <span>{{ news.publishDate | date:'yyyy-MM-dd hh:mm'}} </span>
+        <span>{{ news.ticker}} </span>
 
-        <a [title] = "news.Summary" [href]="news.LinkUrl">
-          {{news.Title}}
+        <a [title] = "news.summary" [href]="news.linkUrl">
+          {{news.title}}
         </a>
-        <span>{{ news.DownloadTime}} </span>
+        <!-- <span>{{ news.DownloadTime}} </span> -->
       </li>
-    </div> -->
+    </div>
   </ul>
 </div>
