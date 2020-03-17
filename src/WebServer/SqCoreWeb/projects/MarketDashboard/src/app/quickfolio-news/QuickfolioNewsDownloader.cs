@@ -36,6 +36,8 @@ namespace SqCoreWeb
         Dictionary<int, List<NewsItem>> m_newsMemory = new Dictionary<int, List<NewsItem>>();
         Random m_random = new Random(DateTime.Now.Millisecond);
         KeyValuePair<int, int> m_sleepBetweenDnsMs = new KeyValuePair<int, int>(2000, 1000);     // <fix, random>
+        string[] m_stockTickers = { "AAPL", "ADBE", "AMZN", "BABA", "CRM", "FB", "GOOGL", "MA", "MSFT", "NVDA", "PYPL", "QCOM", "V" };
+
         internal List<NewsItem> GetCommonNews()
         {
             string rssFeedUrl = string.Format(@"https://www.cnbc.com/id/100003114/device/rss/rss.html");
@@ -55,11 +57,15 @@ namespace SqCoreWeb
             return m_newsMemory[0];
         }
 
+        internal List<string> GetStockTickers()
+        {
+            return new List<string> {"All assets"}.Union(m_stockTickers).ToList();
+        }
+
         internal List<NewsItem> GetStockNews()
         {
-            string[] stocks = { "AAPL", "ADBE", "AMZN", "BABA", "CRM", "FB", "GOOGL", "MA", "MSFT", "NVDA", "PYPL", "QCOM", "V" };
             List<NewsItem> foundNewsItems = new List<NewsItem>();
-            foreach (string ticker in stocks)
+            foreach (string ticker in m_stockTickers)
             {
                 string rssFeedUrl = string.Format(@"https://feeds.finance.yahoo.com/rss/2.0/headline?s={0}&region=US&lang=en-US", ticker);
                 foundNewsItems.AddRange(ReadRSS(rssFeedUrl, NewsSource.YahooRSS, ticker));

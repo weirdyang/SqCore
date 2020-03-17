@@ -14,7 +14,7 @@ namespace SqCoreWeb
     
     public partial class DashboardPushHub : Hub
     {
-        const int m_newsReloadInterval = 1 * 10 * 1000; // 5 minutes in milliseconds 
+        const int m_newsReloadInterval = 5 * 60 * 1000; // 5 minutes in milliseconds 
         Timer m_newsReloadTimer;
         QuickfolioNewsDownloader m_newsDownloader = new QuickfolioNewsDownloader();
 
@@ -26,15 +26,16 @@ namespace SqCoreWeb
         {
             // don't do a long process here. Start big things in a separate thread. One way is in 'DashboardPushHub_mktHealth.cs'
             // DashboardPushHubKestrelBckgrndSrv.HubContext?.Clients.All.SendAsync("quickfNewsOnConnected", "This message is to Laci, :) from the Webserver backend.");
+            DashboardPushHubKestrelBckgrndSrv.HubContext?.Clients.All.SendAsync("stockTickerList", m_newsDownloader.GetStockTickers());
             TriggerQuickfolioNewsDownloader();
         }
 
         private void TriggerQuickfolioNewsDownloader()
         {
             List<NewsItem> commonNews = m_newsDownloader.GetCommonNews();
-            DashboardPushHubKestrelBckgrndSrv.HubContext?.Clients.All.SendAsync("quickfNewsOnConnected", commonNews);
+            DashboardPushHubKestrelBckgrndSrv.HubContext?.Clients.All.SendAsync("quickfNewsCommonNewsUpdated", commonNews);
             List<NewsItem> stockNews = m_newsDownloader.GetStockNews();
-            DashboardPushHubKestrelBckgrndSrv.HubContext?.Clients.All.SendAsync("quickfNewsOnConnectedStocks", stockNews);
+            DashboardPushHubKestrelBckgrndSrv.HubContext?.Clients.All.SendAsync("quickfNewsStockNewsUpdated", stockNews);
         }
 
         public void OnDisconnectedAsync_QuickfNews(Exception exception)

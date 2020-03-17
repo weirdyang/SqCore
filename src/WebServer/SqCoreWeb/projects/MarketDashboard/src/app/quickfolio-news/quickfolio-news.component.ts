@@ -20,6 +20,8 @@ export class QuickfolioNewsComponent implements OnInit {
   @Input() _parentHubConnection?: HubConnection = undefined; // this property will be input from above parent container
 
   public request: XMLHttpRequest = new XMLHttpRequest();
+  selectedTicker = '';
+  stockTickers: string[] = [];
   stockNews: NewsItem[] = [];
   generalNews: NewsItem[] = [
     // {
@@ -65,22 +67,85 @@ export class QuickfolioNewsComponent implements OnInit {
   constructor() {
   }
 
+  public menuClick(event, ticker: string): void {
+    // console.log('menu clicked xx' + ticker + 'xx');
+    if (ticker === 'All assets') {
+      this.selectedTicker = '';
+    } else {
+      this.selectedTicker = ticker;
+    }
+    this.UpdateNewsVisibility();
+  }
+
+  UpdateNewsVisibility() {
+    const menuElements = document.querySelectorAll('.menuElement');
+    for (const menuElement of menuElements) {
+      // console.log('menu element found xx' + menuElement.innerHTML + 'xx');
+      // menuElement.className += ' active';
+      let ticker = this.selectedTicker;
+      if (ticker === '') {
+        ticker = 'All assets';
+      }
+      menuElement.className = 'menuElement';
+      if (menuElement.innerHTML === ticker) {
+        // console.log('menu element found ' + ticker);
+        menuElement.className += ' active';
+      }
+    }
+    const newsElements = document.querySelectorAll('.newsItemStock');
+    // console.log('newsItems count = ' + newsElements.length);
+    for (const newsElement of newsElements) {
+      // console.log('news ' + newsElement);
+      const tickerSpan = newsElement.getElementsByClassName('newsTicker')[0];
+      // console.log('news ticker count = ' + tickerSpan.innerHTML);
+      if (this.TickerIsPresent(tickerSpan.innerHTML, this.selectedTicker)) {
+        newsElement.className = 'newsItemStock';
+      } else {
+        newsElement.className += ' inVisible';
+      }
+    }
+  }
+
+  TickerIsPresent(tickersConcatenated: string, selectedTicker: string): boolean {
+    if (selectedTicker === '') {
+      return true;
+    }
+    const tickers = tickersConcatenated.split(',');
+    let foundSame = false;
+    tickers.forEach(existingTicker => {
+      if (existingTicker.trim() === selectedTicker) {
+        foundSame = true;
+      }
+    });
+    return foundSame;
+  }
+
   ngOnInit(): void {
     if (this._parentHubConnection != null) {
       this._parentHubConnection.on(
-        'quickfNewsOnConnected',
+        'quickfNewsCommonNewsUpdated',
         (message: NewsItem[]) => {
           this.extractNewsList(message, this.generalNews);
         }
       );
       this._parentHubConnection.on(
-        'quickfNewsOnConnectedStocks',
+        'stockTickerList',
+        (message: string[]) => {
+          this.stockTickers = message;
+          console.log('Init menu');
+          this.menuClick(null, 'All assets');
+        }
+      );
+      this._parentHubConnection.on(
+        'quickfNewsStockNewsUpdated',
         (message: NewsItem[]) => {
           this.extractNewsList(message, this.stockNews);
+          this.UpdateNewsVisibility();
         }
       );
     }
   }
+
 
   extractNewsList(message: NewsItem[], newsList: NewsItem[]): void {
     // console.log('new common message list ' + message.length);
