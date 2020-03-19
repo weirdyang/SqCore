@@ -1,5 +1,5 @@
 <p>Common news downloaded from CNBC</p>
-<div style="overflow-y: scroll; height:160px;">
+<div style="overflow-y: auto; height:160px;">
   <ul>
     <div class="newsItemCommon" *ngFor="let news of generalNews">
       <li>
@@ -15,17 +15,17 @@
 </div>
 <p>Quickfolio specific news</p>
 <div>
-  <div style="width: 100px; float:left">
+  <div style="width: 100px; height: 602px; float:left; overflow-y: auto;">
     <div class="vertical-menu" *ngFor="let ticker of stockTickers">
       <a class="menuElement" href="#" (click)="menuClick($event, ticker)">{{ ticker }}</a>
     </div>
   </div>
 
-  <div style="width: 860px; height: 602px; float:right">
-    <div style="overflow-y: scroll; height:602px;">
+  <div style="width: 600px; height: 602px; float:left; overflow-y: auto;">
+    <!-- <div style=" height:602px;"> -->
       <ul>
         <div class="newsItemStock" *ngFor="let news of stockNews">
-          <li>
+          <li (mouseenter)=mouseEnter(news)>
             <span>{{ news.publishDate | date:'yyyy-MM-dd hh:mm'}} </span>
             <span class="newsTicker">{{ news.ticker}} </span>
 
@@ -37,5 +37,10 @@
         </div>
       </ul>
     </div>
+  <!-- </div> -->
+  <div style="width: 180px; float: right; margin-left: 10px; height: 602px; overflow-y: auto;">
+    <span>
+      {{previewText}}
+    </span>
   </div>
 </div>

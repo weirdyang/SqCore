@@ -20,6 +20,7 @@ export class QuickfolioNewsComponent implements OnInit {
   @Input() _parentHubConnection?: HubConnection = undefined; // this property will be input from above parent container
 
   public request: XMLHttpRequest = new XMLHttpRequest();
+  previewText = '';
   selectedTicker = '';
   stockTickers: string[] = [];
   stockNews: NewsItem[] = [];
@@ -65,6 +66,11 @@ export class QuickfolioNewsComponent implements OnInit {
   ];
 
   constructor() {
+  }
+
+  public mouseEnter(news: NewsItem): void {
+    // console.log('mouse Enter ' + news.linkUrl);
+    this.previewText = news.summary;
   }
 
   public menuClick(event, ticker: string): void {

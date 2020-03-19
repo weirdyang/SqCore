@@ -10,7 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Xml.Linq;
-
+using SqCommon;
 
 namespace SqCoreWeb
 {
@@ -38,6 +38,36 @@ namespace SqCoreWeb
         KeyValuePair<int, int> m_sleepBetweenDnsMs = new KeyValuePair<int, int>(2000, 1000);     // <fix, random>
         string[] m_stockTickers = { "AAPL", "ADBE", "AMZN", "BABA", "CRM", "FB", "GOOGL", "MA", "MSFT", "NVDA", "PYPL", "QCOM", "V" };
 
+        public QuickfolioNewsDownloader()
+        {
+            string valuesFromGSheetStr = "Error. Make sure GoogleApiKeyKey, GoogleApiKeyKey is in SQLab.WebServer.SQLab.NoGitHub.json !";
+            if (!String.IsNullOrEmpty(Utils.Configuration["Google:GoogleApiKeyName"]) && !String.IsNullOrEmpty(Utils.Configuration["Google:GoogleApiKeyKey"]))
+            {
+                if (!Utils.DownloadStringWithRetry(out valuesFromGSheetStr, "https://sheets.googleapis.com/v4/spreadsheets/1c5ER22sXDEVzW3uKthclpArlZvYuZd6xUffXhs6rRsM/values/A1%3AA1?key=" + Utils.Configuration["Google:GoogleApiKeyKey"]))
+                    valuesFromGSheetStr = "Error in DownloadStringWithRetry().";
+            }
+            if (!valuesFromGSheetStr.StartsWith("Error"))
+            {
+                ExtractTickers(valuesFromGSheetStr);
+            }
+        }
+
+        private void ExtractTickers(string p_spreadsheetString)
+        {
+            int pos = p_spreadsheetString.IndexOf(@"""values"":");
+            if (pos < 0)
+                return;
+            p_spreadsheetString = p_spreadsheetString.Substring(pos + 9); // cut off until the end of "values":
+            int posStart = p_spreadsheetString.IndexOf(@"""");
+            if (posStart < 0)
+                return;
+            int posEnd = p_spreadsheetString.IndexOf(@"""", posStart + 1);
+            if (posEnd < 0)
+                return;
+            string cellValue = p_spreadsheetString.Substring(posStart + 1, posEnd - posStart - 1);
+            m_stockTickers = cellValue.Split(',').Select(x => x.Trim()).ToArray();
+        }
+
         internal List<NewsItem> GetCommonNews()
         {
             string rssFeedUrl = string.Format(@"https://www.cnbc.com/id/100003114/device/rss/rss.html");
@@ -59,7 +89,7 @@ namespace SqCoreWeb
 
         internal List<string> GetStockTickers()
         {
-            return new List<string> {"All assets"}.Union(m_stockTickers).ToList();
+            return new List<string> { "All assets" }.Union(m_stockTickers).ToList();
         }
 
         internal List<NewsItem> GetStockNews()
@@ -133,12 +163,6 @@ namespace SqCoreWeb
                 Console.WriteLine(exception.Message);
                 return new List<NewsItem>();
             }
-
-        }
-
-        private static double GetUnixTimestamp(DateTime p_dateTime)
-        {
-            return (DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
         }
     }
 }
