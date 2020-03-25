@@ -5,7 +5,7 @@
       <li>
         <span>{{ news.publishDate | date:'yyyy-MM-dd hh:mm'}} </span>
 
-        <a [title]="news.summary" [href]="news.linkUrl">
+        <a [title]="news.summary" [href]="news.linkUrl" target="_blank">
           {{news.title}}
         </a>
         <!-- <span>{{ news.DownloadTime}} </span> -->
@@ -29,7 +29,7 @@
             <span>{{ news.publishDate | date:'yyyy-MM-dd hh:mm'}} </span>
             <span class="newsTicker">{{ news.ticker}} </span>
 
-            <a [title]="news.summary" [href]="news.linkUrl">
+            <a [title]="news.summary" [href]="news.linkUrl" target="_blank">
               {{news.title}}
             </a>
             <!-- <span>{{ news.DownloadTime}} </span> -->
