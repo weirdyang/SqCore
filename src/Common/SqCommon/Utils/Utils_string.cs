@@ -7,6 +7,10 @@ namespace SqCommon
 
     public static partial class Utils
     {
+        public static bool IsDigit(char p_char)
+        {
+            return (uint)(p_char - '0') <= 9u;
+        }
 
         public static string TruncateLongString(this string str, int maxLengthAllowed)
         {

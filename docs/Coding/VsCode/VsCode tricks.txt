@@ -17,3 +17,13 @@
 
 - 2019-09-20: I found no way to run task (tasks.json) in an external terminal (only internal),
 however, it is possible to launch thing in launch.json and use "externalConsole": true
+
+- open tab in new window
+// There is no floating window concept in vscode, probably because of Linux
+https://stackoverflow.com/questions/43362133/visual-studio-code-open-tab-in-new-window
+"When I want to split the screens I usually do one of the following:
+1. open new window (new vscode instance) with: Ctrl+Shift+N and after that I drag the current file I want to the new window.
+on dual display, it is better (the second vscode instance is on a different screen)
+2. on the File explorer - I hit Ctrl+Enter on the file I want - and then this file and the other file open together 
+in the same screen but in split mode, so you can see the two files together. If the screen is wide enough this is not a bad solution at all that you can get used to.
+(if the screen is huge, 40", then this is better if vsCode is extended to fullscreen. Less mouse and eye movement.)

@@ -1,0 +1,98 @@
+
+
+****** Notes on selecting the in-memory structure of TimeSeries (Fast)
+
+http://www.jfree.org/jfreechart/api/gjdoc/org/jfree/data/time/TimeSeries.html
+http://www.jfree.org/jfreechart/api/gjdoc/org/jfree/data/time/TimeSeriesDataItem.html
+https://rdrr.io/cran/timeSeries/man/timeSeries.html
+	Close/Data should be in a Matrix. So, they separate dates into a separate Vector.
+	TimeSeries.DatesList   TimeSeries.DataMatrix (with Open/Close/High/Low/Volume). This gives RAM coherence. Frequently used ClosePrice data is next to each other in a List<>. Not mixed with Open/Close... However, Date is only stored once. Good.
+
+https://www.extremeoptimization.com/QuickStart/CSharp/SimpleTimeSeries.aspx
+https://bluemountaincapital.github.io/Deedle/csharpseries.html
+https://docs.microsoft.com/en-us/dotnet/machine-learning/tutorials/time-series-demand-forecasting
+https://stackoverflow.com/questions/9052754/managing-timeseries-in-c-sharp
+"If you need the prices of multiple stocks at each date, and not every stock appears for every date, then you could choose between Dictionary<DateTime, Dictionary<Stock, decimal>> and Dictionary<Stock, Dictionary<DateTime, decimal>>, depending on how you want to access the values afterwards (or even both if you don't mind storing the values twice)."
+"TeaFiles.Net is a library for time series storage in flat files."
+https://github.com/discretelogics/TeaFiles.Net-time-series-storage-in-flat-files   81 GitHub stars.
+" I believe the SortedList is a more appropriate structure to hold your time series data."
+" SortedList is implemented as an array, so if faster insertion/removal times are needed then the SortedDictionary would be a better choice"
+"How sparse is the data? If you expect values for each column for each time point then why not create a class to hold the data at each point. If not you could use one list per column."
+"Yes i might use one list per column. Zoo objects are made to handle timeseries. The index of the table will be unified thru all stocks and missing values will be handled."
+"I might use a sorted dictionary using a class storing all the stock values for a certain date as Tvalue but it doesn't make a lot of sense no? "
+https://docs.microsoft.com/en-us/dotnet/api/system.collections.generic.sortedlist-2?redirectedfrom=MSDN&view=netframework-4.8
+"The SortedList<TKey,TValue> generic class is an array of key/value pairs with O(log n) retrieval, where n is the number of elements in the dictionary. In this, it is similar to the SortedDictionary<TKey,TValue> generic class. The two classes have similar object models, and both have O(log n) retrieval. Where the two classes differ is in memory use and speed of insertion and removal:
+
+SortedList<TKey,TValue> uses less memory than SortedDictionary<TKey,TValue>.
+
+SortedDictionary<TKey,TValue> has faster insertion and removal operations for unsorted data, O(log n) as opposed to O(n) for SortedList<TKey,TValue>.
+
+If the list is populated all at once from sorted data, SortedList<TKey,TValue> is faster than SortedDictionary<TKey,TValue>.
+
+Another difference between the SortedDictionary<TKey,TValue> and SortedList<TKey,TValue> classes is that SortedList<TKey,TValue> supports efficient indexed retrieval of keys and values through the collections returned by the Keys and Values properties. It is not necessary to regenerate the lists when the properties are accessed, because the lists are just wrappers for the internal arrays of keys and values."
+
+>https://stackoverflow.com/questions/1928780/very-fast-cache-access-time-indexed-data-in-c-sharp
+
+>obvious (too basic) ideas: Dictionary<DateTime, object>() (not fast access)  , or List<Tuple<date,double>>
+Agy: But R stores the dateSeries separate from the Dates, in a Matrix. Which is something I can do with SortedList.
+
+
+ 
+ 
+>http://faculty.washington.edu/ezivot/econ424/Working%20with%20Time%20Series%20Data%20in%20R.pdf
+"Working	with	Financial	Time	Series	Data	in	R
+ timeSeries, zoo
+ For handling more general
+irregularly spaced financial time series, by far the most used packages are timeSeries, zoo and xts. The
+timeSeries package is part of the suite of Rmetrics packages for financial data analysis and
+computational finance created by Diethelm Weurtz and his colleagues at ETZ Zurich (see
+www.Rmetrics.org). In these packages, timeSeries objects are the core data objects. However,
+outside of Rmetrics, timeSeries objects are not as frequently used as zoo and xts objects for
+representing time series data. Hence, in this tutorial I will focus mostly on using zoo and xts objects
+for handing general time series. 1
+ Time series data represented by timeSeries, zoo and xts objects have a similar structure: the time
+index is stored as a vector in some (typically ordered) date‐time object, and the data is stored in some
+rectangular data object. The resulting timeSeries, zoo or xts objects combine the time index and
+data into a single object. 
+ 
+>Agy: I would actually like something as SortedList<DateTime, Values>, but with multiple Value1, Value2... Values, for Close/Open/etc.
+ 
+
+>How SortedList is imlemented, I can copy parts of the source code (for ordering)
+https://github.com/dotnet/corefx/tree/master/src
+"CoreFX is the foundational class libraries for .NET Core. It includes types for collections, file systems, console, JSON, XML, async and many others."
+https://docs.microsoft.com/en-us/dotnet/api/system.collections.sortedlist?view=netcore-3.1
+https://github.com/dotnet/corefx/tree/master/src/System.Collections/src/System/Collections/Generic
+https://github.com/dotnet/corefx/blob/master/src/System.Collections/src/System/Collections/Generic/SortedList.cs
+"public class SortedList<TKey, TValue>  {
+		private TKey[] keys; // Do not rename (binary serialization)
+        private TValue[] values; // Do not rename (binary serialization)"
+
+
+
+>What should be the structure of the class TimeSeries?
+>If Date is projected to => one big class/struct (Open/Close/High/Low/Volume), then current SortedList is enough. 
+>If Date is projected to => separate Open, separate Close... arrays... This is better for RAM coherency.. then we better create new SqFinancialTimeSeriesSortedList = FtsSortedList
+FtsSortedList<Date, double, double, int> 
+Those value indexes can be indexed from 0...5, But they can be Enums.
+
+
+>How to access FtsSortedList data from the outside?  sg. like: m_mytimeseries[2020-01-01, Enum.ClosePrice]
+1.
+https://stackoverflow.com/questions/6969881/operator-overload
+Alternatively, overload operator() to take multiple arguments, such that you might invoke myObject(x,y).
+// IF indexer can only be 1D, then we can index it with a struct Coordinate.
+struct Coordinate {  int x, y; }
+class Matrix {
+    int** data;
+    operator[](Coordinate c) {
+        return data[c.y][c.x];
+2.
+Luckily. Yes. indexer operator [] override can be even 3D.		
+https://stackoverflow.com/questions/18192547/most-efficient-way-of-using-multidimensional-array-indexers	
+public Tile this[int x, int y, bool override = false]   {         get 		
+		
+
+
+
+

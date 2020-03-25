@@ -8,7 +8,7 @@ using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Text;
-using YahooFinanceAPI;
+using YahooFinanceApi;
 
 
 // *********************************************************************************************************************
@@ -67,6 +67,8 @@ namespace SqCoreWeb.Controllers
 
         private Tuple<string, string> GenerateYffResponse()
         {
+            throw new NotImplementedException();
+            /*
             try
             {
                 // 1. Prepare input parameters
@@ -252,7 +254,7 @@ namespace SqCoreWeb.Controllers
             catch (Exception e)
             {
                 return new Tuple<string, string>(@"{ ""Message"":  ""Exception caught by WebApi Get(): " + e.Message + @""" }", "application/json");
-            }
+            }  */
         }
 
         private readonly Dictionary<string, int> cCommandToIndDict = new Dictionary<string, int>() { { "d", 0 }, { "o", 1 }, { "h", 2 }, { "l", 3 }, { "c", 4 }, { "c1", 5 }, { "v", 6 } };

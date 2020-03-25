@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Hosting;
 using System.Text;
 using System.Net;
+using FinTechCommon;
+using System.Diagnostics;
 
 namespace SqCoreWeb
 {
@@ -54,6 +56,21 @@ namespace SqCoreWeb
     public partial class DashboardPushHub : Hub
     {
         static List<DashboardClients> g_clients = new List<DashboardClients>();
+
+        static DashboardPushHub()
+        {
+            // static ctor DashboardPushHub is only called at the time first instance is created, which is only when the first connection happens. It can be days after Kestrel webserver starts. 
+            // But that is OK. At least if MarketDashboard is not used by users, it will not consume CPU resources.");
+        }
+        public static void EarlyInit()
+        {
+            MemDb.gMemDb.EvInitialized += new MemDb.InitializedEventHandler(EvMemDbInitialized);
+        }
+
+        static void EvMemDbInitialized()
+        {
+            EvMemDbInitialized_mktHealth();
+        }
 
         public override Task OnConnectedAsync()
         {

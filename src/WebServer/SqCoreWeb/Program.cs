@@ -14,6 +14,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NLog.Web;
 using SqCommon;
+using FinTechCommon;
 
 namespace SqCoreWeb
 {
@@ -70,6 +71,8 @@ namespace SqCoreWeb
 
             try
             {
+                DashboardPushHub.EarlyInit();    // services add handlers to the MemDb.EvMemDbInitialized event.
+                MemDb.gMemDb.Init();
                 CreateHostBuilder(args).Build().Run();
             }
             catch (Exception e)
@@ -81,6 +84,7 @@ namespace SqCoreWeb
                 }
                 HealthMonitorMessage.SendAsync($"Exception in SqCoreWebsite.C#.MainThread. Exception: '{ e.ToStringWithShortenedStackTrace(1200)}'", HealthMonitorMessageID.SqCoreWebCsError).GetAwaiter().GetResult();
             }
+            MemDb.gMemDb.Exit();
 
             gLogger.Info("****** Main() END");
             NLog.LogManager.Shutdown();
