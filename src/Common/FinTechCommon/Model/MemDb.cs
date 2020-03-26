@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using SqCommon;
@@ -25,14 +26,16 @@ namespace FinTechCommon
     {
 
         public static MemDb gMemDb = new MemDb();
-        public List<Security> Securities { get; } = new List<Security>() { // to minimize mem footprint, only load the necessary dates (not all history). 1Year = 2KB
-            new Security() { SecID = 1, Ticker = "GLD"},    // alphabetical order for faster search
-            new Security() { SecID = 2, Ticker = "QQQ", ExpectedHistorySpan="Date: 2010-01-01"},
-            new Security() { SecID = 3, Ticker = "SPY"},
-            new Security() { SecID = 4, Ticker = "TLT"},
-            new Security() { SecID = 5, Ticker = "VXX"},
-            new Security() { SecID = 6, Ticker = "UNG", ExpectedHistorySpan="5y"},
-            new Security() { SecID = 7, Ticker = "USO", ExpectedHistorySpan="5y"}};
+        // alphabetical order for faster search. 
+        // SumMem: 2+10+10+4*5 = 42 years. 42*260*(2+4)= 66KB.
+        public List<Security> Securities { get; } = new List<Security>() { // to minimize mem footprint, only load the necessary dates (not all history). 1Year = 260*(2+4)=1560B = 1.5KB,  5y data is: 5*260*(2+4) = 7.8K
+            new Security() { SecID = 1, Ticker = "GLD", ExpectedHistorySpan="5y"},                  // history starts on 2004-11-18
+            new Security() { SecID = 2, Ticker = "QQQ", ExpectedHistorySpan="Date: 2010-01-01"},    // history starts on 1999-03-10. Full history would be: 32KB. 
+            new Security() { SecID = 3, Ticker = "SPY", ExpectedHistorySpan="Date: 2010-01-01"},    // history starts on 1993-01-29. Full history would be: 44KB, 
+            new Security() { SecID = 4, Ticker = "TLT", ExpectedHistorySpan="5y"},                  // history starts on 2002-07-30
+            new Security() { SecID = 5, Ticker = "VXX", ExpectedHistorySpan="Date: 2018-01-25"},    // history starts on 2018-01-25 on YF, because VXX was restarted. The previously existed VXX.B shares are not on YF.
+            new Security() { SecID = 6, Ticker = "UNG", ExpectedHistorySpan="5y"},                  // history starts on 2007-04-18
+            new Security() { SecID = 7, Ticker = "USO", ExpectedHistorySpan="5y"}};                 // history starts on 2006-04-10
 
 
         Timer m_reloadHistoricalDataTimer;
@@ -108,7 +111,17 @@ namespace FinTechCommon
                 // In general, round these price data Decimals to 4 decimal precision.
                 foreach (var sec in Securities)
                 {
-                    var history = Yahoo.GetHistoricalAsync(sec.Ticker, new DateTime(2018, 02, 01, 0, 0, 0), DateTime.Now, Period.Daily).Result;
+                    DateTime startDateET = new DateTime(2018, 02, 01, 0, 0, 0);
+                    if (sec.ExpectedHistorySpan.StartsWith("Date: ")) {
+                        if (!DateTime.TryParseExact(sec.ExpectedHistorySpan.Substring("Date: ".Length), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out startDateET))
+                            throw new Exception($"ReloadHistoricalDataAndSetTimer(): wrong ExpectedHistorySpan for ticker {sec.Ticker}");
+                    } else if (sec.ExpectedHistorySpan.EndsWith("y")) {
+                        if (!Int32.TryParse(sec.ExpectedHistorySpan.Substring(0, sec.ExpectedHistorySpan.Length - 1), out int nYears))
+                            throw new Exception($"ReloadHistoricalDataAndSetTimer(): wrong ExpectedHistorySpan for ticker {sec.Ticker}");
+                        startDateET = DateTime.UtcNow.FromUtcToEt().AddYears(-1*nYears);
+                    }
+
+                    var history = Yahoo.GetHistoricalAsync(sec.Ticker, startDateET, DateTime.Now, Period.Daily).Result;
 
                     // for penny stocks, IB and YF considers them for max. 4 digits. UWT price (both in IB ask-bid, YF history) 2020-03-19: 0.3160, 2020-03-23: 2302
                     // sec.AdjCloseHistory = history.Select(r => (double)Math.Round(r.AdjustedClose, 4)).ToList();
@@ -123,7 +136,7 @@ namespace FinTechCommon
 
                     var tsDates = sec.DailyHistory.Keys;
                     var tsValues = sec.DailyHistory.Values1(TickType.SplitDivAdjClose);
-                    Debug.WriteLine($"{sec.Ticker} last: DateTime: {tsDates.Last()}, Close: {tsValues.Last()}");  // only writes to Console in Debug mode in vscode 'Debug Console'
+                    Debug.WriteLine($"{sec.Ticker}, first: DateTime: {tsDates.First()}, Close: {tsValues.First()}, last: DateTime: {tsDates.Last()}, Close: {tsValues.Last()}");  // only writes to Console in Debug mode in vscode 'Debug Console'
                 }
 
                 m_lastReloadHistoricalData = DateTime.UtcNow;

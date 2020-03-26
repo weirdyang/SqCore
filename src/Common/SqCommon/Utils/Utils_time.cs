@@ -100,6 +100,11 @@ namespace SqCommon
             return TimeZoneInfo.ConvertTime(p_dateTimeET, estZone, utcZone);
         }
 
+        public static DateTime FromEtToUtc(this DateTime p_dateTimeEt)
+        {
+            return Utils.ConvertTimeFromEtToUtc(p_dateTimeEt);
+        }
+
         public static DateTime ConvertTimeFromUtcToEt(DateTime p_dateTimeUtc)
         {
             TimeZoneInfo utcZone = TimeZoneInfo.Utc;
@@ -115,6 +120,11 @@ namespace SqCommon
             }
 
             return TimeZoneInfo.ConvertTime(p_dateTimeUtc, utcZone, estZone);
+        }
+
+        public static DateTime FromUtcToEt(this DateTime p_dateTimeUtc)
+        {
+            return Utils.ConvertTimeFromUtcToEt(p_dateTimeUtc);
         }
 
 

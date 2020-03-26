@@ -1,22 +1,28 @@
 
 - start vscode in any directory in CMD, type: "code ."  // runs code with the current directory.
 
-- (Ctrl + ') toggles the Terminal window parts
-- (Ctrl+Shift+B) start build
+Shortcuts:
+Debugger:
 - F5: Debug, attach debugger
 - Ctrl-F5: Run without attaching debugger
+
+Code editing:
 - F12: Go to definition
 - Go to definition via mouse: hold down Control, Move mouse over a method, simple click (not double click). After that Ctrl-Back will go back.
 - Alt-LeftArrow, Alt-RightArrow: Navigate back and forward. (after Go To Definition, or after changing opened files.). Navigate Forward only makes sense After a Navigate Back, otherwise nothing happens.
-
 - F2: Refactoring:Rename symbol (function, variable) in all files. see https://code.visualstudio.com/docs/editor/refactoring
+- Ctrl-K, Ctrl-F Format selection.
+
+Vscode services:
+- (Ctrl + ,): Search Settings
+- (Ctrl + ') toggles the Terminal window parts
+- (Ctrl+Shift+B) start build
 - Ctrl+P (Quick Open) + and start to type any filename
 
-- Ctrl-K, Ctrl-F Format selection.
 
 
 - 2019-09-20: I found no way to run task (tasks.json) in an external terminal (only internal),
-however, it is possible to launch thing in launch.json and use "externalConsole": true
+however, it is possible to launch things in launch.json and use "externalConsole": true
 
 - open tab in new window
 // There is no floating window concept in vscode, probably because of Linux

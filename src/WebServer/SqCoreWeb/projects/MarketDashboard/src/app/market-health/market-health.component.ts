@@ -42,10 +42,24 @@ export class MarketHealthComponent implements OnInit {
       });
 
       this._parentHubConnection.on('RtMktSumNonRtStat', (message: RtMktSumNonRtStat[]) => {
-        const msgStr = message.map(s => s.secID + '-' + s.ticker + ':prevClose-' + s.previousClose.toFixed(2).toString() + ':open-' + s.periodOpen.toFixed(2).toString() + '/high-' + s.periodHigh.toFixed(2).toString() + '/low-' + s.periodLow.toFixed(2).toString() + '=> ? ' ).join(', ');
+        const msgStr = message.map(s => s.secID + '-' + s.ticker + ':prevClose-' + s.previousClose.toFixed(2).toString() + ' : periodStart-' + s.periodStart.toString() + ':open-' + s.periodOpen.toFixed(2).toString() + '/high-' + s.periodHigh.toFixed(2).toString() + '/low-' + s.periodLow.toFixed(2).toString() + '  *************  ').join(', ');
         console.log('ws: RtMktSumNonRtStat arrived: ' + msgStr);
         this.rtMktSumPeriodStatStr = msgStr;
       });
     }
   } // ngOnInit()
+
+  onClickChangeLookback(lookbackStr: string) {
+    console.log('Sq.onClickChangeLookback(): ' + lookbackStr);
+    if (this._parentHubConnection != null) {
+      this._parentHubConnection.invoke('changeLookback', lookbackStr)
+        .then((message: RtMktSumNonRtStat[]) => {
+          const msgStr = message.map(s => s.secID + '-' + s.ticker + ':prevClose-' + s.previousClose.toFixed(2).toString() + ' : periodStart-' + s.periodStart.toString() + ':open-' + s.periodOpen.toFixed(2).toString() + '/high-' + s.periodHigh.toFixed(2).toString() + '/low-' + s.periodLow.toFixed(2).toString() + '  *************  ').join(', ');
+          console.log('ws: onClickChangeLookback() got back message ' + msgStr);
+          this.rtMktSumPeriodStatStr = msgStr;
+        });
+    }
+  }
+
+
 }

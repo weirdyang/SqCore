@@ -25,7 +25,7 @@ namespace SqCoreWeb
         public double Last { get; set; } = -100.0;     // real-time last price
     }
 
-    class RtMktSumNonRtStat     // this is sent to clients usually just once per day, OR when the PeriodStartDate changes at the client
+    public class RtMktSumNonRtStat     // this is sent to clients usually just once per day, OR when the PeriodStartDate changes at the client
     {
         public uint SecID { get; set; } = 0;        // set the Client know what is the SecID, because RtStat will not send it.
         public String Ticker { get; set; } = String.Empty;
@@ -83,10 +83,23 @@ namespace SqCoreWeb
                 }
             }
 
-            DateTime todayET = Utils.ConvertTimeFromUtcToEt(DateTime.UtcNow).Date;
-            DateTime periodStart = new DateTime(todayET.Year - 1, 12, 31);  // YTD relative to 31st December, last year
+            IEnumerable<RtMktSumNonRtStat> periodStatToClient = GetLookbackStat("YTD");
 
-            IEnumerable<RtMktSumNonRtStat> periodStatToClient = g_mktSummaryStocks.Select(r =>
+            Utils.Logger.Info("Clients.All.SendAsync: RtMktSumNonRtStat");
+            DashboardPushHubKestrelBckgrndSrv.HubContext?.Clients.All.SendAsync("RtMktSumNonRtStat", periodStatToClient);
+        }
+
+        private static IEnumerable<RtMktSumNonRtStat> GetLookbackStat(string p_lookbackStr)
+        {
+            DateTime todayET = Utils.ConvertTimeFromUtcToEt(DateTime.UtcNow).Date;
+            DateTime lookbackStart = new DateTime(todayET.Year - 1, 12, 31);  // YTD relative to 31st December, last year
+            if (p_lookbackStr.EndsWith("y"))
+            {
+                if (Int32.TryParse(p_lookbackStr.Substring(0, p_lookbackStr.Length - 1), out int nYears))
+                    lookbackStart = todayET.AddYears(-1*nYears);
+            }
+
+            IEnumerable<RtMktSumNonRtStat> lookbackStatToClient = g_mktSummaryStocks.Select(r =>
             {
                 Security sec = MemDb.gMemDb.GetFirstMatchingSecurity(r.Ticker);
                 DateOnly[] dates = sec.DailyHistory.GetKeyArrayDirect();
@@ -96,9 +109,9 @@ namespace SqCoreWeb
                 int iPrevDay = (dates[dates.Length - 1] >= new DateOnly(Utils.ConvertTimeFromUtcToEt(DateTime.UtcNow))) ? dates.Length - 2 : dates.Length - 1;
                 Debug.WriteLine($"Found: {r.Ticker}, {dates[iPrevDay]}:{sdaCloses[iPrevDay]}");
 
-                int iPeriodStartOrBefore = sec.DailyHistory.IndexOfKey(new DateOnly(periodStart));      // the valid price at the weekend is the one on the previous Friday.
+                int iLookbackStartOrBefore = sec.DailyHistory.IndexOfKey(new DateOnly(lookbackStart));      // the valid price at the weekend is the one on the previous Friday.
                 float max = float.MinValue, min = float.MaxValue;
-                for (int i = iPeriodStartOrBefore; i <= iPrevDay; i++)
+                for (int i = iLookbackStartOrBefore; i <= iPrevDay; i++)
                 {
                     if (sdaCloses[i] > max)
                         max = sdaCloses[i];
@@ -111,16 +124,14 @@ namespace SqCoreWeb
                     SecID = r.SecID,
                     Ticker = r.Ticker,
                     PreviousClose = sdaCloses[iPrevDay],
-                    PeriodStart = periodStart,
-                    PeriodOpen = sdaCloses[iPeriodStartOrBefore],
+                    PeriodStart = lookbackStart,
+                    PeriodOpen = sdaCloses[iLookbackStartOrBefore],
                     PeriodHigh = max,
                     PeriodLow = min
                 };
                 return rtStock;
             });
-
-            Utils.Logger.Info("Clients.All.SendAsync: RtMktSumNonRtStat");
-            DashboardPushHubKestrelBckgrndSrv.HubContext?.Clients.All.SendAsync("RtMktSumNonRtStat", periodStatToClient);
+            return lookbackStatToClient;
         }
 
         public void OnDisconnectedAsync_MktHealth(Exception exception)
@@ -178,5 +189,9 @@ namespace SqCoreWeb
             }
         }
 
-    }
+        public IEnumerable<RtMktSumNonRtStat> ChangeLookback(string p_lookbackStr)
+        {
+            return GetLookbackStat(p_lookbackStr);
+        }
+   }
 }
