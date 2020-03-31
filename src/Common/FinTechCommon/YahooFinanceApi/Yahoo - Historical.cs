@@ -16,7 +16,7 @@ namespace YahooFinanceApi
     {
         public static bool IgnoreEmptyRows { set { RowExtension.IgnoreEmptyRows = value; } }
 
-        public static async Task<IReadOnlyList<Candle>> GetHistoricalAsync(string symbol, DateTime? startTime = null, DateTime? endTime = null, Period period = Period.Daily, CancellationToken token = default)
+        public static async Task<IReadOnlyList<Candle?>> GetHistoricalAsync(string symbol, DateTime? startTime = null, DateTime? endTime = null, Period period = Period.Daily, CancellationToken token = default)
 		    => await GetTicksAsync(symbol, 
 	                               startTime, 
 	                               endTime, 
@@ -25,7 +25,7 @@ namespace YahooFinanceApi
                                    RowExtension.ToCandle,
                                    token).ConfigureAwait(false);
 
-        public static async Task<IReadOnlyList<DividendTick>> GetDividendsAsync(string symbol, DateTime? startTime = null, DateTime? endTime = null, CancellationToken token = default)
+        public static async Task<IReadOnlyList<DividendTick?>> GetDividendsAsync(string symbol, DateTime? startTime = null, DateTime? endTime = null, CancellationToken token = default)
             => await GetTicksAsync(symbol, 
                                    startTime, 
                                    endTime, 
@@ -34,7 +34,7 @@ namespace YahooFinanceApi
                                    RowExtension.ToDividendTick,
                                    token).ConfigureAwait(false);
 
-        public static async Task<IReadOnlyList<SplitTick>> GetSplitsAsync(string symbol, DateTime? startTime = null, DateTime? endTime = null, CancellationToken token = default)
+        public static async Task<IReadOnlyList<SplitTick?>> GetSplitsAsync(string symbol, DateTime? startTime = null, DateTime? endTime = null, CancellationToken token = default)
             => await GetTicksAsync(symbol,
                                    startTime,
                                    endTime,

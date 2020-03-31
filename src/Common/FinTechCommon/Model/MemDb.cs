@@ -128,8 +128,8 @@ namespace FinTechCommon
                     // for penny stocks, IB and YF considers them for max. 4 digits. UWT price (both in IB ask-bid, YF history) 2020-03-19: 0.3160, 2020-03-23: 2302
                     // sec.AdjCloseHistory = history.Select(r => (double)Math.Round(r.AdjustedClose, 4)).ToList();
 
-                    var dates = history.Select(r => new DateOnly(r.DateTime)).ToArray();
-                    var kvpar1 = new KeyValuePair<TickType, float[]>(TickType.SplitDivAdjClose, history.Select(r => (float)Math.Round(r.AdjustedClose, 4)).ToArray());
+                    var dates = history.Select(r => new DateOnly(r!.DateTime)).ToArray();
+                    var kvpar1 = new KeyValuePair<TickType, float[]>(TickType.SplitDivAdjClose, history.Select(r => (float)Math.Round(r!.AdjustedClose, 4)).ToArray());
                     sec.DailyHistory = new FinTimeSeries<DateOnly, float, uint>(
                         dates,
                         new KeyValuePair<TickType, float[]>[] { kvpar1 },

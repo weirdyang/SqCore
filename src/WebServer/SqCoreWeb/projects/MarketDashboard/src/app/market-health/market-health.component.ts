@@ -1,5 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { HubConnection } from '@microsoft/signalr';
+import { SqNgCommonUtilsTime } from './../../../../sq-ng-common/src/lib/sq-ng-common.utils_time';   // direct reference, instead of via 'public-api.ts' as an Angular library. No need for 'ng build sq-ng-common'. see https://angular.io/guide/creating-libraries
+
 
 class RtMktSumRtStat {
   public secID = NaN;
@@ -14,6 +16,8 @@ class RtMktSumNonRtStat {
   public periodOpen = NaN;
   public periodHigh = NaN;
   public periodLow = NaN;
+  public periodMaxDD = NaN;
+  public periodMaxDU = NaN;
 }
 
 class RtMktSumFullStat {
@@ -180,6 +184,11 @@ export class MarketHealthComponent implements OnInit {
   
  
   ngOnInit(): void {
+    console.log('JS new Date(). Local time.: ' + new Date().toString());
+    const etNow = SqNgCommonUtilsTime.ConvertDateLocToEt(new Date());
+    console.log('EtNow from SqNgCommonUtilsTime.ConvertLocalTimeToET(): ' + etNow.toString());
+
+
     if (this._parentHubConnection != null) {
       // this._parentHubConnection.on('RtMktSumRtStat', (message: RtMktSumRtStat[]) => {
       //   const msgStr = message.map(s => s.secID + ' ? =>' + s.last.toFixed(2).toString()).join(', ');  // %Chg: Bloomberg, MarketWatch, TradingView doesn't put "+" sign if it is positive, IB, CNBC, YahooFinance does. Go as IB.

@@ -37,6 +37,8 @@ namespace SqCoreWeb
         public double PeriodOpen { get; set; } = -100.0;
         public double PeriodHigh { get; set; } = -100.0;
         public double PeriodLow { get; set; } = -100.0;
+        public double PeriodMaxDD { get; set; } = -100.0;
+        public double PeriodMaxDU { get; set; } = -100.0;
     }
 
 
@@ -109,14 +111,20 @@ namespace SqCoreWeb
                 int iPrevDay = (dates[dates.Length - 1] >= new DateOnly(Utils.ConvertTimeFromUtcToEt(DateTime.UtcNow))) ? dates.Length - 2 : dates.Length - 1;
                 Debug.WriteLine($"Found: {r.Ticker}, {dates[iPrevDay]}:{sdaCloses[iPrevDay]}");
 
-                int iLookbackStartOrBefore = sec.DailyHistory.IndexOfKey(new DateOnly(lookbackStart));      // the valid price at the weekend is the one on the previous Friday.
-                float max = float.MinValue, min = float.MaxValue;
+                int iLookbackStartOrBefore = sec.DailyHistory.IndexOfKeyOrBeforeKey(new DateOnly(lookbackStart));      // the valid price at the weekend is the one on the previous Friday.
+                float max = float.MinValue, min = float.MaxValue, maxDD = float.MinValue, maxDU = float.MaxValue;
                 for (int i = iLookbackStartOrBefore; i <= iPrevDay; i++)
                 {
                     if (sdaCloses[i] > max)
                         max = sdaCloses[i];
                     if (sdaCloses[i] < min)
                         min = sdaCloses[i];
+                    float dailyDD = sdaCloses[i] / max - 1;     // daily Drawdown = how far from High = loss felt compared to Highest
+                    if (dailyDD > maxDD)
+                        maxDD = dailyDD;                        // maxDD = maximum loss, pain felt over the period
+                    float dailyDU = sdaCloses[i] / min - 1;     // daily DrawUp = how far from Low = profit felt compared to Lowest
+                    if (dailyDU > maxDU)
+                        maxDU = dailyDU;                        // maxDU = maximum profit, happiness felt over the period
                 }
 
                 var rtStock = new RtMktSumNonRtStat()
@@ -127,7 +135,9 @@ namespace SqCoreWeb
                     PeriodStart = lookbackStart,
                     PeriodOpen = sdaCloses[iLookbackStartOrBefore],
                     PeriodHigh = max,
-                    PeriodLow = min
+                    PeriodLow = min,
+                    PeriodMaxDD = maxDD,
+                    PeriodMaxDU = maxDU
                 };
                 return rtStock;
             });

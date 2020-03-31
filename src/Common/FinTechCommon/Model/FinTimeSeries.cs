@@ -619,12 +619,23 @@ namespace FinTechCommon
             }
         }
 
-        public int IndexOfKey(TKey key)
+        public int IndexOfKey(TKey key)     // if it exact match. If date is not found (because it was weekend), it returns -1.
         {
             if (key == null)
                 throw new ArgumentNullException(nameof(key));
             int ret = Array.BinarySearch<TKey>(keys, 0, _size, key, comparer);
             return ret >= 0 ? ret : -1;
+        }
+
+        public int IndexOfKeyOrBeforeKey(TKey key)  // If date is not found, because it is a weekend, it gives back the previous index, which is less.
+        {
+            if (key == null)
+                throw new ArgumentNullException(nameof(key));
+            int ret = Array.BinarySearch<TKey>(keys, 0, _size, key, comparer);
+            // You can use the '~' to take the bitwise complement which will give you the index of the first item larger than the search item.
+            if (ret < 0)
+                ret = ~ret -1; // this is the item which is larger, so we have to take away -1 to get the item which is smaller (older Date)
+            return ret;
         }
 
         public int IndexOfValue1(TickType tickType, TValue1 value)
