@@ -53,10 +53,12 @@ namespace SqCoreWeb
 
         static int m_rtMktSummaryTimerFrequencyMs = 3000;    // as a demo go with 3sec, later change it to 5sec, do decrease server load.
 
+        // alphabetical order is not required here, because it is searched in MemDb one by one, and that search is fast, because that is ordered alphabetically.
+        // this is the order of appearance on the UI.
         static List<RtMktSummaryStock> g_mktSummaryStocks = new List<RtMktSummaryStock>() {
-            new RtMktSummaryStock() { Ticker = "GLD"},  // alphabetical order for faster search
             new RtMktSummaryStock() { Ticker = "QQQ"},
             new RtMktSummaryStock() { Ticker = "SPY"},
+            new RtMktSummaryStock() { Ticker = "GLD"},
             new RtMktSummaryStock() { Ticker = "TLT"},
             new RtMktSummaryStock() { Ticker = "VXX"},
             new RtMktSummaryStock() { Ticker = "UNG"},

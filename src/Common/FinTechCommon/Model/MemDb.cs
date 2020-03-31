@@ -26,11 +26,13 @@ namespace FinTechCommon
     {
 
         public static MemDb gMemDb = new MemDb();
-        // alphabetical order for faster search. 
+
         // RAM requirement: 1Year = 260*(2+4) = 1560B = 1.5KB,  5y data is: 5*260*(2+4) = 7.8K
         // Max RAM requirement if need only AdjClose: 20years for 5K stocks: 5000*20*260*(2+4) = 160MB (only one data per day: DivSplitAdjClose.)
         // Max RAM requirement if need O/H/L/C/AdjClose/Volume: 6x of previous = 960MB = 1GB
         // current SumMem: 2+10+10+4*5 = 42 years. 42*260*(2+4)= 66KB.
+
+        // alphabetical order for faster search. 
         public List<Security> Securities { get; } = new List<Security>() { // to minimize mem footprint, only load the necessary dates (not all history).
             new Security() { SecID = 1, Ticker = "GLD", ExpectedHistorySpan="5y"},                  // history starts on 2004-11-18
             new Security() { SecID = 2, Ticker = "QQQ", ExpectedHistorySpan="Date: 2010-01-01"},    // history starts on 1999-03-10. Full history would be: 32KB. 
