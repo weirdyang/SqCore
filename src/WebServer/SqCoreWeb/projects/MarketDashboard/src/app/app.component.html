@@ -27,14 +27,6 @@
 </div>
 
 <div class="content">
-  {{ title }} (ver {{ version }}) is under construction...<br>
-  Back-end is up and running. Front-end is under development...<br><br>
-  Next steps: <br>
-  1. Toolbar height should be 40 pixels. Why it is not?<br>
-  <br>
-
-  {{toolSelectionMsg}}<br><br>
-  <hr style="margin: 0" size="2px" width="100%">
   <app-market-health [hidden]="!(activeTool=='MarketHealth')" [_parentHubConnection]="_hubConnection"></app-market-health>
   <app-catalyst-sniffer [hidden]="!(activeTool=='CatalystSniffer')" ></app-catalyst-sniffer>
   <app-quickfolio-news [hidden]="!(activeTool=='QuickfolioNews')" [_parentHubConnection]="_hubConnection"></app-quickfolio-news>

@@ -1,13 +1,44 @@
-<p style="margin: 0;">market-health works!</p>
+<div class="dashboardTopCont">
+    <div class="leftDiv">
+        <table>
+            <tr >
+                <th></th>
+                <th *ngFor="let tickers of tableHeaderLinks"><a href="{{tickers.reference}}" target="_blank">{{tickers.ticker}}</a></th>
+            </tr>
+            <tr>
+                <td align="left">DailyReturn</td>
+                <td *ngFor="let items of perfIndDaily">{{items}}</td>
+            </tr>
+            <tr>
+                <td align="left">
+                    <select class="form-control" id="lookBackPeriod" (change)=onClickChangeLookback()>
+                        <option value="YTD" selected>YTD</option>
+                        <option value="1y">1Y</option>
+                    </select>
+                    <select class="form-control" id="marketIndicator" (change)=perfIndicatorSelector()>
+                        <option value="PerRet" selected>Return</option>
+                        <option value="DD">DrawDown</option>
+                        <option value="DU">DrawUp</option>
+                    </select>
+                </td>
+                <td *ngFor="let items of perfIndSelected">{{items}}</td>
+            </tr>
+        </table>
+    </div>
+    <div class="rightDiv" id="tradingHoursTimer">
+    </div>
+</div>
+<!-- <hr> -->
+<!-- <p style="margin: 0;">market-health works!</p>
 Market Summary (Updated realtime. WebSocket based server push data in 2 seconds.): <br>
 <hr>
 {{rtMktSumPrevCloseStr}}
 <hr>
 {{rtMktSumRtQuoteStr}}
 <hr>
-{{rtMktSumPeriodStatStr}}
+{{rtMktSumPeriodStatStr}} -->
 
-<hr>
+<!-- <hr>
 <div (click)="onClickChangeLookback('1y')">Get 1y lookback period data (click here)</div>
-<div (click)="onClickChangeLookback('YTD')">Get YTD lookback period data (click here)</div>
+<div (click)="onClickChangeLookback('YTD')">Get YTD lookback period data (click here)</div> -->
 
