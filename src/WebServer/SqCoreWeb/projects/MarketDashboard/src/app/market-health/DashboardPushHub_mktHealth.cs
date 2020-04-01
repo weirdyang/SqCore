@@ -124,7 +124,7 @@ namespace SqCoreWeb
                 Debug.WriteLine($"Found: {r.Ticker}, {dates[iPrevDay]}:{sdaCloses[iPrevDay]}");
 
                 int iLookbackStartOrBefore = sec.DailyHistory.IndexOfKeyOrBeforeKey(new DateOnly(lookbackStart));      // the valid price at the weekend is the one on the previous Friday.
-                float max = float.MinValue, min = float.MaxValue, maxDD = float.MinValue, maxDU = float.MaxValue;
+                float max = float.MinValue, min = float.MaxValue, maxDD = float.MaxValue, maxDU = float.MinValue;
                 for (int i = iLookbackStartOrBefore; i <= iPrevDay; i++)
                 {
                     if (sdaCloses[i] > max)
@@ -132,7 +132,7 @@ namespace SqCoreWeb
                     if (sdaCloses[i] < min)
                         min = sdaCloses[i];
                     float dailyDD = sdaCloses[i] / max - 1;     // daily Drawdown = how far from High = loss felt compared to Highest
-                    if (dailyDD > maxDD)
+                    if (dailyDD < maxDD)
                         maxDD = dailyDD;                        // maxDD = maximum loss, pain felt over the period
                     float dailyDU = sdaCloses[i] / min - 1;     // daily DrawUp = how far from Low = profit felt compared to Lowest
                     if (dailyDU > maxDU)

@@ -14,10 +14,36 @@
   align-items: stretch;
   justify-content: space-between;
 }
-.leftDiv {
+.dashboardTopCont .leftDiv {
   float:left;
+  visibility: hidden;
 }
-.rightDiv {
+
+.dashboardTopCont table{
+  border-collapse: collapse;
+}
+.dashboardTopCont table td, th{
+  padding: 0rem;
+  border-style: ridge;
+  border-width: 0.2rem;
+  border-color: #4e95f4 ;
+  width: 7rem;
+  text-align: center;
+}
+
+.dashboardTopCont .tableHeader {
+  background: #b8d1f3;
+}
+
+.dashboardTopCont .rightDiv {
   float:right;
   text-align: center;
+}
+.dashboardTopCont .realtimeRow{
+  font-size: 1.6rem;
+  background-color: #dae5f4;
+}
+.dashboardTopCont .pastPerfRow{
+  font-size: 1.4rem;
+  background-color: #ffffff;
 }
