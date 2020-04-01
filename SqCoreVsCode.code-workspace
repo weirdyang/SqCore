@@ -31,5 +31,6 @@
 			"minimap.background": "#00000055"
 		},
 		"timeline.showView": true,
+		"editor.renderWhitespace": "all",
 	}
 }
