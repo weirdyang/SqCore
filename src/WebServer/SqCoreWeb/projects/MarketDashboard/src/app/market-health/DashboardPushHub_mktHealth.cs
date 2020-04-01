@@ -95,12 +95,22 @@ namespace SqCoreWeb
 
         private static IEnumerable<RtMktSumNonRtStat> GetLookbackStat(string p_lookbackStr)
         {
-            DateTime todayET = Utils.ConvertTimeFromUtcToEt(DateTime.UtcNow).Date;
+            DateTime todayET = Utils.ConvertTimeFromUtcToEt(DateTime.UtcNow).Date;  // the default is YTD.
             DateTime lookbackStart = new DateTime(todayET.Year - 1, 12, 31);  // YTD relative to 31st December, last year
             if (p_lookbackStr.EndsWith("y"))
             {
                 if (Int32.TryParse(p_lookbackStr.Substring(0, p_lookbackStr.Length - 1), out int nYears))
-                    lookbackStart = todayET.AddYears(-1*nYears);
+                    lookbackStart = todayET.AddYears(-1 * nYears);
+            }
+            else if (p_lookbackStr.EndsWith("m"))
+            {
+                if (Int32.TryParse(p_lookbackStr.Substring(0, p_lookbackStr.Length - 1), out int nMonths))
+                    lookbackStart = todayET.AddMonths(-1 * nMonths);
+            }
+            else if (p_lookbackStr.EndsWith("w"))
+            {
+                if (Int32.TryParse(p_lookbackStr.Substring(0, p_lookbackStr.Length - 1), out int nWeeks))
+                    lookbackStart = todayET.AddDays(-7 * nWeeks);
             }
 
             IEnumerable<RtMktSumNonRtStat> lookbackStatToClient = g_mktSummaryStocks.Select(r =>
