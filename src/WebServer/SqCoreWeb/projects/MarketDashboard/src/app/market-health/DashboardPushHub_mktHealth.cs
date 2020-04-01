@@ -124,6 +124,10 @@ namespace SqCoreWeb
                 Debug.WriteLine($"Found: {r.Ticker}, {dates[iPrevDay]}:{sdaCloses[iPrevDay]}");
 
                 int iLookbackStartOrBefore = sec.DailyHistory.IndexOfKeyOrBeforeKey(new DateOnly(lookbackStart));      // the valid price at the weekend is the one on the previous Friday.
+                if (iLookbackStartOrBefore == -1) // if startDate is not found, because e.g. we want to go back 3 years, while stock has only 2 years history
+                {
+                    iLookbackStartOrBefore = 0; // then fix the startDate as the first available date of history.
+                }
                 float max = float.MinValue, min = float.MaxValue, maxDD = float.MaxValue, maxDU = float.MinValue;
                 for (int i = iLookbackStartOrBefore; i <= iPrevDay; i++)
                 {
@@ -131,8 +135,8 @@ namespace SqCoreWeb
                         max = sdaCloses[i];
                     if (sdaCloses[i] < min)
                         min = sdaCloses[i];
-                    float dailyDD = sdaCloses[i] / max - 1;     // daily Drawdown = how far from High = loss felt compared to Highest
-                    if (dailyDD < maxDD)
+                    float dailyDD = sdaCloses[i] / max - 1;     // -0.1 = -10%. daily Drawdown = how far from High = loss felt compared to Highest
+                    if (dailyDD < maxDD)                        // dailyDD are a negative values, so we should do MIN-search to find the Maximum negative value
                         maxDD = dailyDD;                        // maxDD = maximum loss, pain felt over the period
                     float dailyDU = sdaCloses[i] / min - 1;     // daily DrawUp = how far from Low = profit felt compared to Lowest
                     if (dailyDU > maxDU)
@@ -144,7 +148,7 @@ namespace SqCoreWeb
                     SecID = r.SecID,
                     Ticker = r.Ticker,
                     PreviousClose = sdaCloses[iPrevDay],
-                    PeriodStart = lookbackStart,
+                    PeriodStart = dates[iLookbackStartOrBefore],    // it may be not the 'asked' start date if we have less price history
                     PeriodOpen = sdaCloses[iLookbackStartOrBefore],
                     PeriodHigh = max,
                     PeriodLow = min,
