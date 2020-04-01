@@ -9,6 +9,7 @@ class NewsItem {
   public downloadTime: Date = new Date();
   public publishDate: Date = new Date();
   public source = '';
+  public displayText = '';
 }
 
 @Component({
@@ -20,8 +21,18 @@ export class QuickfolioNewsComponent implements OnInit {
   @Input() _parentHubConnection?: HubConnection = undefined; // this property will be input from above parent container
 
   public request: XMLHttpRequest = new XMLHttpRequest();
+  interval: NodeJS.Timeout;
   previewText = '';
+  previewTextCommon = '';
   selectedTicker = '';
+  previewedCommonNews: NewsItem = new NewsItem();
+  previewCommonInterval: NodeJS.Timeout = setInterval(
+    () => {
+    }, 10 * 60 * 1000); // every 10 minutes do nothing (just avoid compiler error (uninitialised))
+  previewedStockNews: NewsItem = new NewsItem();
+  previewStockInterval: NodeJS.Timeout = setInterval(
+    () => {
+    }, 10 * 60 * 1000); // every 10 minutes do nothing (just avoid compiler error (uninitialised))
   stockTickers: string[] = [];
   stockNews: NewsItem[] = [];
   generalNews: NewsItem[] = [
@@ -66,11 +77,66 @@ export class QuickfolioNewsComponent implements OnInit {
   ];
 
   constructor() {
+    this.interval = setInterval(
+      () => {
+        this.updateNewsDownloadTextValues();
+        this.UpdatePreviewHighlightCommon();
+      }, 15000); // every 15 sec
+  }
+
+  public mouseEnterCommon(news: NewsItem): void {
+    // console.log('mouse Enter Common' + news.linkUrl);
+    this.previewTextCommon = news.summary;
+    this.previewedCommonNews = news;
+    this.UpdatePreviewHighlightCommon();
+  }
+
+  UpdatePreviewHighlightCommon() {
+    const newsElements = document.querySelectorAll('.newsItemCommon');
+    console.log('newsItems count = ' + newsElements.length);
+    for (const newsElement of newsElements) {
+      // console.log('news ' + newsElement);
+      const hyperLink = newsElement.getElementsByClassName('newsHyperlink')[0];
+      // console.log('news ticker count = ' + tickerSpan.innerHTML);
+      if (hyperLink.getAttribute('href') === this.previewedCommonNews.linkUrl) {
+        newsElement.className = newsElement.className.replace(' previewed', '') + ' previewed';
+        // console.log('setting to previewed');
+      } else {
+        newsElement.className = newsElement.className.replace(' previewed', '');
+      }
+    }
+    clearInterval(this.previewCommonInterval);
+    // this.previewCommonInterval = null;
   }
 
   public mouseEnter(news: NewsItem): void {
     // console.log('mouse Enter ' + news.linkUrl);
     this.previewText = news.summary;
+    this.previewedStockNews = news;
+    this.UpdatePreviewHighlightStock();
+  }
+
+  UpdatePreviewHighlightStock() {
+    const newsElements = document.querySelectorAll('.newsItemStock');
+    // console.log('newsItems count = ' + newsElements.length);
+    for (const newsElement of newsElements) {
+      // console.log('news ' + newsElement);
+      const hyperLink = newsElement.getElementsByClassName('newsHyperlink')[0];
+      // console.log('news ticker count = ' + tickerSpan.innerHTML);
+      if (hyperLink.getAttribute('href') === this.previewedStockNews.linkUrl) {
+        newsElement.className = newsElement.className.replace(' previewed', '') + ' previewed';
+        // console.log('setting to previewed');
+      } else {
+        newsElement.className = newsElement.className.replace(' previewed', '');
+      }
+    }
+  }
+
+  public reloadClick(event): void {
+    // console.log('reload clicked');
+    if (this._parentHubConnection != null) {
+      this._parentHubConnection.send('ReloadQuickfolio');
+    }
   }
 
   public menuClick(event, ticker: string): void {
@@ -105,9 +171,9 @@ export class QuickfolioNewsComponent implements OnInit {
       const tickerSpan = newsElement.getElementsByClassName('newsTicker')[0];
       // console.log('news ticker count = ' + tickerSpan.innerHTML);
       if (this.TickerIsPresent(tickerSpan.innerHTML, this.selectedTicker)) {
-        newsElement.className = 'newsItemStock';
+        newsElement.className = newsElement.className.replace(' inVisible', '');
       } else {
-        newsElement.className += ' inVisible';
+        newsElement.className = newsElement.className.replace(' inVisible', '') + ' inVisible';
       }
     }
   }
@@ -131,25 +197,65 @@ export class QuickfolioNewsComponent implements OnInit {
       this._parentHubConnection.on(
         'quickfNewsCommonNewsUpdated',
         (message: NewsItem[]) => {
+          console.log('Quickfolio News: general news update arrived');
           this.extractNewsList(message, this.generalNews);
+          this.previewCommonInterval = setInterval(
+            () => {
+              this.SetCommonPreviewIfEmpty();
+            }, 1000); // after 1 sec
         }
       );
       this._parentHubConnection.on(
         'stockTickerList',
         (message: string[]) => {
+          console.log('Quickfolio News: stock ticker list update arrived');
           this.stockTickers = message;
           console.log('Init menu');
           this.menuClick(null, 'All assets');
+          this.removeUnreferencedNews();
         }
       );
       this._parentHubConnection.on(
         'quickfNewsStockNewsUpdated',
         (message: NewsItem[]) => {
+          console.log('Quickfolio News: stock news update arrived');
           this.extractNewsList(message, this.stockNews);
           this.UpdateNewsVisibility();
+          this.previewStockInterval = setInterval(
+            () => {
+              this.SetStockPreviewIfEmpty();
+            }, 1000); // after 1 sec
         }
       );
     }
+  }
+
+  SetStockPreviewIfEmpty() {
+    if (this.previewText === '') {
+      if (this.stockNews.length > 0) {
+        this.mouseEnter(this.stockNews[0]);
+      }
+    }
+  }
+
+  SetCommonPreviewIfEmpty() {
+    if (this.previewTextCommon === '') {
+      if (this.generalNews.length > 0) {
+        this.mouseEnterCommon(this.generalNews[0]);
+        // console.log('SetCommonPreviewIfEmpty ' + this.generalNews[0].linkUrl);
+      }
+    }
+  }
+
+  removeUnreferencedNews() {
+    this.stockNews = this.stockNews.filter(news => this.NewsItemHasTicker(news));
+  }
+
+  NewsItemHasTicker(news: NewsItem): boolean {
+    let tickers = news.ticker.split(',');
+    tickers = tickers.filter(existingTicker => this.stockTickers.includes(existingTicker));
+    news.ticker = tickers.join(', ');
+    return tickers.length > 0;
   }
 
 
@@ -160,61 +266,6 @@ export class QuickfolioNewsComponent implements OnInit {
       this.insertMessage(newsList, newNews);
     }
   }
-
-  // extractNews(message, isCommon): void {
-  //   if (isCommon) {
-  //     this.generalNews = [];
-  //   } else {
-  //     this.stockNews = [];
-  //   }
-  //   while (message.startsWith('news')) {
-  //     message = message.substr(11); // trim news_ticker
-  //     const tickerLength = message.search('news_title');
-  //     const ticker = message.substr(0, tickerLength);
-  //     message = message.substr(tickerLength + 10); // trim news_title
-  //     const titleLength = message.search('news_summary');
-  //     const title = message.substr(0, titleLength);
-  //     message = message.substr(titleLength + 12); // trim news_summary
-  //     const summaryLength = message.search('news_link');
-  //     const summary = message.substr(0, summaryLength);
-  //     message = message.substr(summaryLength + 9); // trim news_link
-  //     const linkLength = message.search('news_downloadTime');
-  //     const link = message.substr(0, linkLength);
-  //     message = message.substr(linkLength + 17); // trim news_downloadTime
-  //     const dTimeLength = message.search('news_publishDate');
-  //     const dTime = message.substr(0, dTimeLength);
-  //     message = message.substr(dTimeLength + 16); // trim news_publishDate
-  //     const pDateLength = message.search('news_source');
-  //     const pDate = message.substr(0, pDateLength);
-  //     message = message.substr(pDateLength + 11); // trim news_source
-  //     const nSourceLength = message.search('news_end');
-  //     // const nSource = message.substr(0, nSourceLength);
-  //     message = message.substr(nSourceLength + 8); // trim news_end
-  //     if (isCommon) {
-  //       this.insertMessage(this.generalNews,
-  //         {
-  //           ticker: '',
-  //           title,
-  //           summary,
-  //           linkUrl: link,
-  //           downloadTime: dTime,
-  //           publishDate: pDate,
-  //           source: ''
-  //         });
-  //     } else {
-  //       this.insertMessage(this.stockNews,
-  //         {
-  //           ticker,
-  //           title,
-  //           summary,
-  //           linkUrl: link,
-  //           downloadTime: dTime,
-  //           publishDate: pDate,
-  //           source: ''
-  //         });
-  //     }
-  //   }
-  // }
 
   insertMessage(messages: NewsItem[], newItem: NewsItem): void {
     let index = 0;
@@ -229,7 +280,21 @@ export class QuickfolioNewsComponent implements OnInit {
         index++;
       }
     }
+    this.updateNewsDownloadText(newItem);
     messages.splice(index, 0, newItem);
+  }
+
+  updateNewsDownloadTextValues() {
+    for (const news of this.generalNews) {
+      this.updateNewsDownloadText(news);
+    }
+    for (const news of this.stockNews) {
+      this.updateNewsDownloadText(news);
+    }
+  }
+
+  updateNewsDownloadText(newsItem: NewsItem) {
+    newsItem.displayText = this.getpublishedString(newsItem.publishDate);
   }
 
   extendTickerSection(news: NewsItem, newTicker: string) {
@@ -243,5 +308,26 @@ export class QuickfolioNewsComponent implements OnInit {
     if (!foundSame) {
       news.ticker += ', ' + newTicker;
     }
+  }
+
+  getpublishedString(date: Date) {
+    // console.log('since ' + date + '  ...  ' + new Date());
+    const downloadDate = new Date(date);
+    const timeDiffInSecs = Math.floor((new Date().getTime() - downloadDate.getTime()) / 1000);
+    // console.log('since ' + timeDiffInSecs);
+    if (timeDiffInSecs < 60) {
+      return timeDiffInSecs.toString() + 'sec ago';
+    }
+    let timeDiffMinutes = Math.floor(timeDiffInSecs / 60);
+    if (timeDiffMinutes < 60) {
+      return timeDiffMinutes.toString() + 'min ago';
+    }
+    const timeDiffHours = Math.floor(timeDiffMinutes / 60);
+    timeDiffMinutes = timeDiffMinutes - 60 * timeDiffHours;
+    if (timeDiffHours < 24) {
+      return timeDiffHours.toString() + 'h ' + timeDiffMinutes.toString() + 'm ago';
+    }
+    const timediffDays = Math.floor(timeDiffHours / 24);
+    return timediffDays.toString() + ' days ago';
   }
 } // class

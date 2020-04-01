@@ -29,6 +29,7 @@ namespace SqCoreWeb
         public DateTime DownloadTime { get; set; }
         public DateTime PublishDate { get; set; }
         public string Source { get; set; } = string.Empty;
+        public string DisplayText { get; set; } = string.Empty;
     }
 
     public class QuickfolioNewsDownloader
@@ -39,6 +40,11 @@ namespace SqCoreWeb
         string[] m_stockTickers = { "AAPL", "ADBE", "AMZN", "BABA", "CRM", "FB", "GOOGL", "MA", "MSFT", "NVDA", "PYPL", "QCOM", "V" };
 
         public QuickfolioNewsDownloader()
+        {
+            UpdateStockTickers();
+        }
+
+        public void UpdateStockTickers()
         {
             string valuesFromGSheetStr = "Error. Make sure GoogleApiKeyKey, GoogleApiKeyKey is in SQLab.WebServer.SQLab.NoGitHub.json !";
             if (!String.IsNullOrEmpty(Utils.Configuration["Google:GoogleApiKeyName"]) && !String.IsNullOrEmpty(Utils.Configuration["Google:GoogleApiKeyKey"]))
@@ -82,9 +88,9 @@ namespace SqCoreWeb
                     System.Threading.Thread.Sleep(m_sleepBetweenDnsMs.Key + m_random.Next(m_sleepBetweenDnsMs.Value));
                 retryCount++;
             }
-            AddFoundNews(0, foundNewsItems);
+            // AddFoundNews(0, foundNewsItems);
             // return NewsToString(m_newsMemory[0]);
-            return m_newsMemory[0];
+            return foundNewsItems;
         }
 
         internal List<string> GetStockTickers()
@@ -152,6 +158,7 @@ namespace SqCoreWeb
                     newsItem.PublishDate = item.PublishDate.LocalDateTime;
                     newsItem.DownloadTime = DateTime.Now;
                     newsItem.Source = p_newsSource.ToString();
+                    newsItem.DisplayText = string.Empty;
                     //newsItem.setFiltered();
 
                     foundNews.Add(newsItem);

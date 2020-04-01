@@ -1,19 +1,33 @@
-<p>Common news downloaded from CNBC</p>
-<div style="overflow-y: auto; height:160px;">
-  <ul>
-    <div class="newsItemCommon" *ngFor="let news of generalNews">
-      <li>
-        <span>{{ news.publishDate | date:'yyyy-MM-dd hh:mm'}} </span>
-
-        <a [title]="news.summary" [href]="news.linkUrl" target="_blank">
-          {{news.title}}
-        </a>
-        <!-- <span>{{ news.DownloadTime}} </span> -->
-      </li>
-    </div>
-  </ul>
+<p style="margin: 0px;">General news from CNBC</p>
+<div style="overflow: hidden;">
+  <div style="overflow-y: auto; height:160px; width: 750px; float:left;">
+    <ul style="margin: 0px;">
+      <div class="newsItemCommon" *ngFor="let news of generalNews">
+        <li (mouseenter)=mouseEnterCommon(news)>
+          <!-- <span>{{getpublishedString(news.publishDate)}} </span> -->
+          <span>{{news.displayText}} </span>
+          <a class="newsHyperlink" [title]="news.summary" [href]="news.linkUrl" target="_blank">
+            {{news.title}}
+          </a>
+          <!-- <span>{{ news.DownloadTime}} </span> -->
+        </li>
+      </div>
+    </ul>
+  </div>
+  <div style="width: 200px; float: right; margin-left: 10px; height: 160px; overflow-y: auto;">
+    <span>
+      {{previewTextCommon}}
+    </span>
+  </div>
 </div>
-<p>Quickfolio specific news</p>
+
+<div style="overflow: hidden;">
+<p style="float:left;">Quickfolio specific news. You can change the quickfolio members
+  <a target="_blank" href="https://docs.google.com/spreadsheets/d/1c5ER22sXDEVzW3uKthclpArlZvYuZd6xUffXhs6rRsM">here</a>
+  .</p>
+  <button type="button" style="float:left; margin: 14px;" (click)="reloadClick($event)">Reload quickfolio</button>
+</div>
+
 <div>
   <div style="width: 100px; height: 602px; float:left; overflow-y: auto;">
     <div class="vertical-menu" *ngFor="let ticker of stockTickers">
@@ -21,15 +35,15 @@
     </div>
   </div>
 
-  <div style="width: 600px; height: 602px; float:left; overflow-y: auto;">
+  <div style="width: 490px; height: 602px; float:left; overflow-y: auto;">
     <!-- <div style=" height:602px;"> -->
-      <ul>
+      <ul style="margin: 0px;">
         <div class="newsItemStock" *ngFor="let news of stockNews">
           <li (mouseenter)=mouseEnter(news)>
-            <span>{{ news.publishDate | date:'yyyy-MM-dd hh:mm'}} </span>
+          <!-- <span>{{getpublishedString(news.publishDate)}} </span> -->
+          <span>{{news.displayText}} </span>
             <span class="newsTicker">{{ news.ticker}} </span>
-
-            <a [title]="news.summary" [href]="news.linkUrl" target="_blank">
+            <a class="newsHyperlink" [title]="news.summary" [href]="news.linkUrl" target="_blank">
               {{news.title}}
             </a>
             <!-- <span>{{ news.DownloadTime}} </span> -->
@@ -38,7 +52,7 @@
       </ul>
     </div>
   <!-- </div> -->
-  <div style="width: 180px; float: right; margin-left: 10px; height: 602px; overflow-y: auto;">
+  <div style="width: 360px; float: right; height: 602px; overflow-y: auto;">
     <span>
       {{previewText}}
     </span>
