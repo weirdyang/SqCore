@@ -85,7 +85,7 @@ class TradingHoursTimer {
     // Post market ends: 20:00 - 1200 min
     let isOpenStr = '';
     if (dayOfWeek === 0 || dayOfWeek === 6) {
-      isOpenStr = 'Today is weekend. Market is closed.';
+      isOpenStr = 'Today is weekend. U.S. market is closed.';
     } else if (timeOfDay < 240) {
       isOpenStr = 'Market is closed. Pre-market starts in ' + Math.floor((240 - timeOfDay) / 60) + 'h' + (240 - timeOfDay) % 60 + 'min.';
     } else if (timeOfDay < 570) {
@@ -95,7 +95,7 @@ class TradingHoursTimer {
     } else if (timeOfDay < 1200) {
       isOpenStr = 'Regular trading is closed. Post-market ends in ' + Math.floor((1200 - timeOfDay) / 60) + 'h' + (1200 - timeOfDay) % 60 + 'min.';
     } else {
-      isOpenStr = 'Market is already closed.';
+      isOpenStr = 'U.S. market is closed.';
     }
 
     if (hoursSt.length < 2) {

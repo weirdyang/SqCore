@@ -67,14 +67,12 @@ namespace SqCoreWeb.Controllers
 
         private Tuple<string, string> GenerateYffResponse()
         {
-            throw new NotImplementedException();
-            /*
             try
             {
                 // 1. Prepare input parameters
                 string uriQuery = Request.QueryString.ToString();    // "?s=VXX,SVXY,^vix&f=ab&o=csv" from the URL http://localhost:58213/api/rtp?s=VXX,XIV,^vix&f=ab&o=csv
                 if (uriQuery.Length > 8192)
-                {//When you try to pass a string longer than 8192 charachters, a faultException will be thrown. There is a solution, but I don't want
+                {   //When you try to pass a string longer than 8192 charachters, a faultException will be thrown. There is a solution, but I don't want
                     return new Tuple<string, string>(@"{ ""Message"":  ""Error caught by WebApi Get():: uriQuery is longer than 8192: we don't process that. Uri: " + uriQuery + @""" }", "application/json");
                 }
 
@@ -113,81 +111,106 @@ namespace SqCoreWeb.Controllers
                 }
 
 
-                string? jsonpCallback = null;
-                if (allParamsDict.TryGetValue("jsonp", out queryStrVal))
+                string? jsonpCallback = null, outputVariable = null;
+                if (isOutputJson)
                 {
-                    jsonpCallback = queryStrVal[0];
-                }
-                string? outputVariable = null;
-                if (allParamsDict.TryGetValue("yffOutVar", out queryStrVal))
-                {
-                    outputVariable = queryStrVal[0];
-                }
-                if (jsonpCallback == null && outputVariable == null)
-                {
-                    return new Tuple<string, string>(@"{ ""Message"":  ""Error: nor yffOutVar= , neiher jsonp= was found. Uri: " + uriQuery + @""" }", "application/json");
-                }
-                else if (jsonpCallback != null && outputVariable != null)
-                {
-                    return new Tuple<string, string>(@"{ ""Message"":  ""Error: Both yffOutVar= ,  jsonp= were found. Uri: " + uriQuery + @""" }", "application/json");
+                    if (allParamsDict.TryGetValue("jsonp", out queryStrVal))
+                    {
+                        jsonpCallback = queryStrVal[0];
+                    }
+                    if (allParamsDict.TryGetValue("yffOutVar", out queryStrVal))
+                    {
+                        outputVariable = queryStrVal[0];
+                    }
+                    if (jsonpCallback == null && outputVariable == null)
+                    {
+                        return new Tuple<string, string>(@"{ ""Message"":  ""Error: nor yffOutVar= , neiher jsonp= was found. Uri: " + uriQuery + @""" }", "application/json");
+                    }
+                    else if (jsonpCallback != null && outputVariable != null)
+                    {
+                        return new Tuple<string, string>(@"{ ""Message"":  ""Error: Both yffOutVar= ,  jsonp= were found. Uri: " + uriQuery + @""" }", "application/json");
+                    }
                 }
 
                 string? targetUriWithoutHttp = null;
-                if (allParamsDict.TryGetValue("yffUri", out queryStrVal))
+                string ticker = String.Empty;
+                if (allParamsDict.TryGetValue("yffUri", out queryStrVal))   // yffUri=query1.finance.yahoo.com/v7/finance/download/AAPL&period1=2017-02-02&period2=2017-05-22&interval=1d&events=history
                 {
                     targetUriWithoutHttp = queryStrVal[0];
+                    int indSlash = targetUriWithoutHttp.LastIndexOf('/');
+                    if (indSlash != -1)
+                        ticker = targetUriWithoutHttp.Substring(indSlash + 1);
                 }
+
 
                 // 2. Obtain Token.Cookie and Crumb (maybe from cache until 12 hours) that is needed for Y!F API from 2017-05
                 // after 2017-05: https://query1.finance.yahoo.com/v7/finance/download/VXX?period1=1492941064&period2=1495533064&interval=1d&events=history&crumb=VBSMphmA5gp
                 // but we will accept standard dates too and convert to Unix epoch before sending it to YF
                 // https://query1.finance.yahoo.com/v7/finance/download/VXX?period1=2017-02-31&period2=2017-05-23&interval=1d&events=history&crumb=VBSMphmA5gp
                 // https://github.com/dennislwy/YahooFinanceAPI
-                int maxTryCrumb = 10;                 //first get a valid token from Yahoo Finance
-                while (maxTryCrumb >= 0 && (string.IsNullOrEmpty(Token.Cookie) || string.IsNullOrEmpty(Token.Crumb)))
-                {
-                    //await Token.RefreshAsync().ConfigureAwait(false);
-                    bool tokenSuccess = Token.RefreshAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-                    maxTryCrumb--;
-                }
+                // int maxTryCrumb = 10;                 //first get a valid token from Yahoo Finance
+                // while (maxTryCrumb >= 0 && (string.IsNullOrEmpty(Token.Cookie) || string.IsNullOrEmpty(Token.Crumb)))
+                // {
+                //     //await Token.RefreshAsync().ConfigureAwait(false);
+                //     bool tokenSuccess = Token.RefreshAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+                //     maxTryCrumb--;
+                // }
 
                 // 3. With the Token.Cookie and Crumb download YF CSV file
                 string startTimeStr = allParamsDict["period1"];
                 string endTimeStr = allParamsDict["period2"];
+                DateTime startTime = DateOnly.MinValue, endTime = DateTime.UtcNow;
                 if (startTimeStr.IndexOf('-') != -1)    // format '2017-05-20' has hyphen in it; if it has hyphen, try to convert to Date.
                 {
-                    DateTime date = DateTime.ParseExact(startTimeStr, "yyyy-MM-dd", CultureInfo.InvariantCulture);
-                    startTimeStr = Utils.DateTimeUtcToUnixTimeStamp(date).ToString();
+                    startTime = DateTime.ParseExact(startTimeStr, "yyyy-MM-dd", CultureInfo.InvariantCulture);
                 }
-                if (String.Equals(endTimeStr, "UtcNow", StringComparison.CurrentCultureIgnoreCase))    // format '2017-05-20' has hyphen in it; if it has hyphen, try to convert to Date.
+                else
                 {
-                    endTimeStr = Utils.DateTimeUtcToUnixTimeStamp(DateTime.UtcNow).ToString();
-                }
-                else if (endTimeStr.IndexOf('-') != -1)    // format '2017-05-20' has hyphen in it; if it has hyphen, try to convert to Date.
-                {
-                    DateTime date = DateTime.ParseExact(endTimeStr, "yyyy-MM-dd", CultureInfo.InvariantCulture);
-                    if (date.Date == DateTime.UtcNow.Date)  // if today is included, we thing the caller wants the real-time (latest) data; so change endTime to UtcNow
-                        date = DateTime.UtcNow;
-                    else
-                        date = date.AddHours(12);    // endTimeStr Date is excluded from daily data, so Add a little bit more
-                    endTimeStr = Utils.DateTimeUtcToUnixTimeStamp(date).ToString();
+                    startTime = Utils.UnixTimeStampToDateTimeUtc(long.Parse(startTimeStr)); // it is in UnixTimestamp string, we have to convert to Date
                 }
 
-                var csvDownload = string.Empty;
-                string yfURI = String.Format("https://{0}?period1={1}&period2={2}&interval={3}&events={4}&crumb={5}", targetUriWithoutHttp, startTimeStr, endTimeStr, allParamsDict["interval"], allParamsDict["events"], Token.Crumb ?? "");
-                HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(yfURI);
-                request.CookieContainer = new CookieContainer();
-                request.Headers[HttpRequestHeader.Cookie] = Token.Cookie;
-                request.Method = "GET";
-                var task = request.GetResponseAsync();
-                task.Wait(10000); // Blocks current thread until GetFooAsync task completes; timeout is 10000msec
-                using (var response = (HttpWebResponse)task.Result)
+                if (String.Equals(endTimeStr, "UtcNow", StringComparison.CurrentCultureIgnoreCase))    // format '2017-05-20' has hyphen in it; if it has hyphen, try to convert to Date.
                 {
-                    using (Stream stream = response.GetResponseStream())
-                    {
-                        csvDownload = new StreamReader(stream).ReadToEnd();
-                    }
+                    endTime = DateTime.UtcNow;
                 }
+                else
+                {
+                    if (endTimeStr.IndexOf('-') != -1)    // format '2017-05-20' has hyphen in it; if it has hyphen, try to convert to Date.
+                        endTime = DateTime.ParseExact(endTimeStr, "yyyy-MM-dd", CultureInfo.InvariantCulture);
+                    else
+                        endTime = Utils.UnixTimeStampToDateTimeUtc(long.Parse(endTimeStr));
+
+                    if (endTime.Date == DateTime.UtcNow.Date)  // if today is included, we think the caller wants the real-time (latest) data; so change endTime to UtcNow
+                        endTime = DateTime.UtcNow;
+                    else
+                        endTime = endTime.AddHours(12);    // endTimeStr Date is excluded from daily data, so Add a little bit more to the middle of the UTC day
+                }
+                
+
+                // var csvDownload = string.Empty;
+                // string yfURI = String.Format("https://{0}?period1={1}&period2={2}&interval={3}&events={4}&crumb={5}", targetUriWithoutHttp, startTimeStr, endTimeStr, allParamsDict["interval"], allParamsDict["events"], Token.Crumb ?? "");
+                // HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(yfURI);
+                // request.CookieContainer = new CookieContainer();
+                // request.Headers[HttpRequestHeader.Cookie] = Token.Cookie;
+                // request.Method = "GET";
+                // var task = request.GetResponseAsync();
+                // task.Wait(10000); // Blocks current thread until GetFooAsync task completes; timeout is 10000msec
+                // using (var response = (HttpWebResponse)task.Result)
+                // {
+                //     using (Stream stream = response.GetResponseStream())
+                //     {
+                //         csvDownload = new StreamReader(stream).ReadToEnd();
+                //     }
+                // }
+
+                Period period = Period.Daily;
+                if (allParamsDict["interval"] == "1w")
+                    period = Period.Weekly;
+                else if (allParamsDict["interval"] == "1m")
+                    period = Period.Monthly;
+
+                var history = Yahoo.GetHistoricalAsync(ticker, startTime, endTime, period).Result;
+
 
                 // 4.1 Process YF CSV file either as JSON or as CSV: Header
                 StringBuilder responseStrBldr = new StringBuilder();
@@ -204,57 +227,80 @@ namespace SqCoreWeb.Controllers
                     }
                 }
                 else
-                {
+                {   // output is CSV
                     WriteRow(isOutputJson, yffColumnsList, new string[] { "Date", "Open", "High", "Low", "Close", "Adj Close", "Volume" }, responseStrBldr, ref wasDataLineWritten);
                 }
 
-                // 4.2 Process YF CSV file either as JSON or as CSV: Data lines
-                // First is the header, so skip it. Previously, it was upside down, so the latest was the first, but from 2017-05, the oldest is the first. Fine. Leave it like that.
-                string[] lines = csvDownload.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                for (int i = 1; i < lines.Length; i++)
+                foreach (var candle in history)
                 {
-                    string[] cells = lines[i].Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-                    if (cells.Length != 7)
-                    {
-                        return new Tuple<string, string>(@"{ ""Message"":  ""Error: yF row doesn't have 7 cells: " + lines[i] + @""" }", "application/json");
-                    }
-
-                    DateTime date;
-                    if (!DateTime.TryParseExact(cells[0], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out date))
-                    {
-                        return new Tuple<string, string>(@"{ ""Message"":  ""Error: problem with date format: " + cells[0] + @""" }", "application/json");
-                    }
+                    string[] cells = new string[7];
                     if (isOutputJson)
-                        cells[0] = String.Format(@"Date.UTC({0},{1},{2})", date.Year, date.Month - 1, date.Day);
+                        cells[0] = String.Format(@"Date.UTC({0},{1},{2})", candle!.DateTime.Year, candle!.DateTime.Month - 1, candle!.DateTime.Day);
                     else
-                        cells[0] = String.Format(@"{0}-{1}-{2}", date.Year, date.Month, date.Day);
+                        cells[0] = String.Format(@"{0}-{1}-{2}", candle!.DateTime.Year, candle!.DateTime.Month, candle!.DateTime.Day);
 
                     // Prices in the given CSV as "15.830000" is pointless. Convert it to "15.8" if possible, 		"16.059999"	should be converted too
-                    for (int j = 1; j < 6; j++)
-                    {
-                        if (Double.TryParse(cells[j], out double price))
-                            cells[j] = price.ToString("0.###");
-                    }
-
-                    //Volume is sometimes "000"; convert it to "0"
-                    if (Int64.TryParse(cells[6], out long volume))  // Volume was the 5th index, not it is the 6th index (the last item)
-                        cells[6] = volume.ToString();
+                    cells[1] = candle!.Open.ToString("0.###");
+                    cells[2] = candle!.High.ToString("0.###");
+                    cells[3] = candle!.Low.ToString("0.###");
+                    cells[4] = candle!.Close.ToString("0.###");
+                    cells[5] = candle!.AdjustedClose.ToString("0.###");
+                    cells[6] = candle!.Volume.ToString("0.###");
 
                     WriteRow(isOutputJson, yffColumnsList, cells, responseStrBldr, ref wasDataLineWritten);
                 }
 
+
+                // // 4.2 Process YF CSV file either as JSON or as CSV: Data lines
+                // // First is the header, so skip it. Previously, it was upside down, so the latest was the first, but from 2017-05, the oldest is the first. Fine. Leave it like that.
+                // string[] lines = csvDownload.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                // for (int i = 1; i < lines.Length; i++)
+                // {
+                //     string[] cells = lines[i].Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                //     if (cells.Length != 7)
+                //     {
+                //         return new Tuple<string, string>(@"{ ""Message"":  ""Error: yF row doesn't have 7 cells: " + lines[i] + @""" }", "application/json");
+                //     }
+
+                //     DateTime date;
+                //     if (!DateTime.TryParseExact(cells[0], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out date))
+                //     {
+                //         return new Tuple<string, string>(@"{ ""Message"":  ""Error: problem with date format: " + cells[0] + @""" }", "application/json");
+                //     }
+                //     if (isOutputJson)
+                //         cells[0] = String.Format(@"Date.UTC({0},{1},{2})", date.Year, date.Month - 1, date.Day);
+                //     else
+                //         cells[0] = String.Format(@"{0}-{1}-{2}", date.Year, date.Month, date.Day);
+
+                //     // Prices in the given CSV as "15.830000" is pointless. Convert it to "15.8" if possible, 		"16.059999"	should be converted too
+                //     for (int j = 1; j < 6; j++)
+                //     {
+                //         if (Double.TryParse(cells[j], out double price))
+                //             cells[j] = price.ToString("0.###");
+                //     }
+
+                //     //Volume is sometimes "000"; convert it to "0"
+                //     if (Int64.TryParse(cells[6], out long volume))  // Volume was the 5th index, not it is the 6th index (the last item)
+                //         cells[6] = volume.ToString();
+
+                //     WriteRow(isOutputJson, yffColumnsList, cells, responseStrBldr, ref wasDataLineWritten);
+                // }
+
                 // 4.3 Process YF CSV file either as JSON or as CSV: Footer and finalizing it
-                if (outputVariable != null)
-                    responseStrBldr.Append("];");
-                if (jsonpCallback != null)
-                    responseStrBldr.Append("]);");
+                if (isOutputJson)
+                {
+                    if (outputVariable != null)
+                        responseStrBldr.Append("];");
+                    if (jsonpCallback != null)
+                        responseStrBldr.Append("]);");
+                }
 
                 return new Tuple<string, string>(responseStrBldr.ToString(), "application/javascript");
             }
             catch (Exception e)
             {
                 return new Tuple<string, string>(@"{ ""Message"":  ""Exception caught by WebApi Get(): " + e.Message + @""" }", "application/json");
-            }  */
+            }
         }
 
         private readonly Dictionary<string, int> cCommandToIndDict = new Dictionary<string, int>() { { "d", 0 }, { "o", 1 }, { "h", 2 }, { "l", 3 }, { "c", 4 }, { "c1", 5 }, { "v", 6 } };

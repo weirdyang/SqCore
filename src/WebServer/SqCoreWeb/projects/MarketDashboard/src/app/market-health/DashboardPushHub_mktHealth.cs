@@ -75,6 +75,18 @@ namespace SqCoreWeb
             }
         }
 
+
+        static void EvMemDbHistoricalDataReloaded_mktHealth()
+        {
+            Utils.Logger.Info("EvMemDbHistoricalDataReloaded_mktHealth() START");
+
+            if (g_clients.Count > 0)    // Notify all the connected users. 
+            {
+                IEnumerable<RtMktSumNonRtStat> periodStatToClient = GetLookbackStat("YTD");     // reset lookback to to YTD.
+                DashboardPushHubKestrelBckgrndSrv.HubContext?.Clients.All.SendAsync("RtMktSumNonRtStat", periodStatToClient);
+            }
+        }
+
         public void OnConnectedAsync_MktHealth()
         {
             lock (m_rtMktSummaryTimerLock)

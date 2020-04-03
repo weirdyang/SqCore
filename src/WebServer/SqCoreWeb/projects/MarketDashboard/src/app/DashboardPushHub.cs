@@ -64,12 +64,18 @@ namespace SqCoreWeb
         }
         public static void EarlyInit()
         {
-            MemDb.gMemDb.EvInitialized += new MemDb.InitializedEventHandler(EvMemDbInitialized);
+            MemDb.gMemDb.EvInitialized += new MemDb.MemDbEventHandler(EvMemDbInitialized);
+            MemDb.gMemDb.EvHistoricalDataReloaded += new MemDb.MemDbEventHandler(EvMemDbHistoricalDataReloaded);
         }
 
         static void EvMemDbInitialized()
         {
             EvMemDbInitialized_mktHealth();
+        }
+
+        static void EvMemDbHistoricalDataReloaded()
+        {
+            EvMemDbHistoricalDataReloaded_mktHealth();
         }
 
         public override Task OnConnectedAsync()

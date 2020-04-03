@@ -32,7 +32,6 @@ namespace FinTechCommon
         // Max RAM requirement if need O/H/L/C/AdjClose/Volume: 6x of previous = 960MB = 1GB
         // current SumMem: 2+10+10+4*5 = 42 years. 42*260*(2+4)= 66KB.
 
-        // alphabetical order for faster search. 
         public List<Security> Securities { get; } = new List<Security>() { // to minimize mem footprint, only load the necessary dates (not all history).
             new Security() { SecID = 1, Ticker = "GLD", ExpectedHistorySpan="5y"},                  // history starts on 2004-11-18
             new Security() { SecID = 2, Ticker = "QQQ", ExpectedHistorySpan="Date: 2010-01-01"},    // history starts on 1999-03-10. Full history would be: 32KB. 
@@ -42,15 +41,29 @@ namespace FinTechCommon
             new Security() { SecID = 7, Ticker = "USO", ExpectedHistorySpan="5y"},                  // history starts on 2006-04-10
              new Security() { SecID = 5, Ticker = "VXX", ExpectedHistorySpan="Date: 2018-01-25"}};  // history starts on 2018-01-25 on YF, because VXX was restarted. The previously existed VXX.B shares are not on YF.
 
-        Timer m_reloadHistoricalDataTimer;
-        DateTime m_lastReloadHistoricalData = DateTime.MinValue; // UTC
+        // alphabetical order for faster search is not realistic without Index tables. MemDb should mirror persistent data in RedisDb. For Trades in Portfolios. The SecID in MemDb should be the same SecID as in Redis.
+        // There are ticker renames every other day, and we will not reorganize the whole Securities table in Redis just because there were ticker renames in real life.
+        // In Redis, SecID will be permanent. Starting from 1...increasing by 1. Redis 'tables' will be ordered by SecID, because of faster JOIN operations. And SecID will be permanent, so no reorganizing is needed.
+        // The top bits of SecID is the SecType, so there can be gaps in the SecID ordered list. But at least, we can aim to order this array by SecID. (as in Redis)
+        // TODO: if we want to have fast BinarySearch access by ticker, we need a Table of Indexes based on Ticker's alphabetical order. An Index table. And the GetFirstMatchingSecurity(string p_ticker) should use it. 
+        int[] m_idxByTicker = new int[7];    // TODO: implement and use Index Table based on Ticker for faster BinarySearch
 
-        public delegate void InitializedEventHandler();
-        public event InitializedEventHandler? EvInitialized = null;
+        public bool IsInitialized { get; set; } = false;
+
+        public delegate void MemDbEventHandler();
+        public event MemDbEventHandler? EvInitialized = null;
+        
+
+
+        Timer m_historicalDataReloadTimer;
+        DateTime m_lastHistoricalDataReload = DateTime.MinValue; // UTC
+        public event MemDbEventHandler? EvHistoricalDataReloaded = null;
+
+        
 
         public MemDb()
         {
-            m_reloadHistoricalDataTimer = new System.Threading.Timer(new TimerCallback(ReloadHistoricalDataTimer_Elapsed), this, TimeSpan.FromMilliseconds(-1.0), TimeSpan.FromMilliseconds(-1.0));
+            m_historicalDataReloadTimer = new System.Threading.Timer(new TimerCallback(ReloadHistoricalDataTimer_Elapsed), this, TimeSpan.FromMilliseconds(-1.0), TimeSpan.FromMilliseconds(-1.0));
         }
 
         public void Init()
@@ -62,14 +75,15 @@ namespace FinTechCommon
         {
             Thread.CurrentThread.Name = "MemDb.Init_WT Thread";
 
-            ReloadHistoricalDataAndSetTimer();
+            HistoricalDataReloadAndSetTimer();
 
+            IsInitialized = true;
             EvInitialized?.Invoke();
         }
 
         public Security GetSecurity(uint p_secID)
         {
-            // TODO: if fast access is important order Securities by SecID as well, and then use BinarySearch
+            // TODO: <after dates are compacted> MemDb. If fast access is important order Securities by SecID as well, and then use BinarySearch
             foreach (var sec in Securities)
             {
                 if (sec.SecID == p_secID)
@@ -80,8 +94,10 @@ namespace FinTechCommon
 
         public Security GetFirstMatchingSecurity(string p_ticker)
         {
-            // although Tickers are not unique (only SecID), most of the time clients access it by Ticker.
-            //  TODO: if fast access is important order Securities by Ticker, and then use BinarySearch
+            // although Tickers are not unique (only SecID), most of the time clients access data by Ticker.
+
+            // TODO: <after dates are compacted> MemDb. implement and use Index Table based on Ticker for faster BinarySearch. int[] m_idxByTicker. 
+            // Both GetFirstMatchingSecurity(string p_ticker) and GetSecurity(uint p_secID) should use BinarySearch.
             foreach (var sec in Securities)
             {
                 if (sec.Ticker == p_ticker)
@@ -97,12 +113,13 @@ namespace FinTechCommon
 
         public static void ReloadHistoricalDataTimer_Elapsed(object state)    // Timer is coming on a ThreadPool thread
         {
-            ((MemDb)state).ReloadHistoricalDataAndSetTimer();
+            ((MemDb)state).HistoricalDataReloadAndSetTimer();
         }
 
         // https://github.com/lppkarl/YahooFinanceApi
-        void ReloadHistoricalDataAndSetTimer()
+        void HistoricalDataReloadAndSetTimer()
         {
+            Utils.Logger.Info("ReloadHistoricalDataAndSetTimer() START");
             try
             {
                 // The startTime & endTime here defaults to EST timezone
@@ -142,14 +159,14 @@ namespace FinTechCommon
                     var tsValues = sec.DailyHistory.Values1(TickType.SplitDivAdjClose);
                     Debug.WriteLine($"{sec.Ticker}, first: DateTime: {tsDates.First()}, Close: {tsValues.First()}, last: DateTime: {tsDates.Last()}, Close: {tsValues.Last()}");  // only writes to Console in Debug mode in vscode 'Debug Console'
                 }
-
-                m_lastReloadHistoricalData = DateTime.UtcNow;
             }
             catch (System.Exception e)
             {
                 Utils.Logger.Error(e, "ReloadHistoricalDataAndSetTimer()");
             }
 
+            m_lastHistoricalDataReload = DateTime.UtcNow;
+            EvHistoricalDataReloaded?.Invoke();
 
             // reload times should be relative to ET (Eastern Time), because that is how USA stock exchanges work.
             // Reload History approx in UTC: at 9:00 (when IB resets its own timers and pre-market starts)(in the 3 weeks when summer-winter DST difference, it is 8:00), at 14:00 (30min before market open, last time to get correct data, because sometimes YF fixes data late), 21:30 (30min after close)
@@ -168,7 +185,7 @@ namespace FinTechCommon
 
             DateTime targetDateEt = etNow.Date.AddSeconds(targetTimeOnlySec);
             Utils.Logger.Info($"m_reloadHistoricalDataTimer set next targetdate: {targetDateEt.ToSqDateTimeStr()} ET");
-            m_reloadHistoricalDataTimer.Change(targetDateEt - etNow, TimeSpan.FromMilliseconds(-1.0));     // runs only once.
+            m_historicalDataReloadTimer.Change(targetDateEt - etNow, TimeSpan.FromMilliseconds(-1.0));     // runs only once.
         }
 
         public void Exit()
