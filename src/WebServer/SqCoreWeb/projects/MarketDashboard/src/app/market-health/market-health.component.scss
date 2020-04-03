@@ -32,7 +32,7 @@
 }
 
 .dashboardTopCont .tableHeader {
-  background: #b8d1f3;
+  background: #95bbf3;
 }
 
 .dashboardTopCont .rightDiv {
@@ -41,9 +41,40 @@
 }
 .dashboardTopCont .realtimeRow{
   font-size: 1.6rem;
-  background-color: #dae5f4;
+  font-weight: 500;
+  background-color: #c5d8f3;
 }
 .dashboardTopCont .pastPerfRow{
   font-size: 1.4rem;
-  background-color: #ffffff;
+  background-color: #f0f2f7;
+}
+
+.dashboardTopCont .pastPerfRow .lookbAndMarketIndSel{
+  width: 20rem;
+}
+
+
+.tooltipCell {
+  position: relative;
+  // display: inline-block;
+  // border-bottom: 1px dotted black;
+}
+
+.tooltipCell .tooltipText {
+  padding:0.3rem;
+  font-size: 1.4rem;
+  font-weight: normal;
+  display: none;
+  background:rgb(210, 252, 176);
+  border: 0.1rem solid rgb(19, 7, 177);
+  color: rgb(6, 8, 153);
+  text-align: left;
+  border-radius: 1rem;
+  position: absolute;
+  z-index: 100;
+  white-space: pre;
+}
+
+.tooltipCell:hover .tooltipText {
+  display: inline-block;
 }

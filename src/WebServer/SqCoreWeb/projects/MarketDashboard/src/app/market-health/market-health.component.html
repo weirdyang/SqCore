@@ -6,11 +6,14 @@
                 <th *ngFor="let tickers of tableHeaderLinks"><a href="{{tickers.reference}}" target="_blank">{{tickers.ticker}}</a></th>
             </tr>
             <tr class="realtimeRow">
-                <td align="left">DailyReturn</td>
-                <td *ngFor="let items of perfIndDaily">{{items}}</td>
+                <td align="left">Daily return</td>
+                <!-- <td *ngFor="let items of perfIndDaily" title="{{items.dailyTooltipStr}}">{{items.dailyReturnStr}}</td> -->
+                <td *ngFor="let items of perfIndDaily" class="tooltipCell">{{items.dailyReturnStr}}
+                    <div class="tooltipText">{{items.dailyTooltipStr}}</div>
+                </td>
             </tr>
             <tr class="pastPerfRow">
-                <td align="left" style="width:15rem">
+                <td align="left" class="lookbAndMarketIndSel">
                     <select class="form-control" id="lookBackPeriod" (change)=onClickChangeLookback()>
                         <option value="YTD" selected>YTD</option>
                         <option value="2w">2W</option>
@@ -25,10 +28,14 @@
                         <option value="CDD">CurrDrawDown</option>
                         <option value="CDU">CurrDrawUp</option>
                         <option value="MDD">MaxDrawDown</option>
-                        <option value="MDU">FmddDrawUp</option>
+                        <!-- <option value="MDU">FmddDrawUp</option> -->
+                        <option value="MDU">MaxDrawUp</option>
                     </select>
                 </td>
-                <td *ngFor="let items of perfIndSelected">{{items}}</td>
+                <!-- <td *ngFor="let items of perfIndPeriodFull" title="{{items.periodPerfTooltipStr}}">{{items.selectedPerfIndStr}}</td> -->
+                <td *ngFor="let items of perfIndPeriodFull" class="tooltipCell">{{items.selectedPerfIndStr}}
+                    <div class="tooltipText">{{items.periodPerfTooltipStr}}</div>
+                </td>
             </tr>
         </table>
     </div>

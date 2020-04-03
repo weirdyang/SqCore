@@ -31,15 +31,34 @@ class RtMktSumFullStat {
   public periodLow = NaN;
   public dailyReturn = NaN;
   public periodReturn = NaN;
-  public drawDownPerc = NaN;
-  public drawUpPerc = NaN;
-  public maxDrawDownPerc = NaN;
-  public maxDrawUpPerc = NaN;
+  public drawDownPct = NaN;
+  public drawUpPct = NaN;
+  public maxDrawDownPct = NaN;
+  public maxDrawUpPct = NaN;
 }
 
 class TableHeaderRefs {
   public ticker = '';
   public reference = '';
+}
+
+class DailyPerf {
+  public ticker = '';
+  public dailyReturnStr = '';
+  public dailyReturnSign = 1;
+  public dailyTooltipStr = '';
+}
+
+class PeriodPerf {
+  public ticker = '';
+  public periodReturnStr = '';
+  public drawDownPctStr = '';
+  public drawUpPctStr = '';
+  public maxDrawDownPctStr = '';
+  public maxDrawUpPctStr = '';
+  public selectedPerfIndSign = 1;
+  public selectedPerfIndStr = '';
+  public periodPerfTooltipStr = '';
 }
 
 class TradingHoursTimer {
@@ -57,7 +76,7 @@ class TradingHoursTimer {
     const minutes = time2.getMinutes();
     let hoursSt = hours.toString();
     let minutesSt = minutes.toString();
-    const dayOfWeek = time2.getDay() + 1;
+    const dayOfWeek = time2.getDay();
     const timeOfDay = hours * 60 + minutes;
     // ET idoben:
     // Pre-market starts: 4:00 - 240 min
@@ -65,7 +84,7 @@ class TradingHoursTimer {
     // Regular trading ends: 16:00 - 960 min
     // Post market ends: 20:00 - 1200 min
     let isOpenStr = '';
-    if (dayOfWeek > 5) {
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
       isOpenStr = 'Today is weekend. Market is closed.';
     } else if (timeOfDay < 240) {
       isOpenStr = 'Market is closed. Pre-market starts in ' + Math.floor((240 - timeOfDay) / 60) + 'h' + (240 - timeOfDay) % 60 + 'min.';
@@ -109,7 +128,8 @@ export class MarketHealthComponent implements OnInit {
   rtMktSumToDashboard = 'Dashboard';
   marketFullStat: RtMktSumFullStat[] = [];
   tableHeaderLinks: TableHeaderRefs[] = [];
-  perfIndDaily: string[] = [];
+  perfIndDaily: DailyPerf[] = [];
+  perfIndPeriodFull: PeriodPerf[] = [];
   perfIndPeriod: string[] = [];
   perfIndCDD: string[] = [];
   perfIndCDU: string[] = [];
@@ -117,25 +137,40 @@ export class MarketHealthComponent implements OnInit {
   perfIndMDU: string[] = [];
   perfIndSelected: string[] = [];
 
+
   constructor() { }
 
   public perfIndicatorSelector(): void {
     const value = (document.getElementById('marketIndicator') as HTMLSelectElement).value;
     switch (value) {
       case 'PerRet':
-        this.perfIndSelected = this.perfIndPeriod.slice();
+        for (const items of this.perfIndPeriodFull) {
+          items.selectedPerfIndStr = items.periodReturnStr;
+        }
         break;
       case 'CDD':
-        this.perfIndSelected = this.perfIndCDD.slice();
+        for (const items of this.perfIndPeriodFull) {
+          items.selectedPerfIndSign = -1;
+          items.selectedPerfIndStr = items.drawDownPctStr;
+        }
         break;
       case 'CDU':
-        this.perfIndSelected = this.perfIndCDU.slice();
+        for (const items of this.perfIndPeriodFull) {
+          items.selectedPerfIndSign = 1;
+          items.selectedPerfIndStr = items.drawUpPctStr;
+        }
         break;
       case 'MDD':
-        this.perfIndSelected = this.perfIndMDD.slice();
+        for (const items of this.perfIndPeriodFull) {
+          items.selectedPerfIndSign = -1;
+          items.selectedPerfIndStr = items.maxDrawDownPctStr;
+        }
         break;
       case 'MDU':
-        this.perfIndSelected = this.perfIndMDU.slice();
+        for (const items of this.perfIndPeriodFull) {
+          items.selectedPerfIndSign = 1;
+          items.selectedPerfIndStr = items.maxDrawUpPctStr;
+        }
         break;
     }
   }
@@ -188,7 +223,7 @@ export class MarketHealthComponent implements OnInit {
       const existingFullStatItems = marketFullStat.filter(fullStatItem => fullStatItem.secID === singleStockInfo.secID);
       if (existingFullStatItems.length === 0) {
         marketFullStat.push({secID: singleStockInfo.secID, ticker: '', last: singleStockInfo.last, previousClose: NaN, periodStart: new Date(), periodOpen: NaN, periodHigh: NaN,
-      periodLow: NaN, dailyReturn: NaN, periodReturn: NaN, drawDownPerc: NaN, drawUpPerc: NaN, maxDrawDownPerc: NaN, maxDrawUpPerc: NaN});
+      periodLow: NaN, dailyReturn: NaN, periodReturn: NaN, drawDownPct: NaN, drawUpPct: NaN, maxDrawDownPct: NaN, maxDrawUpPct: NaN});
       } else {
         existingFullStatItems[0].last = singleStockInfo.last;
         this.updateReturns(existingFullStatItems[0]);
@@ -207,7 +242,7 @@ export class MarketHealthComponent implements OnInit {
       const existingFullStatItems = marketFullStat.filter(fullStatItem => fullStatItem.secID === singleStockInfo.secID);
       if (existingFullStatItems.length === 0) {
         marketFullStat.push({secID: singleStockInfo.secID, ticker: singleStockInfo.ticker, last: NaN, previousClose: singleStockInfo.previousClose, periodStart: singleStockInfo.periodStart, periodOpen: singleStockInfo.periodOpen, periodHigh: singleStockInfo.periodHigh,
-      periodLow: singleStockInfo.periodLow, dailyReturn: NaN, periodReturn: NaN, drawDownPerc: NaN, drawUpPerc: NaN, maxDrawDownPerc: singleStockInfo.periodMaxDD, maxDrawUpPerc: singleStockInfo.periodMaxDU});
+      periodLow: singleStockInfo.periodLow, dailyReturn: NaN, periodReturn: NaN, drawDownPct: NaN, drawUpPct: NaN, maxDrawDownPct: singleStockInfo.periodMaxDD, maxDrawUpPct: singleStockInfo.periodMaxDU});
         this.tableHeaderLinks.push({ticker: singleStockInfo.ticker, reference: 'https://uk.tradingview.com/chart/?symbol=' + singleStockInfo.ticker});
       } else {
         existingFullStatItems[0].ticker = singleStockInfo.ticker;
@@ -227,8 +262,10 @@ export class MarketHealthComponent implements OnInit {
   updateReturns(item: RtMktSumFullStat) {
     item.dailyReturn = item.last > 0 ? item.last / item.previousClose - 1 : 0;
     item.periodReturn = item.last > 0 ? item.last / item.periodOpen - 1 : item.previousClose / item.periodOpen - 1;
-    item.drawDownPerc = item.last > 0 ? item.last / Math.max(item.periodHigh, item.last) - 1 : item.previousClose / item.periodHigh - 1;
-    item.drawUpPerc = item.last > 0 ? item.last / Math.min(item.periodLow, item.last) - 1 : item.previousClose / item.periodLow - 1;
+    item.drawDownPct = item.last > 0 ? item.last / Math.max(item.periodHigh, item.last) - 1 : item.previousClose / item.periodHigh - 1;
+    item.drawUpPct = item.last > 0 ? item.last / Math.min(item.periodLow, item.last) - 1 : item.previousClose / item.periodLow - 1;
+    item.maxDrawDownPct = Math.min(item.maxDrawDownPct, item.drawDownPct);
+    item.maxDrawUpPct = Math.max(item.maxDrawUpPct, item.drawUpPct);
   }
 
   updateTableRows(perfIndicators: RtMktSumFullStat[]) {
@@ -238,16 +275,27 @@ export class MarketHealthComponent implements OnInit {
     this.perfIndCDU = [];
     this.perfIndMDD = [];
     this.perfIndMDU = [];
+    this.perfIndPeriodFull = [];
 
-    for (const items of perfIndicators ) {
+    for (const items of perfIndicators) {
       if (Number.isNaN(items.dailyReturn) === false) {
-      this.perfIndDaily.push((items.dailyReturn >= 0 ? '+' : '') + (items.dailyReturn * 100).toFixed(2).toString() + '%');
-      this.perfIndPeriod.push((items.periodReturn >= 0 ? '+' : '') + (items.periodReturn * 100).toFixed(2).toString() + '%');
-      this.perfIndCDD.push((items.drawDownPerc >= 0 ? '+' : '') + (items.drawDownPerc * 100).toFixed(2).toString() + '%');
-      this.perfIndCDU.push((items.drawUpPerc >= 0 ? '+' : '') + (items.drawUpPerc * 100).toFixed(2).toString() + '%');
-      this.perfIndMDD.push((items.maxDrawDownPerc >= 0 ? '+' : '') + (items.maxDrawDownPerc * 100).toFixed(2).toString() + '%');
-      this.perfIndMDU.push((items.maxDrawUpPerc >= 0 ? '+' : '') + (items.maxDrawUpPerc * 100).toFixed(2).toString() + '%');
+      this.perfIndDaily.push({ticker: items.ticker, dailyReturnStr: (items.dailyReturn >= 0 ? '+' : '') + (items.dailyReturn * 100).toFixed(2).toString() + '%', dailyReturnSign: Math.sign(items.dailyReturn),
+      dailyTooltipStr: items.ticker + '\n' + 'Daily return: ' + (items.dailyReturn >= 0 ? '+' : '') + (items.dailyReturn * 100).toFixed(2).toString() + '%' + '\n' + 'Last price: ' + items.last.toFixed(2).toString() + '\n' + 'Previous close price: ' + items.previousClose.toFixed(2).toString()} );
+      this.perfIndPeriodFull.push({ticker: items.ticker,
+        periodReturnStr: (items.periodReturn >= 0 ? '+' : '') + (items.periodReturn * 100).toFixed(2).toString() + '%',
+        drawDownPctStr: (items.drawDownPct >= 0 ? '+' : '') + (items.drawDownPct * 100).toFixed(2).toString() + '%',
+        drawUpPctStr: (items.drawUpPct >= 0 ? '+' : '') + (items.drawUpPct * 100).toFixed(2).toString() + '%',
+        maxDrawDownPctStr: (items.maxDrawDownPct >= 0 ? '+' : '') + (items.maxDrawDownPct * 100).toFixed(2).toString() + '%',
+        maxDrawUpPctStr: (items.maxDrawUpPct >= 0 ? '+' : '') + (items.maxDrawUpPct * 100).toFixed(2).toString() + '%',
+        selectedPerfIndSign: Math.sign(items.periodReturn),
+        selectedPerfIndStr: '',
+        periodPerfTooltipStr: ''
+      });
       }
+    }
+
+    for (const items of this.perfIndPeriodFull) {
+      items.periodPerfTooltipStr = items.ticker + '\r\n' + 'Period return: ' + items.periodReturnStr + '\n' + 'Current drawdown: ' + items.drawDownPctStr + '\n' + 'Current drawup: ' + items.drawUpPctStr + '\n' + 'Maximum drawdown: ' + items.maxDrawDownPctStr + '\n' + 'Maximum drawup: ' + items.maxDrawUpPctStr;
     }
     this.perfIndicatorSelector();
   }
