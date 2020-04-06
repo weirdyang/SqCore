@@ -8,32 +8,36 @@
             <tr class="realtimeRow">
                 <td align="left">Daily return</td>
                 <!-- <td *ngFor="let items of perfIndDaily" title="{{items.dailyTooltipStr}}">{{items.dailyReturnStr}}</td> -->
-                <td *ngFor="let items of perfIndDaily" class="tooltipCell">{{items.dailyReturnStr}}
+                <td *ngFor="let items of perfIndDaily" class="tooltipCell {{items.dailyReturnClass}}">{{items.dailyReturnStr}}
                     <div class="tooltipText">{{items.dailyTooltipStr}}</div>
                 </td>
             </tr>
             <tr class="pastPerfRow">
                 <td align="left" class="lookbAndMarketIndSel">
-                    <select class="form-control" id="lookBackPeriod" (change)=onClickChangeLookback()>
-                        <option value="YTD" selected>YTD</option>
-                        <option value="2w">2W</option>
-                        <option value="1m">1M</option>
-                        <option value="6m">6M</option>
-                        <option value="1y">1Y</option>
-                        <option value="3y">3Y</option>
-                        <option value="5y">5Y</option>
-                    </select>
-                    <select class="form-control" id="marketIndicator" (change)=perfIndicatorSelector()>
-                        <option value="PerRet" selected>Return</option>
-                        <option value="CDD">CurrDrawDown</option>
-                        <option value="CDU">CurrDrawUp</option>
-                        <option value="MDD">MaxDrawDown</option>
-                        <!-- <option value="MDU">FmddDrawUp</option> -->
-                        <option value="MDU">MaxDrawUp</option>
-                    </select>
+                    <div class="select">
+                    <select id="lookBackPeriod" (change)=onClickChangeLookback()>
+                            <option value="YTD" selected>YTD</option>
+                            <option value="2w">2W</option>
+                            <option value="1m">1M</option>
+                            <option value="6m">6M</option>
+                            <option value="1y">1Y</option>
+                            <option value="3y">3Y</option>
+                            <option value="5y">5Y</option>
+                        </select>
+                    </div>
+                    &nbsp;
+                    <div class="select">
+                        <select id="marketIndicator" (change)=perfIndicatorSelector()>
+                            <option value="PerRet" selected>Return</option>
+                            <option value="CDD">CurrDrawDown</option>
+                            <option value="CDU">CurrDrawUp</option>
+                            <option value="MDD">MaxDrawDown</option>
+                            <option value="MDU">MaxDrawUp</option>
+                        </select>
+                    </div>
                 </td>
                 <!-- <td *ngFor="let items of perfIndPeriodFull" title="{{items.periodPerfTooltipStr}}">{{items.selectedPerfIndStr}}</td> -->
-                <td *ngFor="let items of perfIndPeriodFull" class="tooltipCell">{{items.selectedPerfIndStr}}
+                <td *ngFor="let items of perfIndPeriodFull" class="tooltipCell {{items.selectedPerfIndClass}} {{items.lookbackErrorClass}}">{{items.selectedPerfIndStr}}
                     <div class="tooltipText">{{items.periodPerfTooltipStr}}</div>
                 </td>
             </tr>
@@ -42,5 +46,3 @@
     <div class="rightDiv" id="tradingHoursTimer">
     </div>
 </div>
-
-

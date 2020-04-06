@@ -2,7 +2,7 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
       Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
     font-size: 1.4rem;
-    color: rgb(96, 32, 148);
+    color: rgb(32, 34, 148);
     box-sizing: border-box;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -53,11 +53,19 @@
   width: 20rem;
 }
 
-
 .tooltipCell {
   position: relative;
+  cursor: help;
   // display: inline-block;
   // border-bottom: 1px dotted black;
+}
+
+.positivePerf {
+  color: green;
+}
+
+.negativePerf {
+  color: red;
 }
 
 .tooltipCell .tooltipText {
@@ -77,4 +85,67 @@
 
 .tooltipCell:hover .tooltipText {
   display: inline-block;
+}
+
+.lookbackError {
+  background-color: salmon;
+}
+
+.lookbackError .tooltipText {
+  background-color: salmon;
+}
+
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  -ms-appearance: none;
+  appearance: none;
+  outline: 0;
+  box-shadow: none;
+  border: 0 !important;
+  background: #2c3e50;
+  background-image: none;
+}
+/* Remove IE arrow */
+select::-ms-expand {
+  display: none;
+}
+/* Custom Select */
+.select {
+  position: relative;
+  display: inline-block;
+  // width: 20em;
+  // height: 3em;
+  // line-height: 3;
+  background: #a5cde4;
+  overflow: hidden;
+  border-radius: .5rem;
+}
+select {
+  flex: 1;
+  padding: 0rem 1.5rem 0rem 0.5rem;
+  background: #a5cde4;
+  // color: #fff;
+  cursor: pointer;
+  color: blue;
+  font-weight: bold;
+}
+/* Arrow */
+.select::after {
+  content: '\25BC';
+  color: blue;
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0rem 0rem;
+  background: #a5cde4;
+  cursor: pointer;
+  pointer-events: none;
+  -webkit-transition: .25s all ease;
+  -o-transition: .25s all ease;
+  transition: .25s all ease;
+}
+/* Transition */
+.select:hover::after {
+  color: #f39c12;
 }

@@ -46,6 +46,7 @@ class DailyPerf {
   public ticker = '';
   public dailyReturnStr = '';
   public dailyReturnSign = 1;
+  public dailyReturnClass = '';
   public dailyTooltipStr = '';
 }
 
@@ -57,8 +58,11 @@ class PeriodPerf {
   public maxDrawDownPctStr = '';
   public maxDrawUpPctStr = '';
   public selectedPerfIndSign = 1;
+  public selectedPerfIndClass = '';
   public selectedPerfIndStr = '';
   public periodPerfTooltipStr = '';
+  public lookbackErrorString = '';
+  public lookbackErrorClass = '';
 }
 
 class TradingHoursTimer {
@@ -136,7 +140,8 @@ export class MarketHealthComponent implements OnInit {
   perfIndMDD: string[] = [];
   perfIndMDU: string[] = [];
   perfIndSelected: string[] = [];
-
+  currDateN: Date = new Date();
+  lookbackStart: Date = new Date(this.currDateN.getUTCFullYear() - 1, 11, 31);
 
   constructor() { }
 
@@ -146,30 +151,40 @@ export class MarketHealthComponent implements OnInit {
       case 'PerRet':
         for (const items of this.perfIndPeriodFull) {
           items.selectedPerfIndStr = items.periodReturnStr;
+          items.selectedPerfIndClass = (items.selectedPerfIndSign === 1) ? 'positivePerf' : 'negativePerf';
+          items.periodPerfTooltipStr = items.lookbackErrorString + items.periodPerfTooltipStr;
         }
         break;
       case 'CDD':
         for (const items of this.perfIndPeriodFull) {
           items.selectedPerfIndSign = -1;
+          items.selectedPerfIndClass = 'negativePerf';
           items.selectedPerfIndStr = items.drawDownPctStr;
+          items.periodPerfTooltipStr = items.lookbackErrorString + items.periodPerfTooltipStr;
         }
         break;
       case 'CDU':
         for (const items of this.perfIndPeriodFull) {
           items.selectedPerfIndSign = 1;
+          items.selectedPerfIndClass = 'positivePerf';
           items.selectedPerfIndStr = items.drawUpPctStr;
+          items.periodPerfTooltipStr = items.lookbackErrorString + items.periodPerfTooltipStr;
         }
         break;
       case 'MDD':
         for (const items of this.perfIndPeriodFull) {
           items.selectedPerfIndSign = -1;
+          items.selectedPerfIndClass = 'negativePerf';
           items.selectedPerfIndStr = items.maxDrawDownPctStr;
+          items.periodPerfTooltipStr = items.lookbackErrorString + items.periodPerfTooltipStr;
         }
         break;
       case 'MDU':
         for (const items of this.perfIndPeriodFull) {
           items.selectedPerfIndSign = 1;
+          items.selectedPerfIndClass = 'positivePerf';
           items.selectedPerfIndStr = items.maxDrawUpPctStr;
+          items.periodPerfTooltipStr = items.lookbackErrorString + items.periodPerfTooltipStr;
         }
         break;
     }
@@ -207,6 +222,23 @@ export class MarketHealthComponent implements OnInit {
   onClickChangeLookback() {
     const lookbackStr = (document.getElementById('lookBackPeriod') as HTMLSelectElement).value;
     console.log('Sq.onClickChangeLookback(): ' + lookbackStr);
+    const currDate: Date = new Date();
+
+    if (lookbackStr === 'YTD') {
+      this.lookbackStart = new Date(currDate.getUTCFullYear() - 1, 11, 31);
+    } else if (lookbackStr.endsWith('y')) {
+      const lbYears = parseInt(lookbackStr.substr(0, lookbackStr.length - 1), 10);
+      this.lookbackStart = new Date(currDate.setUTCFullYear(currDate.getUTCFullYear() - lbYears));
+    } else if (lookbackStr.endsWith('m')) {
+      const lbMonths = parseInt(lookbackStr.substr(0, lookbackStr.length - 1), 10);
+      this.lookbackStart = new Date(currDate.setUTCMonth(currDate.getUTCMonth() - lbMonths));
+    } else if (lookbackStr.endsWith('w')) {
+      const lbWeeks = parseInt(lookbackStr.substr(0, lookbackStr.length - 1), 10);
+      this.lookbackStart = new Date(currDate.setUTCDate(currDate.getUTCDate() - lbWeeks * 7));
+    }
+
+    console.log('StartDate: ' + this.lookbackStart);
+
     if (this._parentHubConnection != null) {
       this._parentHubConnection.invoke('changeLookback', lookbackStr)
         .then((message: RtMktSumNonRtStat[]) => {
@@ -235,6 +267,7 @@ export class MarketHealthComponent implements OnInit {
     if (typeof(x) !== 'undefined' && x !== null) {
       x.style.visibility = 'visible';
     }
+
   }
 
   updateMktSumNonRt(message: RtMktSumNonRtStat[], marketFullStat: RtMktSumFullStat[]): void {
@@ -276,11 +309,14 @@ export class MarketHealthComponent implements OnInit {
     this.perfIndMDD = [];
     this.perfIndMDU = [];
     this.perfIndPeriodFull = [];
+    console.log('StartD: ' + this.lookbackStart);
 
     for (const items of perfIndicators) {
       if (Number.isNaN(items.dailyReturn) === false) {
-      this.perfIndDaily.push({ticker: items.ticker, dailyReturnStr: (items.dailyReturn >= 0 ? '+' : '') + (items.dailyReturn * 100).toFixed(2).toString() + '%', dailyReturnSign: Math.sign(items.dailyReturn),
+      this.perfIndDaily.push({ticker: items.ticker, dailyReturnStr: (items.dailyReturn >= 0 ? '+' : '') + (items.dailyReturn * 100).toFixed(2).toString() + '%', dailyReturnSign: Math.sign(items.dailyReturn), dailyReturnClass: (items.dailyReturn >= 0 ? 'positivePerf' : 'negativePerf'),
       dailyTooltipStr: items.ticker + '\n' + 'Daily return: ' + (items.dailyReturn >= 0 ? '+' : '') + (items.dailyReturn * 100).toFixed(2).toString() + '%' + '\n' + 'Last price: ' + items.last.toFixed(2).toString() + '\n' + 'Previous close price: ' + items.previousClose.toFixed(2).toString()} );
+      const dataStartDate: Date = new Date(items.periodStart);
+      console.log(items.ticker + ' ' + dataStartDate);
       this.perfIndPeriodFull.push({ticker: items.ticker,
         periodReturnStr: (items.periodReturn >= 0 ? '+' : '') + (items.periodReturn * 100).toFixed(2).toString() + '%',
         drawDownPctStr: (items.drawDownPct >= 0 ? '+' : '') + (items.drawDownPct * 100).toFixed(2).toString() + '%',
@@ -288,11 +324,16 @@ export class MarketHealthComponent implements OnInit {
         maxDrawDownPctStr: (items.maxDrawDownPct >= 0 ? '+' : '') + (items.maxDrawDownPct * 100).toFixed(2).toString() + '%',
         maxDrawUpPctStr: (items.maxDrawUpPct >= 0 ? '+' : '') + (items.maxDrawUpPct * 100).toFixed(2).toString() + '%',
         selectedPerfIndSign: Math.sign(items.periodReturn),
+        selectedPerfIndClass: '',
         selectedPerfIndStr: '',
-        periodPerfTooltipStr: ''
+        periodPerfTooltipStr: '',
+        lookbackErrorString: (dataStartDate > this.lookbackStart) ? ('Server returned period data with started ' + dataStartDate.toISOString().slice(0, 10) + ' instead of the expected ' + this.lookbackStart.toISOString().slice(0, 10)) + '. \r\n\r\n' : '',
+        lookbackErrorClass: (dataStartDate > this.lookbackStart) ? 'lookbackError' : ''
       });
       }
     }
+
+    console.log('Start: ' + this.lookbackStart + ' VXX start: ' + perfIndicators[4].periodStart + ' class: ' + this.perfIndPeriodFull[4].lookbackErrorClass + ' errorStr: ' + this.perfIndPeriodFull[4].lookbackErrorString);
 
     for (const items of this.perfIndPeriodFull) {
       items.periodPerfTooltipStr = items.ticker + '\r\n' + 'Period return: ' + items.periodReturnStr + '\n' + 'Current drawdown: ' + items.drawDownPctStr + '\n' + 'Current drawup: ' + items.drawUpPctStr + '\n' + 'Maximum drawdown: ' + items.maxDrawDownPctStr + '\n' + 'Maximum drawup: ' + items.maxDrawUpPctStr;
