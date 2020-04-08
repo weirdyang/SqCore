@@ -47,7 +47,8 @@ class DailyPerf {
   public dailyReturnStr = '';
   public dailyReturnSign = 1;
   public dailyReturnClass = '';
-  public dailyTooltipStr = '';
+  public dailyTooltipStr1 = '';
+  public dailyTooltipStr2 = '';
 }
 
 class PeriodPerf {
@@ -60,7 +61,9 @@ class PeriodPerf {
   public selectedPerfIndSign = 1;
   public selectedPerfIndClass = '';
   public selectedPerfIndStr = '';
-  public periodPerfTooltipStr = '';
+  public periodPerfTooltipStr1 = '';
+  public periodPerfTooltipStr2 = '';
+  public periodPerfTooltipStr3 = '';
   public lookbackErrorString = '';
   public lookbackErrorClass = '';
 }
@@ -152,7 +155,6 @@ export class MarketHealthComponent implements OnInit {
         for (const items of this.perfIndPeriodFull) {
           items.selectedPerfIndStr = items.periodReturnStr;
           items.selectedPerfIndClass = (items.selectedPerfIndSign === 1) ? 'positivePerf' : 'negativePerf';
-          items.periodPerfTooltipStr = items.lookbackErrorString + items.periodPerfTooltipStr;
         }
         break;
       case 'CDD':
@@ -160,7 +162,6 @@ export class MarketHealthComponent implements OnInit {
           items.selectedPerfIndSign = -1;
           items.selectedPerfIndClass = 'negativePerf';
           items.selectedPerfIndStr = items.drawDownPctStr;
-          items.periodPerfTooltipStr = items.lookbackErrorString + items.periodPerfTooltipStr;
         }
         break;
       case 'CDU':
@@ -168,7 +169,6 @@ export class MarketHealthComponent implements OnInit {
           items.selectedPerfIndSign = 1;
           items.selectedPerfIndClass = 'positivePerf';
           items.selectedPerfIndStr = items.drawUpPctStr;
-          items.periodPerfTooltipStr = items.lookbackErrorString + items.periodPerfTooltipStr;
         }
         break;
       case 'MDD':
@@ -176,7 +176,6 @@ export class MarketHealthComponent implements OnInit {
           items.selectedPerfIndSign = -1;
           items.selectedPerfIndClass = 'negativePerf';
           items.selectedPerfIndStr = items.maxDrawDownPctStr;
-          items.periodPerfTooltipStr = items.lookbackErrorString + items.periodPerfTooltipStr;
         }
         break;
       case 'MDU':
@@ -184,7 +183,6 @@ export class MarketHealthComponent implements OnInit {
           items.selectedPerfIndSign = 1;
           items.selectedPerfIndClass = 'positivePerf';
           items.selectedPerfIndStr = items.maxDrawUpPctStr;
-          items.periodPerfTooltipStr = items.lookbackErrorString + items.periodPerfTooltipStr;
         }
         break;
     }
@@ -321,7 +319,8 @@ export class MarketHealthComponent implements OnInit {
       // NaN can be valid that means 'No Data' on server. UI can handle with a nicer "NoData" message than "NaN", but don't ignore that.
       // if (Number.isNaN(items.dailyReturn) === false) {
       this.perfIndDaily.push({ticker: items.ticker, dailyReturnStr: (items.dailyReturn >= 0 ? '+' : '') + (items.dailyReturn * 100).toFixed(2).toString() + '%', dailyReturnSign: Math.sign(items.dailyReturn), dailyReturnClass: (items.dailyReturn >= 0 ? 'positivePerf' : 'negativePerf'),
-      dailyTooltipStr: items.ticker + '\n' + 'Daily return: ' + (items.dailyReturn >= 0 ? '+' : '') + (items.dailyReturn * 100).toFixed(2).toString() + '%' + '\n' + 'Last price: ' + items.last.toFixed(2).toString() + '\n' + 'Previous close price: ' + items.previousClose.toFixed(2).toString()} );
+      dailyTooltipStr1: items.ticker,
+      dailyTooltipStr2: 'Daily return: ' + (items.dailyReturn >= 0 ? '+' : '') + (items.dailyReturn * 100).toFixed(2).toString() + '%' + '\n' + 'Last price: ' + items.last.toFixed(2).toString() + '\n' + 'Previous close price: ' + items.previousClose.toFixed(2).toString()} );
       const dataStartDate: Date = new Date(items.periodStart);
       console.log(items.ticker + ' ' + dataStartDate);
       this.perfIndPeriodFull.push({ticker: items.ticker,
@@ -333,8 +332,10 @@ export class MarketHealthComponent implements OnInit {
         selectedPerfIndSign: Math.sign(items.periodReturn),
         selectedPerfIndClass: '',
         selectedPerfIndStr: '',
-        periodPerfTooltipStr: '',
-        lookbackErrorString: (dataStartDate > this.lookbackStart) ? ('Server returned period data with started ' + dataStartDate.toISOString().slice(0, 10) + ' instead of the expected ' + this.lookbackStart.toISOString().slice(0, 10)) + '. \r\n\r\n' : '',
+        periodPerfTooltipStr1: '',
+        periodPerfTooltipStr2: '',
+        periodPerfTooltipStr3: '\r\n' + 'Period start: ' + dataStartDate.toISOString().slice(0, 10) + '\r\n' + 'Previous close: ' + items.previousClose.toFixed(2).toString() + '\r\n' + 'Period open: ' + items.periodOpen.toFixed(2).toString() + '\r\n' + 'Period high: ' + items.periodHigh.toFixed(2).toString() + '\r\n' + 'Period low: ' + items.periodLow.toFixed(2).toString(),
+        lookbackErrorString: (dataStartDate > this.lookbackStart) ? ('! Period data starts on ' + dataStartDate.toISOString().slice(0, 10) + '\r\n' + ' instead of the expected ' + this.lookbackStart.toISOString().slice(0, 10)) + '. \r\n\r\n' : '',
         lookbackErrorClass: (dataStartDate > this.lookbackStart) ? 'lookbackError' : ''
       });
       // }
@@ -343,7 +344,8 @@ export class MarketHealthComponent implements OnInit {
     console.log('Start: ' + this.lookbackStart + ' VXX start: ' + perfIndicators[4].periodStart + ' class: ' + this.perfIndPeriodFull[4].lookbackErrorClass + ' errorStr: ' + this.perfIndPeriodFull[4].lookbackErrorString);
 
     for (const items of this.perfIndPeriodFull) {
-      items.periodPerfTooltipStr = items.ticker + '\r\n' + 'Period return: ' + items.periodReturnStr + '\n' + 'Current drawdown: ' + items.drawDownPctStr + '\n' + 'Current drawup: ' + items.drawUpPctStr + '\n' + 'Maximum drawdown: ' + items.maxDrawDownPctStr + '\n' + 'Maximum drawup: ' + items.maxDrawUpPctStr;
+      items.periodPerfTooltipStr1 = items.ticker;
+      items.periodPerfTooltipStr2 = 'Period return: ' + items.periodReturnStr + '\r\n' + 'Current drawdown: ' + items.drawDownPctStr + '\r\n' + 'Current drawup: ' + items.drawUpPctStr + '\r\n' + 'Maximum drawdown: ' + items.maxDrawDownPctStr + '\r\n' + 'Maximum drawup: ' + items.maxDrawUpPctStr;
     }
     this.perfIndicatorSelector();
   }

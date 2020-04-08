@@ -83,6 +83,14 @@
   white-space: pre;
 }
 
+.tooltipCell .tooltipText .bold{
+  font-weight: bold;
+}
+
+.tooltipCell .tooltipText .smallTT{
+  font-size: 1rem;
+}
+
 .tooltipCell:hover .tooltipText {
   display: inline-block;
 }
@@ -114,6 +122,7 @@ select::-ms-expand {
 .select {
   position: relative;
   display: inline-block;
+  margin-top: 0.25rem;
   // width: 20em;
   // height: 3em;
   // line-height: 3;
@@ -149,3 +158,4 @@ select {
 .select:hover::after {
   color: #f39c12;
 }
+
