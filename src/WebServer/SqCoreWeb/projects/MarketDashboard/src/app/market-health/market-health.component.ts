@@ -206,6 +206,8 @@ export class MarketHealthComponent implements OnInit {
         message.forEach(element => {
           if (element.previousClose.toString() === 'NaN') {
             element.previousClose = NaN;
+          } else {
+            element.previousClose = Number(element.previousClose);
           }
         });
         const msgStr = message.map(s => s.secID + '-' + s.ticker + ':prevClose-' + s.previousClose.toString() + ' : periodStart-' + s.periodStart.toString() + ':open-' + s.periodOpen.toFixed(2).toString() + '/high-' + s.periodHigh.toFixed(2).toString() + '/low-' + s.periodLow.toFixed(2).toString() + '/mdd' + s.periodMaxDD.toFixed(2).toString() + '/mdu' + s.periodMaxDU.toFixed(2).toString()).join(', ');
