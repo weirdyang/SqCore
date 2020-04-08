@@ -64,8 +64,9 @@ namespace FinTechCommon
             // TODO: implement business logic here
             // pre/post-market, it should use YF
             // regular trading hours (RTH): IEX.
-
+            // if (Utils.UsaTradingHoursNow() == TradingHours.RegularTrading)
             DownloadLastPriceIex(p_secIDs);
+
             return p_secIDs.Select(r =>
             {
                 var sec = GetSecurity(r);

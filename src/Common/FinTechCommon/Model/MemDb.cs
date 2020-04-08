@@ -178,9 +178,9 @@ namespace FinTechCommon
             int targetTimeOnlySec;
             if (nowTimeOnlySec < 4 * 60 * 60)
                 targetTimeOnlySec = 4 * 60 * 60;
-            else if (nowTimeOnlySec < 9 * 60 * 60)
+            else if (nowTimeOnlySec < 9 * 60 * 60)  // Market opens 9:30ET, but reload data 30min before
                 targetTimeOnlySec = 9 * 60 * 60;
-            else if (nowTimeOnlySec < 16 * 60 * 60 + 30 * 60)
+            else if (nowTimeOnlySec < 16 * 60 * 60 + 30 * 60)   // Market closes at 16:00ET, but reload data 30min after
                 targetTimeOnlySec = 16 * 60 * 60 + 30 * 60;
             else
                 targetTimeOnlySec = 24 * 60 * 60 + 4 * 60 * 60; // next day 4:00
