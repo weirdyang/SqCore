@@ -244,8 +244,16 @@ export class MarketHealthComponent implements OnInit {
     if (this._parentHubConnection != null) {
       this._parentHubConnection.invoke('changeLookback', lookbackStr)
         .then((message: RtMktSumNonRtStat[]) => {
+          // If SignalR receives NaN string, it creates a "NaN" string here instead of NaN Number. Revert it immediately.
+          message.forEach(element => {
+            if (element.previousClose.toString() === 'NaN') {
+              element.previousClose = NaN;
+            } else {
+              element.previousClose = Number(element.previousClose);
+          }
+        });
           this.updateMktSumNonRt(message, this.marketFullStat);
-          const msgStr = message.map(s => s.secID + '-' + s.ticker + ':prevClose-' + s.previousClose.toFixed(2).toString() + ' : periodStart-' + s.periodStart.toString() + ':open-' + s.periodOpen.toFixed(2).toString() + '/high-' + s.periodHigh.toFixed(2).toString() + '/low-' + s.periodLow.toFixed(2).toString() + '  *************  ').join(', ');
+          const msgStr = message.map(s => s.secID + '-' + s.ticker + ':prevClose-' + s.previousClose.toString() + ' : periodStart-' + s.periodStart.toString() + ':open-' + s.periodOpen.toFixed(2).toString() + '/high-' + s.periodHigh.toFixed(2).toString() + '/low-' + s.periodLow.toFixed(2).toString() + '/mdd' + s.periodMaxDD.toFixed(2).toString() + '/mdu' + s.periodMaxDU.toFixed(2).toString()).join(', ');
           console.log('ws: onClickChangeLookback() got back message ' + msgStr);
           this.rtMktSumPeriodStatStr = msgStr;
         });
