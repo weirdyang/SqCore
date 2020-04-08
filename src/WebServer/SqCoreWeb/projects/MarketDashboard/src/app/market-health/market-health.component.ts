@@ -11,7 +11,7 @@ class RtMktSumRtStat {
 class RtMktSumNonRtStat {
   public secID = NaN;  // JavaScript Numbers are Always 64-bit Floating Point
   public ticker = '';
-  public previousClose = NaN;
+  public previousClose = NaN;   // If SignalR receives NaN string, it creates a "NaN" string here instead of NaN Number. Revert it immediately.
   public periodStart = new Date();
   public periodOpen = NaN;
   public periodHigh = NaN;
@@ -197,19 +197,21 @@ export class MarketHealthComponent implements OnInit {
         const msgStr = message.map(s => s.secID + ' ? =>' + s.last.toFixed(2).toString()).join(', ');  // %Chg: Bloomberg, MarketWatch, TradingView doesn't put "+" sign if it is positive, IB, CNBC, YahooFinance does. Go as IB.
         console.log('ws: RtMktSumRtStat arrived: ' + msgStr);
         this.rtMktSumRtQuoteStr = msgStr;
-      });
 
-      this._parentHubConnection.on('RtMktSumNonRtStat', (message: RtMktSumNonRtStat[]) => {
-        const msgStr = message.map(s => s.secID + '-' + s.ticker + ':prevClose-' + s.previousClose.toFixed(2).toString() + ' : periodStart-' + s.periodStart.toString() + ':open-' + s.periodOpen.toFixed(2).toString() + '/high-' + s.periodHigh.toFixed(2).toString() + '/low-' + s.periodLow.toFixed(2).toString() + '/mdd' + s.periodMaxDD.toFixed(2).toString() + '/mdu' + s.periodMaxDU.toFixed(2).toString()).join(', ');
-        console.log('ws: RtMktSumNonRtStat arrived: ' + msgStr);
-        this.rtMktSumPeriodStatStr = msgStr;
-      });
-
-      this._parentHubConnection.on('RtMktSumRtStat', (message: RtMktSumRtStat[]) => {
         this.updateMktSumRt(message, this.marketFullStat);
       });
 
       this._parentHubConnection.on('RtMktSumNonRtStat', (message: RtMktSumNonRtStat[]) => {
+        // If SignalR receives NaN string, it creates a "NaN" string here instead of NaN Number. Revert it immediately.
+        message.forEach(element => {
+          if (element.previousClose.toString() === 'NaN') {
+            element.previousClose = NaN;
+          }
+        });
+        const msgStr = message.map(s => s.secID + '-' + s.ticker + ':prevClose-' + s.previousClose.toString() + ' : periodStart-' + s.periodStart.toString() + ':open-' + s.periodOpen.toFixed(2).toString() + '/high-' + s.periodHigh.toFixed(2).toString() + '/low-' + s.periodLow.toFixed(2).toString() + '/mdd' + s.periodMaxDD.toFixed(2).toString() + '/mdu' + s.periodMaxDU.toFixed(2).toString()).join(', ');
+        console.log('ws: RtMktSumNonRtStat arrived: ' + msgStr);
+        this.rtMktSumPeriodStatStr = msgStr;
+
         this.updateMktSumNonRt(message, this.marketFullStat);
       });
 
@@ -274,9 +276,11 @@ export class MarketHealthComponent implements OnInit {
     for (const singleStockInfo of message) {
       const existingFullStatItems = marketFullStat.filter(fullStatItem => fullStatItem.secID === singleStockInfo.secID);
       if (existingFullStatItems.length === 0) {
-        marketFullStat.push({secID: singleStockInfo.secID, ticker: singleStockInfo.ticker, last: NaN, previousClose: singleStockInfo.previousClose, periodStart: singleStockInfo.periodStart, periodOpen: singleStockInfo.periodOpen, periodHigh: singleStockInfo.periodHigh,
-      periodLow: singleStockInfo.periodLow, dailyReturn: NaN, periodReturn: NaN, drawDownPct: NaN, drawUpPct: NaN, maxDrawDownPct: singleStockInfo.periodMaxDD, maxDrawUpPct: singleStockInfo.periodMaxDU});
-        this.tableHeaderLinks.push({ticker: singleStockInfo.ticker, reference: 'https://uk.tradingview.com/chart/?symbol=' + singleStockInfo.ticker});
+        marketFullStat.push({
+          secID: singleStockInfo.secID, ticker: singleStockInfo.ticker, last: NaN, previousClose: singleStockInfo.previousClose, periodStart: singleStockInfo.periodStart, periodOpen: singleStockInfo.periodOpen, periodHigh: singleStockInfo.periodHigh,
+          periodLow: singleStockInfo.periodLow, dailyReturn: NaN, periodReturn: NaN, drawDownPct: NaN, drawUpPct: NaN, maxDrawDownPct: singleStockInfo.periodMaxDD, maxDrawUpPct: singleStockInfo.periodMaxDU
+        });
+        this.tableHeaderLinks.push({ ticker: singleStockInfo.ticker, reference: 'https://uk.tradingview.com/chart/?symbol=' + singleStockInfo.ticker });
       } else {
         existingFullStatItems[0].ticker = singleStockInfo.ticker;
         existingFullStatItems[0].previousClose = singleStockInfo.previousClose;
@@ -312,7 +316,8 @@ export class MarketHealthComponent implements OnInit {
     console.log('StartD: ' + this.lookbackStart);
 
     for (const items of perfIndicators) {
-      if (Number.isNaN(items.dailyReturn) === false) {
+      // NaN can be valid that means 'No Data' on server. UI can handle with a nicer "NoData" message than "NaN", but don't ignore that.
+      // if (Number.isNaN(items.dailyReturn) === false) {
       this.perfIndDaily.push({ticker: items.ticker, dailyReturnStr: (items.dailyReturn >= 0 ? '+' : '') + (items.dailyReturn * 100).toFixed(2).toString() + '%', dailyReturnSign: Math.sign(items.dailyReturn), dailyReturnClass: (items.dailyReturn >= 0 ? 'positivePerf' : 'negativePerf'),
       dailyTooltipStr: items.ticker + '\n' + 'Daily return: ' + (items.dailyReturn >= 0 ? '+' : '') + (items.dailyReturn * 100).toFixed(2).toString() + '%' + '\n' + 'Last price: ' + items.last.toFixed(2).toString() + '\n' + 'Previous close price: ' + items.previousClose.toFixed(2).toString()} );
       const dataStartDate: Date = new Date(items.periodStart);
@@ -330,7 +335,7 @@ export class MarketHealthComponent implements OnInit {
         lookbackErrorString: (dataStartDate > this.lookbackStart) ? ('Server returned period data with started ' + dataStartDate.toISOString().slice(0, 10) + ' instead of the expected ' + this.lookbackStart.toISOString().slice(0, 10)) + '. \r\n\r\n' : '',
         lookbackErrorClass: (dataStartDate > this.lookbackStart) ? 'lookbackError' : ''
       });
-      }
+      // }
     }
 
     console.log('Start: ' + this.lookbackStart + ' VXX start: ' + perfIndicators[4].periodStart + ' class: ' + this.perfIndPeriodFull[4].lookbackErrorClass + ' errorStr: ' + this.perfIndPeriodFull[4].lookbackErrorString);

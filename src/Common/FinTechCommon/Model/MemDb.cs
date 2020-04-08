@@ -148,7 +148,9 @@ namespace FinTechCommon
                     // sec.AdjCloseHistory = history.Select(r => (double)Math.Round(r.AdjustedClose, 4)).ToList();
 
                     var dates = history.Select(r => new DateOnly(r!.DateTime)).ToArray();
-                    var kvpar1 = new KeyValuePair<TickType, float[]>(TickType.SplitDivAdjClose, history.Select(r => (float)Math.Round(r!.AdjustedClose, 4)).ToArray());
+                    var kvpar1 = new KeyValuePair<TickType, float[]>(TickType.SplitDivAdjClose, history.Select(r => 
+                        RowExtension.IsEmptyRow(r!) ? float.NaN : (float)Math.Round(r!.AdjustedClose, 4)
+                    ).ToArray());
                     sec.DailyHistory = new FinTimeSeries<DateOnly, float, uint>(
                         dates,
                         new KeyValuePair<TickType, float[]>[] { kvpar1 },

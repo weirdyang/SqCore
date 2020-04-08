@@ -7,6 +7,13 @@ namespace YahooFinanceApi
     {
         internal static bool IgnoreEmptyRows;
 
+        // 2020-04-08: ET: 10-12, YF-website gives empty row ("Apr 07, 2020	-	-	-	-	-	") for yesterday, although today is good. And yesterday was good at 9:30. They do maintenance...
+        public static bool IsEmptyRow(Candle candle)
+        {
+           return candle.Open == 0 && candle.High == 0 && candle.Low == 0 && candle.Close == 0 &&
+                candle.AdjustedClose == 0 &&  candle.Volume == 0; 
+        }
+
         internal static Candle? ToCandle(string[] row)
         {
             var candle = new Candle

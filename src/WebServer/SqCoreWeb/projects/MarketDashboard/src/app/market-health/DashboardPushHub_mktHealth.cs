@@ -10,6 +10,9 @@ using System.Text;
 using System.Net;
 using System.Diagnostics;
 using FinTechCommon;
+using System.Runtime.Serialization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace SqCoreWeb
 {
@@ -25,13 +28,14 @@ namespace SqCoreWeb
         public double Last { get; set; } = -100.0;     // real-time last price
     }
 
-    public class RtMktSumNonRtStat     // this is sent to clients usually just once per day, OR when the PeriodStartDate changes at the client
+    public class RtMktSumNonRtStat   // this is sent to clients usually just once per day, OR when the PeriodStartDate changes at the client
     {
         public uint SecID { get; set; } = 0;        // set the Client know what is the SecID, because RtStat will not send it.
         public String Ticker { get; set; } = String.Empty;
 
         // when previousClose gradually changes (if user left browser open for a week), PeriodHigh, PeriodLow should be sent again (maybe we are at market high or low)
         // sometimes, the user changed Period from YTD to 2y. It is a choice, we will resend him the PreviousClose data again. Although it is not necessary. That way we only one class, not 2.
+        [JsonConverter(typeof(DoubleJsonConverter))]
         public double PreviousClose { get; set; } = -100.0;
         public DateTime PeriodStart { get; set; } = DateTime.MinValue;
         public double PeriodOpen { get; set; } = -100.0;
@@ -39,6 +43,15 @@ namespace SqCoreWeb
         public double PeriodLow { get; set; } = -100.0;
         public double PeriodMaxDD { get; set; } = -100.0;
         public double PeriodMaxDU { get; set; } = -100.0;
+    }
+
+    public class DoubleJsonConverter : JsonConverter<double>
+    {
+        public override double Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
+                Double.Parse(reader.GetString());
+
+        public override void Write(Utf8JsonWriter writer, double doubleValue, JsonSerializerOptions options) =>
+                writer.WriteStringValue(doubleValue.ToString());
     }
 
 
