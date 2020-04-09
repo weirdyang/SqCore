@@ -296,6 +296,8 @@ export class MarketHealthComponent implements OnInit {
         existingFullStatItems[0].periodOpen = singleStockInfo.periodOpen;
         existingFullStatItems[0].periodHigh = singleStockInfo.periodHigh;
         existingFullStatItems[0].periodLow = singleStockInfo.periodLow;
+        existingFullStatItems[0].maxDrawDownPct = singleStockInfo.periodMaxDD;
+        existingFullStatItems[0].maxDrawUpPct = singleStockInfo.periodMaxDU;
 
         this.updateReturns(existingFullStatItems[0]);
       }

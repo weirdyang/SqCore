@@ -69,6 +69,11 @@ export class AppComponent implements OnInit {
     this.toolSelectionMsg = 'Click red arrow in toolbar! isToolSelectionVisible is set to ' + this.isToolSelectionVisible;
   }
 
+  onClickToolSelected() {
+    this.isToolSelectionVisible = !this.isToolSelectionVisible;
+    this.toolSelectionMsg = 'Click red arrow in toolbar! isToolSelectionVisible is set to ' + this.isToolSelectionVisible;
+  }
+
   onChangeActiveTool(tool: string) {
     if (this.activeTool === tool) {
       return;
