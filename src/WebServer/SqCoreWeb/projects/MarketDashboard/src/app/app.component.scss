@@ -1,6 +1,7 @@
 
 // html { } // global styles are in styles.scss, because they don't work from here, from the component
 // body { }  // global styles are in styles.scss, because they don't work from here, from the component
+// Source: https://code.tutsplus.com/tutorials/how-to-build-a-kick-butt-css3-mega-drop-down-menu--net-15129
 
 $scss-variable-color: #fbbcf4; // SCSS variable
 
@@ -43,11 +44,13 @@ p {
   align-items: center;
   color: white;
   font-weight: 600;
+  font-size: 1.6rem;
   background-image: url('~/assets/images/glass.theme.brightness-80.qlt95.webp');
   background-color: #232f3e; /* Used if the image is unavailable */
   background-position: center; /* Center the image */
   background-repeat: no-repeat; /* Do not repeat the image */
   background-size: 100% 100%; /* Resize the background image to cover the entire container */
+  list-style:none;
 }
 
 .toolbar img {
@@ -63,20 +66,24 @@ p {
   // display: flex;
   // align-items: center;
   float:left;
-  display:block;
+  // display:block;
   
   text-align:center;
   position:relative;
-  padding: 0px 10px 5px 10px;
-  margin:0px 0px 0px 0px;
+  padding: 0rem 0rem 0.5rem 0rem;
+  margin: 0rem 0rem 0rem 0rem;
   border:none;
   z-index: 99;
 }
 
-.toolbar .toolbarMenu:hover {
-  border: 1px solid #777777;
-  padding: 0px 9px 5px 9px;
+.toolbar .toolbarMenu .leftItem:hover {
+  border: 0.1rem solid #777777;
+  padding: 0.1rem 0.5rem 0.4rem 0.5rem;
   color: blue;
+  font-weight: bold;
+  font-size: 1.7rem;
+  // margin-left: -0.1rem;
+  margin-top: 0.3rem;
    
   /* Background color and gradients */
    
@@ -86,106 +93,241 @@ p {
    
   /* Rounded corners */
    
-  -moz-border-radius: 5px 5px 0px 0px;
-  -webkit-border-radius: 5px 5px 0px 0px;
-  border-radius: 5px 5px 0px 0px;
+  -moz-border-radius: 0.5rem 0.5rem 0.5rem 0.5rem;
+  -webkit-border-radius: 0.5rem 0.5rem 0.5rem 0.5rem;
+  border-radius: 0.5rem 0.5rem 0.5rem 0.5rem;
 }
 
-// /* Drop Down */
+.toolbar .toolbarMenu .rightItem:hover {
+  border: 0.1rem solid #777777;
+  padding: 0.1rem 0.5rem 0.4rem 0.5rem;
+  color: blue;
+  font-weight: bold;
+  font-size: 1.7rem;
+  // margin-left: -0.1rem;
+  margin-top: 0.3rem;
+   
+  /* Background color and gradients */
+   
+  background: #F4F4F4;
+  background: -moz-linear-gradient(top, #F4F4F4, #EEEEEE);
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#F4F4F4), to(#EEEEEE));
+   
+  /* Rounded corners */
+   
+  -moz-border-radius: 0.5rem 0.5rem 0.5rem 0.5rem;
+  -webkit-border-radius: 0.5rem 0.5rem 0.5rem 0.5rem;
+  border-radius: 0.5rem 0.5rem 0.5rem 0.5rem;
+}
 
-// .dropdown_1column, 
-// .dropdown_2columns, 
-// .dropdown_3columns, 
-// .dropdown_4columns,
-// .dropdown_5columns {
-//     margin:4px auto;
-//     float:left;
-//     position:absolute;
-//     left:-999em; /* Hides the drop down */
-//     text-align:left;
-//     padding:10px 5px 10px 5px;
-//     border:1px solid #777777;
-//     border-top:none;
+.toolbar .toolbarMenu .leftItemselected {
+  border: 0.1rem solid #777777;
+  padding: 0.5rem 0.9rem 0.5rem 0.9rem;
+  color: blue;
+  font-weight: bold;
+  font-size: 1.7rem;
+  margin-left: -0.1rem;
+  margin-top: 0.5rem;
+   
+  /* Background color and gradients */
+   
+  background: #F4F4F4;
+  background: -moz-linear-gradient(top, #F4F4F4, #EEEEEE);
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#F4F4F4), to(#EEEEEE));
+   
+  /* Rounded corners */
+   
+  -moz-border-radius: 0.5rem 0.5rem 0rem 0rem;
+  -webkit-border-radius: 0.5rem 0.5rem 0rem 0rem;
+  border-radius: 0.5rem 0.5rem 0rem 0rem;
+}
+
+.toolbar .toolbarMenu .rightItemselected {
+  border: 0.1rem solid #777777;
+  padding: 0.5rem 0.9rem 0.5rem 0.9rem;
+  color: blue;
+  font-weight: bold;
+  font-size: 1.7rem;
+  margin-right: -0.1rem;
+  margin-top: 0.5rem;
+   
+  /* Background color and gradients */
+   
+  background: #F4F4F4;
+  background: -moz-linear-gradient(top, #F4F4F4, #EEEEEE);
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#F4F4F4), to(#EEEEEE));
+   
+  /* Rounded corners */
+   
+  -moz-border-radius: 0.5rem 0.5rem 0rem 0.5rem;
+  -webkit-border-radius: 0.5rem 0.5rem 0rem 0.5rem;
+  border-radius: 0.5rem 0.5rem 0rem 0.5rem;
+}
+
+/* Drop Down */
+
+.dropdown_1column, 
+.dropdown_2columns, 
+.dropdown_3columns, 
+.dropdown_4columns,
+.dropdown_5columns {
+    margin:0.4rem auto;
+    // float:left;
+    position:absolute;
+    left:-999em; /* Hides the drop down */
+    text-align:left;
+    padding: 1rem 0.5rem 1rem 0.5rem;
+    border: 0.1rem solid #777777;
+    border-top: none;
+    opacity: 0.93;
      
-//     /* Gradient background */
-//     background:#F4F4F4;
-//     background: -moz-linear-gradient(top, #EEEEEE, #BBBBBB);
-//     background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#EEEEEE), to(#BBBBBB));
+    /* Gradient background */
+    background:#F4F4F4;
+    background: -moz-linear-gradient(top, #EEEEEE, #BBBBBB);
+    background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#EEEEEE), to(#BBBBBB));
  
-//     /* Rounded Corners */
-//     -moz-border-radius: 0px 5px 5px 5px;
-//     -webkit-border-radius: 0px 5px 5px 5px;
-//     border-radius: 0px 5px 5px 5px;
-// }
+    /* Rounded Corners */
+    -moz-border-radius: 0rem 0.5rem 0.5rem 0.5rem;
+    -webkit-border-radius: 0rem 0.5rem 0.5rem 0.5rem;
+    border-radius: 0rem 0.5rem 0.5rem 0.5rem;
+}
  
-// .dropdown_1column {width: 140px;}
-// .dropdown_2columns {width: 280px;}
-// .dropdown_3columns {width: 420px;}
-// .dropdown_4columns {width: 560px;}
-// .dropdown_5columns {width: 700px;}
+.dropdown_1column {width: 10rem;}
+.dropdown_2columns {width: 28rem;}
+.dropdown_3columns {width: 42rem;}
+.dropdown_4columns {width: 56rem;}
+.dropdown_5columns {width: 70rem;}
  
-// .toolbar .toolbarMenu:focus .dropdown_1column, 
-// .toolbar .toolbarMenu:focus .dropdown_2columns, 
-// .toolbar .toolbarMenu:focus .dropdown_3columns,
-// .toolbar .toolbarMenu:focus .dropdown_4columns,
-// .toolbar .toolbarMenu:focus .dropdown_5columns {
-//     left:-1px;
-//     top:auto;
-// }
+.toolbar .toolbarMenu .selectedClick .dropdown_1column, 
+.toolbar .toolbarMenu .selectedClick .dropdown_2columns, 
+.toolbar .toolbarMenu .selectedClick .dropdown_3columns,
+.toolbar .toolbarMenu .selectedClick .dropdown_4columns,
+.toolbar .toolbarMenu .selectedClick .dropdown_5columns {
+    left:-0.1rem;
+    top:auto;
+}
  
-// /* Columns */
+/* Columns */
  
-// .col_1,
-// .col_2,
-// .col_3,
-// .col_4,
-// .col_5 {
-//     display:inline;
-//     float: left;
-//     position: relative;
-//     margin-left: 5px;
-//     margin-right: 5px;
-// }
-// .col_1 {width:130px;}
-// .col_2 {width:270px;}
-// .col_3 {width:410px;}
-// .col_4 {width:550px;}
-// .col_5 {width:690px;}
+.col_1,
+.col_2,
+.col_3,
+.col_4,
+.col_5 {
+    display:flex;
+    float: left;
+    position: relative;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+}
+.col_1 {width:13rem;}
+.col_2 {width:27rem;}
+.col_3 {width:41rem;}
+.col_4 {width:55rem;}
+.col_5 {width:69rem;}
 
-
-.nav-menu-content {
-  // display: none;
-  z-index: 2;
-  position: absolute;
-  top: 4rem;
-  left: 1.5rem;
-  background-color: #f6f6f6;
-  border: solid 0.1rem #bbb;
-  border-top: 0;
-  box-shadow: 0 0.2rem 0.2rem 0 rgba(0,0,0,.2);
-  border-radius: 0 0 1rem 1rem;
-  -moz-border-radius: 0 0 1rem 1rem;;
-  -webkit-border-radius: 0 0 1rem 1rem;;
-  width: 25rem;
-  padding: 1rem;
+/* Right alignment */
+ 
+.toolbar .menu_right {
+  margin-left: auto;
+  // order: 2;
+  margin-right:5rem;
 }
 
-.nav-menu-content .services-group {
-  cursor: pointer;
-  margin: 0rem;
-  padding: 0rem;
-  list-style-type: none;
-}
-
-.nav-menu-content .services-group li:hover{
-  font-size: 2rem;
-  background-color: #f3d673;
+.toolbar .toolbarMenu .selectedClick .align_right {
+  /* Rounded Corners */
+  -moz-border-radius: 0rem 0rem 0.5rem 0.5rem;
+  -webkit-border-radius: 0rem 0rem 0.5rem 0.5rem;
+  border-radius: 0rem 0rem 0.5rem 0.5rem;
   
+  left:auto;
+  right:-0.1rem;
+  top:auto;
+  margin-top: 0.5rem;
+}
+
+.toolbar .toolbarMenu p, .toolbar .toolbarMenu h2, .toolbar .toolbarMenu h3, .toolbar .toolbarMenu ul li {
+  font-family:Arial, Helvetica, sans-serif;
+  line-height:2.1rem;
+  font-size:1.2rem;
+  text-align:left;
+  text-shadow: 0.1rem 0.1rem 0.1rem #FFFFFF;
+}
+.toolbar .toolbarMenu h2 {
+  font-size:2.1rem;
+  font-weight:400;
+  letter-spacing:-0.1rem;
+  margin:0.7rem 0 1.4rem 0;
+  padding-bottom:1.4rem;
+  border-bottom:0.1rem solid #666666;
+}
+.toolbar .toolbarMenu h3 {
+  font-size:1.6rem;
+  margin:0.7rem 0 1.4rem 0;
+  padding-bottom:0.7rem;
+  border-bottom:0.1rem solid #888888;
+  cursor: text;
+}
+.toolbar .toolbarMenu p {
+  line-height:1.8rem;
+  margin:0 0 1rem 0;
+}
+.strong {
+  font-weight:bold;
+}
+.italic {
+  font-style:italic;
+}
+.toolbar .toolbarMenu div a {
+  font-size:1.4rem;
+  color:#015b86;
+}
+.toolbar .toolbarMenu :hover div a {
+  font-size:1.4rem;
+  color:#015b86;
+}
+.toolbar .toolbarMenu :hover div a:hover {
+  font-size:1.6rem;
+  color:#029feb;
+}
+
+.toolbar .toolbarMenu ul {
+  list-style:none;
+  padding:0;
+  margin:0 0 1.2rem 0;
+
+}
+.toolbar .toolbarMenu ul li {
+  font-size:1.4rem;
+  line-height:2.4rem;
+  position:relative;
+  text-shadow: 0.1rem 0.1rem 0.1rem #ffffff;
+  padding:0;
+  margin:0;
+  float:none;
+  text-align:left;
+  width:13rem;
+}
+.toolbar .toolbarMenu ul li:hover {
+  background:none;
+  border:none;
+  padding:0;
+  margin:0;
+}
+
+.toolbar .connectStrength {
+ margin-right: 10rem;
 }
 
 svg.material-icons2 path {
   fill: rgb(255, 0, 0);
   transform: rotate(90deg);
+  transform-origin: 50% 50%;
+}
+
+.toolbar .toolbarMenu .selectedClick svg.material-icons2 path {
+  fill: rgb(255, 0, 0);
+  transform: rotate(270deg);
   transform-origin: 50% 50%;
 }
 

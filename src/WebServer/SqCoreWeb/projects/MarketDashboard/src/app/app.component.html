@@ -4,31 +4,53 @@
   <img id="toolBarImg1" width="40" alt="SQ Logo" src="../assets/images/favicon_Home64x64Resonly.ico" />
   Dashboard: {{ activeTool }} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <div class="toolbarMenu" (click)="onClickToolSelection()">
-    Tools
-    <svg class="material-icons2" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 -8 24 24">
-      <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
-    </svg>
+    <div [className]="isToolSelectionVisible ? 'leftItemselected selectedClick' : 'leftItem'">
+      Tools
+      <svg class="material-icons2" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 -8 24 24">
+        <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
+      </svg>
+      <div class="dropdown_2columns">
+        <div class="col_1">
+          <ul>
+            <h3>Tools</h3>
+            <ul>
+              <li><a href="#" (click)="onChangeActiveTool('MarketHealth')">MarketHealth</a></li>
+              <li><a href="#" (click)="onChangeActiveTool('CatalystSniffer')">CatalystSniffer</a></li>
+              <li><a href="#" (click)="onChangeActiveTool('QuickfolioNews')">QuickfolioNews</a></li>
+            </ul>
+          </ul>
+        </div>
+        <div class="col_1">
+          <ul>
+            <h3>Developer</h3>
+            <ul>
+              <li><a href="#" (click)="onChangeActiveTool('TooltipSandpit')">TooltipSandpit</a></li>
+            </ul>
+          </ul>
+        </div>
+      </div>
+    </div>
   </div>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  <div class="toolbarMenu" (click)="onClickToolSelection()">
-    {{ user.email }}
-    <svg class="material-icons2" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 -4 24 24">
-      <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
-    </svg>
+  <div class="toolbarMenu menu_right" (click)="onClickUserSelection()">
+    <div [className]="isUserSelectionVisible ? 'rightItemselected selectedClick' : 'rightItem'">
+      {{ user.email }}
+      <svg class="material-icons2" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 -8 24 24">
+        <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
+      </svg>
+      <div class="dropdown_1column align_right">
+        <div class="col_1">
+          <ul class="simple">
+            <li><a href="#">Profile</a></li>
+            <li><a href="#">Settings</a></li>
+            <li><a href="#">Log Out</a></li>
+          </ul>   
+        </div>
+      </div>
+    </div>
   </div>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  <img id="wifiImage" width="30" alt="Wifi" title="Connection strength: [under development]" src="../assets/images/wifi.webp"/>
-</div>
-<!-- <div [hidden]="!isToolSelectionVisible" class="nav-menu-content nav-menu-content-fullwidth" id="servicesMenuContent" style="width: 60rem; top: 8.9rem;"> -->
-<div [hidden]="!isToolSelectionVisible" class="nav-menu-content nav-menu-content-fullwidth" id="servicesMenuContent">
-  4 tools:
-  <br>
-  <ul style="width:100%" class="services-group">
-    <li class="awsc-header ico-compute" (click)="onChangeActiveTool('MarketHealth'); onClickToolSelected()">MarketHealth</li>
-    <li class="awsc-header ico-compute" (click)="onChangeActiveTool('CatalystSniffer'); onClickToolSelected()">CatalystSniffer</li>
-    <li class="awsc-header ico-compute" (click)="onChangeActiveTool('QuickfolioNews'); onClickToolSelected()">QuickfolioNews</li>
-    <li class="awsc-header ico-compute" (click)="onChangeActiveTool('TooltipSandpit'); onClickToolSelected()">TooltipSandpit</li>
-  </ul>
+  <div class="connectStrength">
+    <img id="wifiImage" width="30" alt="Wifi" title="Connection strength: [under development]" src="../assets/images/wifi.webp"/>
+  </div>
 </div>
 
 <div class="content">

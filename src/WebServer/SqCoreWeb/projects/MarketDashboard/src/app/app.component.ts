@@ -20,6 +20,7 @@ export class AppComponent implements OnInit {
     email: 'anonymous@gmail.com'
   };
   isToolSelectionVisible = false;
+  isUserSelectionVisible = false;
   toolSelectionMsg = 'Click red arrow in toolbar! isToolSelectionVisible is set to ' + this.isToolSelectionVisible;
   activeTool = 'MarketHealth';
 
@@ -67,11 +68,21 @@ export class AppComponent implements OnInit {
   onClickToolSelection() {
     this.isToolSelectionVisible = !this.isToolSelectionVisible;
     this.toolSelectionMsg = 'Click red arrow in toolbar! isToolSelectionVisible is set to ' + this.isToolSelectionVisible;
+    this.isUserSelectionVisible = false;
   }
 
   onClickToolSelected() {
     this.isToolSelectionVisible = !this.isToolSelectionVisible;
     this.toolSelectionMsg = 'Click red arrow in toolbar! isToolSelectionVisible is set to ' + this.isToolSelectionVisible;
+  }
+
+  onClickUserSelection() {
+    this.isUserSelectionVisible = !this.isUserSelectionVisible;
+    this.isToolSelectionVisible = false;
+  }
+
+  onClickUserSelected() {
+    this.isUserSelectionVisible = !this.isUserSelectionVisible;
   }
 
   onChangeActiveTool(tool: string) {
