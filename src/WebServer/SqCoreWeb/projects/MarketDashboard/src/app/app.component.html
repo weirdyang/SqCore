@@ -3,7 +3,7 @@
 <div class="toolbar" role="banner">
   <img id="toolBarImg1" width="40" alt="SQ Logo" src="../assets/images/favicon_Home64x64Resonly.ico" />
   Dashboard: {{ activeTool }} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  <div class="toolbarMenu" (click)="onClickToolSelection()">
+  <div class="toolbarMenu" (click)="onClickToolSelection()" (clickOutside)="closeDropdownMenu('Tools')">
     <div [className]="isToolSelectionVisible ? 'leftItemselected selectedClick' : 'leftItem'">
       Tools
       <svg class="material-icons2" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 -8 24 24">
@@ -31,7 +31,7 @@
       </div>
     </div>
   </div>
-  <div class="toolbarMenu menu_right" (click)="onClickUserSelection()">
+  <div class="toolbarMenu menu_right" (click)="onClickUserSelection()" (clickOutside)="closeDropdownMenu('User')">
     <div [className]="isUserSelectionVisible ? 'rightItemselected selectedClick' : 'rightItem'">
       {{ user.email }}
       <svg class="material-icons2" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 -8 24 24">
@@ -60,10 +60,6 @@
   <app-tooltip-sandpit [hidden]="!(activeTool=='TooltipSandpit')" ></app-tooltip-sandpit>
   <hr style="margin: 0" size="0.2rem" width="100%">
 </div>
-
-
-
-
 
 
 <router-outlet></router-outlet>

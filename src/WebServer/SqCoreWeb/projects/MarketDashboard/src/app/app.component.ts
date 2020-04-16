@@ -91,4 +91,13 @@ export class AppComponent implements OnInit {
     }
     this.activeTool = tool;
   }
+
+  closeDropdownMenu(menuItem: string) {
+    if (menuItem === 'Tools') {
+      this.isToolSelectionVisible = false;
+    } else if (menuItem === 'User') {
+      this.isUserSelectionVisible = false;
+    }
+  }
+
 }
