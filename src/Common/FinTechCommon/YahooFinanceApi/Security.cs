@@ -79,5 +79,6 @@ namespace YahooFinanceApi
         public Double TwoHundredDayAverage => this["TwoHundredDayAverage"];
         public Double TwoHundredDayAverageChange => this["TwoHundredDayAverageChange"];
         public Double TwoHundredDayAverageChangePercent => this["TwoHundredDayAverageChangePercent"];
+        public Double PreMarketPrice => this["PreMarketPrice"];
     }
 }

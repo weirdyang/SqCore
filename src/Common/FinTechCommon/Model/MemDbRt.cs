@@ -61,18 +61,71 @@ namespace FinTechCommon
 
         public IEnumerable<(uint SecdID, float LastPrice)> GetLastRtPrice(uint[] p_secIDs)     // C# 7.0 adds tuple types and named tuple literals. uint[] is faster to create and more RAM efficient than linked-list<uint>
         {
-            // TODO: implement business logic here
-            // pre/post-market, it should use YF
-            // regular trading hours (RTH): IEX.
-            // if (Utils.UsaTradingHoursNow() == TradingHours.RegularTrading)
-            DownloadLastPriceIex(p_secIDs);
-
-            return p_secIDs.Select(r =>
+            // pre/post-market: it uses YF infrequently (to avoid IP ban), during regular trading hours (RTH): IEX frequently.
+            var tradingHoursNow = Utils.UsaTradingHoursNow();
+            if (tradingHoursNow == TradingHours.RegularTrading)
             {
-                var sec = GetSecurity(r);
-                return (sec.SecID, sec.LastPriceIex);
-            });
+                DownloadLastPriceIex(p_secIDs);
+                return p_secIDs.Select(r =>
+                    {
+                        var sec = GetSecurity(r);
+                        return (sec.SecID, sec.LastPriceIex);
+                    });
+            }
+            else
+            {
+                DownloadLastPriceYF(p_secIDs, tradingHoursNow);
+                return p_secIDs.Select(r =>
+                    {
+                        var sec = GetSecurity(r);
+                        return (sec.SecID, sec.LastPriceYF);
+                    });
+            }
+        }
 
+        DateTime m_lastDownloadLastPriceYF = DateTime.MinValue;
+        void DownloadLastPriceYF(uint[] p_secIDs, TradingHours p_tradingHoursNow)  // takes ? ms from WinPC
+        {
+            Utils.Logger.Info("DownloadLastPriceYF() START");
+            try
+            {
+                TimeSpan tsSinceLastYfDownload = DateTime.UtcNow - m_lastDownloadLastPriceYF;
+                if (tsSinceLastYfDownload <= TimeSpan.FromSeconds(60))  // To avoid being banned by YF, don't query more frequently than 60 sec. That is 60 query per hour.
+                    Thread.Sleep(TimeSpan.FromSeconds(60) - tsSinceLastYfDownload);
+
+                m_lastDownloadLastPriceYF = DateTime.UtcNow;
+
+                // https://query1.finance.yahoo.com/v7/finance/quote?symbols=AAPL,AMZN  returns all the fields.
+                // https://query1.finance.yahoo.com/v7/finance/quote?symbols=QQQ%2CSPY%2CGLD%2CTLT%2CVXX%2CUNG%2CUSO&fields=symbol%2CregularMarketPreviousClose%2CregularMarketPrice%2CmarketState%2CpostMarketPrice%2CpreMarketPrice  // returns just the specified fields.
+                // "marketState":"PRE" or "marketState":"POST", In PreMarket both "preMarketPrice" and "postMarketPrice" are returned.
+                var symbols = p_secIDs.Select(r => GetSecurity(r).Ticker).ToArray();
+                var quotes = Yahoo.Symbols(symbols).Fields(new Field[] { Field.Symbol, Field.RegularMarketPreviousClose, Field.RegularMarketPrice, Field.MarketState, Field.PostMarketPrice, Field.PreMarketPrice }).QueryAsync().Result;
+                foreach (var quote in quotes)
+                {
+                    Security? sec = null;
+                    foreach (var secdID in p_secIDs)
+                    {
+                        var s = GetSecurity(secdID);
+                        if (s.Ticker == quote.Key)
+                        {
+                            sec = s;
+                            break;
+                        }
+                    }
+
+                    if (sec != null)
+                    {
+                        if (p_tradingHoursNow == TradingHours.PreMarket)
+                            sec.LastPriceYF = (float)quote.Value.PreMarketPrice;
+                        else
+                            sec.LastPriceYF = (float)quote.Value.PostMarketPrice;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Utils.Logger.Error(e, "DownloadLastPriceYF()");
+            }
         }
 
         void DownloadLastPriceIex(uint[] p_secIDs)  // takes 450-540ms from WinPC

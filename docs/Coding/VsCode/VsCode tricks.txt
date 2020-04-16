@@ -13,11 +13,14 @@ Code editing:
 - F2: Refactoring:Rename symbol (function, variable) in all files. see https://code.visualstudio.com/docs/editor/refactoring
 - Ctrl-K, Ctrl-F Format selection.
 
+- Ctrl+Shift+O (Go to Symbol, in editor window). type : for lines, @ for symbols. (no local symbols, only class symbols in C#, in TS it works for local symbols too) Can save a lot of navigation time.
+- Ctrl+T (Go to Symbol, in workspace) (jumping to a symbol across files)
+
 Vscode services:
 - (Ctrl + ,): Search Settings
 - (Ctrl + ') toggles the Terminal window parts
 - (Ctrl+Shift+B) start build
-- Ctrl+P (Quick Open) + and start to type any filename
+- Ctrl+P (Quick Open 'file') + and start to type any filename: "*.ts", or "Program.cs". It is easier to find files than browsing. You can now continue to navigate to the symbols of a file result simply by typing '@'.
 
 
 

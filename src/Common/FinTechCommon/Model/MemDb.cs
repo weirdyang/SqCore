@@ -10,7 +10,7 @@ using YahooFinanceApi;
 namespace FinTechCommon
 {
 
-    [DebuggerDisplay("Ticker = {Ticker}")]
+    [DebuggerDisplay("Ticker = {Ticker}, SecID({SecID})")]
     public class Security
     {
         public uint SecID { get; set; } = 0; // invalid value is best to be 0. If it is Uint32.MaxValue is the invalid, then problems if extending to Uint64
@@ -20,6 +20,7 @@ namespace FinTechCommon
         public FinTimeSeries<DateOnly, float, uint> DailyHistory { get; set; } = new FinTimeSeries<DateOnly, float, uint>();
 
         public float LastPriceIex { get; set; } = -100.0f;     // real-time last price
+        public float LastPriceYF { get; set; } = -100.0f;     // real-time last price
     }
 
     public partial class MemDb
@@ -162,7 +163,7 @@ namespace FinTechCommon
                     Debug.WriteLine($"{sec.Ticker}, first: DateTime: {tsDates.First()}, Close: {tsValues.First()}, last: DateTime: {tsDates.Last()}, Close: {tsValues.Last()}");  // only writes to Console in Debug mode in vscode 'Debug Console'
                 }
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
                 Utils.Logger.Error(e, "ReloadHistoricalDataAndSetTimer()");
             }

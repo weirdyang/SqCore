@@ -68,6 +68,7 @@ namespace YahooFinanceApi
         TrailingPE,
         TwoHundredDayAverage,
         TwoHundredDayAverageChange,
-        TwoHundredDayAverageChangePercent
+        TwoHundredDayAverageChangePercent, 
+        PreMarketPrice
     }
 }
