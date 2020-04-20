@@ -19,12 +19,16 @@ serverUser = "sq-vnc-client"
 # serverRsaKeyFile = "g:\work\Archi-data\HedgeQuant\src\Server\AmazonAWS\AwsMTrader\AwsMTrader,sq-vnc-client.pem"
 serverRsaKeyFile = "d:/ArchiData/HedgeQuant\src\Server\AmazonAWS\AwsMTrader\AwsMTrader,sq-vnc-client.pem"
 rootRemoteDir = "/home/sq-vnc-client/SQ/Tools/BenchmarkDB/src"
+zipFileNameWithoutPath = "deploy.7z"
+zipFileRemoteName = rootRemoteDir + "/" + zipFileNameWithoutPath
 
 excludeDirs = set(["bin", "obj", ".vs", "artifacts", "Properties"])
 excludeFileExts = set(["sln", "xproj", "log", "sqlog", "ps1", "py", "sh", "user", "md"])
 
-zipListFileName = "deployList.txt"
-zipFileName = "deploy.7z"
+zipListFileName = rootLocalDir + "/" + "deployList.txt"
+zipFileName = rootLocalDir + "/" + zipFileNameWithoutPath
+
+zipExeWithPath = 'c:/Program Files/7-Zip/7z.exe'
 
 # "mkdir -p" means Create intermediate directories as required. 
 # http://stackoverflow.com/questions/14819681/upload-files-using-sftp-in-python-but-create-directories-if-path-doesnt-exist
@@ -122,7 +126,7 @@ for root, dirs, files in os.walk(rootLocalDir, topdown=True):
     dirs[:] = [d for d in dirs if d not in excludeDirs]     #Modifying dirs in-place will prune the (subsequent) files and directories visited by os.walk
 
     if curRelPathWin != ".":    # root folder is always traversed
-        isFilesTraversed = False;
+        isFilesTraversed = False
         for aSubTreeRoot in acceptedSubTreeRoots:
             if curRelPathWin.startswith(aSubTreeRoot):
                 isFilesTraversed = True   
@@ -138,15 +142,15 @@ for root, dirs, files in os.walk(rootLocalDir, topdown=True):
             curRelPathLinux = curRelPathWin.replace(os.path.sep, '/') + "/"
         remoteDir = rootRemoteDir + "/" +  curRelPathLinux
         print(Fore.CYAN + Style.BRIGHT  + "Adding file to pack list: " + remoteDir  + f)
-        mkdir_p(sftp, remoteDir) 
+        # mkdir_p(sftp, remoteDir) 
         
         # original solution: upload files separatedly
         # ret = sftp.put(root + "/" + f, remoteDir + f, None, True) # Check FileSize after Put() = True
         
         currFileName = rootLocalDir + "/"+ curRelPathWin.replace(os.path.sep, '/')+  "/"+f
         if os.path.isfile(currFileName):
-            fileNamesToZip.append(currFileName.replace("/","\\"))
-            zipListFile.write(currFileName+"\r\n")
+            fileNamesToZip.append((curRelPathWin.replace(os.path.sep, '/')+  "/"+f).replace("/","\\"))
+            zipListFile.write(curRelPathWin.replace(os.path.sep, '/')+  "/"+f+"\r\n")
         # cmd = ['c:/Program Files/7-Zip/7z.exe', 'a', zipFileName, currFileName]
         # sp = subprocess.Popen(cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
         
@@ -158,25 +162,37 @@ zipListFile.close()
 
 print(Fore.CYAN + Style.BRIGHT  + "Packing all files ...")
 
-cmd = ['c:/Program Files/7-Zip/7z.exe', 'a', zipFileName, '-spf2', '@'+zipListFileName]
+print("working dir before " + os.getcwd())
+os.chdir(rootLocalDir)
+print("working dir after " + os.getcwd())
+
+cmd = [zipExeWithPath, 'a', zipFileName, '-spf2', '@'+zipListFileName]
 sp = subprocess.Popen(cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE).wait()
 
-if os.path.isfile(zipListFileName):
-    os.remove(zipListFileName)  #remove old zip list file if exists
+# if os.path.isfile(zipListFileName):
+#     os.remove(zipListFileName)  #remove old zip list file if exists
 
-print(Fore.CYAN + Style.BRIGHT  + "Preparing packed file ...")
+# print(Fore.CYAN + Style.BRIGHT  + "Preparing packed file ...")
 
-for fileName in fileNamesToZip:
-    cmd = ['c:/Program Files/7-Zip/7z.exe', 'rn', "d:/ArchiData/SqCore/"+ zipFileName, fileName[3:], fileName[len(rootLocalDir)+1:]] #cut the <root local dir> from the beginning of the file name, but without the drive, typically "d:/""
-    sp = subprocess.Popen(cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE).wait()
+# for fileName in fileNamesToZip:
+#     cmd = ['c:/Program Files/7-Zip/7z.exe', 'rn', "d:/ArchiData/SqCore/"+ zipFileName, fileName[3:], fileName[len(rootLocalDir)+1:]] #cut the <root local dir> from the beginning of the file name, but without the drive, typically "d:/""
+#     sp = subprocess.Popen(cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE).wait()
 
-print(Fore.CYAN + Style.BRIGHT  + "Sending packed file ...")
+print(Fore.CYAN + Style.BRIGHT  + "Creating root directory on the server ...")
+mkdir_p(sftp, rootRemoteDir)
 
-ret = sftp.put("d:/ArchiData/SqCore/"+zipFileName, rootRemoteDir +'/'+ zipFileName, None, True) # Check FileSize after Put() = True
+print(Fore.CYAN + Style.BRIGHT + "Sending packed file ...")
+
+# Check FileSize after Put() = True
+ret = sftp.put(zipFileName, zipFileRemoteName, None, True)
 
 print(Fore.CYAN + Style.BRIGHT  + "Unpacking file on the server ...")
 
-command = "7z x " + rootRemoteDir+"/"+zipFileName
+# command = "cd /home/sq-vnc-client/SQ/Tools/BenchmarkDB/src"
+# (stdin, stdout, stderr) = sshClient.exec_command(command)
+# for line in stdout.readlines():
+#     print(line)
+command = "cd " + rootRemoteDir + " && 7z x " + zipFileRemoteName
 (stdin, stdout, stderr) = sshClient.exec_command(command)
 for line in stdout.readlines():
     print(line)
@@ -186,4 +202,10 @@ sshClient.close()
 print(Fore.MAGENTA + Style.BRIGHT  +  "SFTP Session is closing. Deployment " + acceptedSubTreeRoots[0] + " is OK.")
 sftp.close()
 transport.close()
+
+if os.path.isfile(zipFileName):
+    os.remove(zipFileName)  # remove zip list file
+if os.path.isfile(zipListFileName):
+    os.remove(zipListFileName)  # remove zip file
+
 #k = input("Press ENTER...")  
