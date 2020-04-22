@@ -103,6 +103,13 @@ namespace SqCoreWeb
         public void OnConnectedAsync_MktHealth()
         {
             // for both the first and the second client, we get RT prices from MemDb immediately and send it back to this Client only.
+
+            // 1. Send the Historical data first. SendAsync() is non-blocking. GetLastRtPrice() can be blocking
+            IEnumerable<RtMktSumNonRtStat> periodStatToClient = GetLookbackStat("YTD");
+            Utils.Logger.Info("Clients.Caller.SendAsync: RtMktSumNonRtStat");
+            Clients.Caller.SendAsync("RtMktSumNonRtStat", periodStatToClient);
+
+            // 2. Send RT price later, because GetLastRtPrice() might block the thread, if it is the first client.
             var lastPrices = MemDb.gMemDb.GetLastRtPrice(g_mktSummaryStocks.Select(r => r.SecID).ToArray());
             IEnumerable<RtMktSumRtStat> rtMktSummaryToClient = lastPrices.Select(r =>
             {
@@ -116,9 +123,7 @@ namespace SqCoreWeb
             Utils.Logger.Info("Clients.Caller.SendAsync: RtMktSumRtStat");
             Clients.Caller.SendAsync("RtMktSumRtStat", rtMktSummaryToClient);
 
-            IEnumerable<RtMktSumNonRtStat> periodStatToClient = GetLookbackStat("YTD");
-            Utils.Logger.Info("Clients.Caller.SendAsync: RtMktSumNonRtStat");
-            Clients.Caller.SendAsync("RtMktSumNonRtStat", periodStatToClient);
+            
 
             lock (m_rtMktSummaryTimerLock)
             {

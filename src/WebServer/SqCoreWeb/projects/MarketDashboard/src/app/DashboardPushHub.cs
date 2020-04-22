@@ -78,6 +78,8 @@ namespace SqCoreWeb
             EvMemDbHistoricalDataReloaded_mktHealth();
         }
 
+        // UI responsiveness: webpage HTML,JS loads in 300-400msec. Then JS starts SignalR negotiation, 30ms on server + latency = 100ms. Then we send messages. Between the first SingalR connected message and RT/historical price: 250ms.
+        // so Menu bar UI comes in 400ms, but the MarketHealth table appears another 400ms later. Fine.
         public override Task OnConnectedAsync()
         {
             var userEmailClaim = this.Context?.User?.Claims?.FirstOrDefault(p => p.Type == @"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress");
