@@ -30,6 +30,7 @@ namespace BenchmarkDB
         public void TestPing()
         {
             string address = Program.gConfiguration.GetConnectionString("PingDefault");
+            Console.WriteLine($"Program.gConfiguration.GetConnectionString(PingDefault): '{address}'");
             int nTries = Utils.InvariantConvert<int>(Program.gConfiguration["AppSettings:TestPingNTries"]);   
             long sumPingTimes = 0;
             for (int i = 0; i < nTries; i++)

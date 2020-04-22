@@ -108,9 +108,8 @@ namespace FinTechCommon
                     if (m_rtTimerRunning)
                     {
                         TimeSpan tsSinceLastRtCall = DateTime.UtcNow - m_lastGetLastRtCall;
-                        if (tsSinceLastRtCall <= TimeSpan.FromSeconds(5 * 60))  // only repeat it, if there was a function call in the last 5 minutes
-                        if (m_rtTimer != null)
-                            m_rtTimer.Change(TimeSpan.FromMilliseconds((tradingHoursNow == TradingHours.RegularTrading) ? m_rtTimerFrequencyRegularMs : m_rtTimerFrequencyPrePostMs), TimeSpan.FromMilliseconds(-1.0));
+                        if (tsSinceLastRtCall <= TimeSpan.FromSeconds(5 * 60))  // only repeat it, if there was a function call in the last 5 minutes 
+                            m_rtTimer!.Change(TimeSpan.FromMilliseconds((tradingHoursNow == TradingHours.RegularTrading) ? m_rtTimerFrequencyRegularMs : m_rtTimerFrequencyPrePostMs), TimeSpan.FromMilliseconds(-1.0));
                         else
                             m_rtTimerRunning = false;
                     }
