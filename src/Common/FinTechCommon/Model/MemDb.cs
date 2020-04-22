@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using SqCommon;
 using YahooFinanceApi;
@@ -80,6 +81,13 @@ namespace FinTechCommon
 
             IsInitialized = true;
             EvInitialized?.Invoke();
+        }
+
+        public void ServerDiagnostic(StringBuilder p_sb)
+        {
+            p_sb.Append("<H2>MemDb</H2>");
+            p_sb.Append($"Historical: #Securities: {Securities.Count}<br>");
+            ServerDiagnosticRealtime(p_sb);
         }
 
         public Security GetSecurity(uint p_secID)

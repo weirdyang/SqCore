@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using SqCommon;
-//using static SqCoreWeb.WsUtils;
+using FinTechCommon;
 
 namespace SqCoreWeb.Controllers
 {
@@ -67,6 +67,8 @@ namespace SqCoreWeb.Controllers
         public ActionResult ServerDiagnostics()
         {
             StringBuilder sb = new StringBuilder(@"<HTML><body><h1>ServerDiagnostics</h1>");
+            Program.ServerDiagnostic(sb);
+            MemDb.gMemDb.ServerDiagnostic(sb);
             DashboardPushHub.ServerDiagnostic(sb);
 
             return Content(sb.Append("</body></HTML>").ToString(), "text/html");

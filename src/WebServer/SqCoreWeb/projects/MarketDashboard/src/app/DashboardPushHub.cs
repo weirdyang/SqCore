@@ -124,7 +124,7 @@ namespace SqCoreWeb
             return base.OnDisconnectedAsync(exception);
         }
 
-        public static void ServerDiagnostic(StringBuilder p_sb)    // Timer is coming on a ThreadPool thread
+        public static void ServerDiagnostic(StringBuilder p_sb)
         {
             p_sb.Append("<H2>DashboardPushHub Websockets</H2>");
  

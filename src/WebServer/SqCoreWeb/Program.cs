@@ -15,6 +15,8 @@ using Microsoft.Extensions.Logging;
 using NLog.Web;
 using SqCommon;
 using FinTechCommon;
+using System.Text;
+using System.Globalization;
 
 namespace SqCoreWeb
 {
@@ -205,6 +207,12 @@ namespace SqCoreWeb
             e.SetObserved();        //  preventing it from triggering exception escalation policy which, by default, terminates the process.
         }
 
+        public static void ServerDiagnostic(StringBuilder p_sb)
+        {
+            p_sb.Append("<H2>Program.exe</H2>");
+            var timeSinceAppStart = DateTime.UtcNow - g_webAppGlobals.WebAppStartTime;
+            p_sb.Append($"WebAppStartTimeUtc: {g_webAppGlobals.WebAppStartTime.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)}({timeSinceAppStart:dd\\.hh\\:mm\\:ss} days ago)<br>");
+        }
 
     }
 }

@@ -102,20 +102,33 @@ namespace SqCoreWeb
 
         public void OnConnectedAsync_MktHealth()
         {
+            // for both the first and the second client, we get RT prices from MemDb immediately and send it back to this Client only.
+            var lastPrices = MemDb.gMemDb.GetLastRtPrice(g_mktSummaryStocks.Select(r => r.SecID).ToArray());
+            IEnumerable<RtMktSumRtStat> rtMktSummaryToClient = lastPrices.Select(r =>
+            {
+                var rtStock = new RtMktSumRtStat()
+                {
+                    SecID = r.SecdID,
+                    Last = r.LastPrice,
+                };
+                return rtStock;
+            });
+            Utils.Logger.Info("Clients.Caller.SendAsync: RtMktSumRtStat");
+            Clients.Caller.SendAsync("RtMktSumRtStat", rtMktSummaryToClient);
+
+            IEnumerable<RtMktSumNonRtStat> periodStatToClient = GetLookbackStat("YTD");
+            Utils.Logger.Info("Clients.Caller.SendAsync: RtMktSumNonRtStat");
+            Clients.Caller.SendAsync("RtMktSumNonRtStat", periodStatToClient);
+
             lock (m_rtMktSummaryTimerLock)
             {
                 if (!m_rtMktSummaryTimerRunning)
                 {
                     Utils.Logger.Info("OnConnectedAsync_MktHealth(). Starting m_rtMktSummaryTimer.");
-                    m_rtMktSummaryTimer.Change(TimeSpan.FromMilliseconds(0), TimeSpan.FromMilliseconds(-1.0));    // runs only once. To avoid that it runs parallel, if first one doesn't finish
                     m_rtMktSummaryTimerRunning = true;
+                    m_rtMktSummaryTimer.Change(TimeSpan.FromMilliseconds(m_rtMktSummaryTimerFrequencyMs), TimeSpan.FromMilliseconds(-1.0));    // runs only once. To avoid that it runs parallel, if first one doesn't finish
                 }
             }
-
-            IEnumerable<RtMktSumNonRtStat> periodStatToClient = GetLookbackStat("YTD");
-
-            Utils.Logger.Info("Clients.All.SendAsync: RtMktSumNonRtStat");
-            DashboardPushHubKestrelBckgrndSrv.HubContext?.Clients.All.SendAsync("RtMktSumNonRtStat", periodStatToClient);
         }
 
         private static IEnumerable<RtMktSumNonRtStat> GetLookbackStat(string p_lookbackStr)
@@ -208,9 +221,7 @@ namespace SqCoreWeb
                 if (!m_rtMktSummaryTimerRunning)
                     return; // if it was disabled by another thread in the meantime, we should not waste resources to execute this.
 
-                List<string> failedDownloads = new List<string>();
                 var lastPrices = MemDb.gMemDb.GetLastRtPrice(g_mktSummaryStocks.Select(r => r.SecID).ToArray());
-
                 IEnumerable<RtMktSumRtStat> rtMktSummaryToClient = lastPrices.Select(r =>
                 {
                     var rtStock = new RtMktSumRtStat()

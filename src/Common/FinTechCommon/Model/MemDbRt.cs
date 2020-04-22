@@ -59,42 +59,111 @@ namespace FinTechCommon
         // - cut-off time is too late. Until 14:30 asking PreviousDay, it still gives the price 2 days ago. When YF will have premarket data at 9:00. Although "latestPrice" can be used as close.
         // - the only good thing: in market-hours, RT prices are free, and very quick to obtain and batched.
 
-        public IEnumerable<(uint SecdID, float LastPrice)> GetLastRtPrice(uint[] p_secIDs)     // C# 7.0 adds tuple types and named tuple literals. uint[] is faster to create and more RAM efficient than linked-list<uint>
+
+        Timer? m_rtTimer;
+        bool m_rtTimerRunning = false;
+        object m_rtTimerLock = new Object();
+
+        ManualResetEventSlim m_rtMres = new ManualResetEventSlim(false);     // 50ns (vs. 1000ns of ManualResetEvent). 50x faster. Because no reliance of operation system. http://www.albahari.com/threading/part2.aspx
+
+        static int m_rtTimerFrequencyRegularMs = 3000;    // as a demo go with 3sec, later change it to 5sec, do decrease server load.
+        static int m_rtTimerFrequencyPrePostMs = 60000; 
+
+        uint[] m_rtSecIDs = new uint[0];
+
+        DateTime m_lastDownloadLastPrice = DateTime.MinValue;
+        uint m_nIexDownload = 0;
+        uint m_nYfDownload = 0;
+        public void ServerDiagnosticRealtime(StringBuilder p_sb)
         {
-            // pre/post-market: it uses YF infrequently (to avoid IP ban), during regular trading hours (RTH): IEX frequently.
-            var tradingHoursNow = Utils.UsaTradingHoursNow();
-            if (tradingHoursNow == TradingHours.RegularTrading)
+            p_sb.Append($"Realtime: m_rtTimerRunning: {m_rtTimerRunning}, m_nYfDownload: {m_nYfDownload}, m_nIexDownload:{m_nIexDownload} <br>");
+        }
+        public void RtTimer_Elapsed(object? state)    // Timer is coming on a ThreadPool thread
+        {
+            // Download the RT price immediately, don't sleep, but set up Timer that it is called either 3 sec or 60 sec later. Until there is a 5 minute when nobody accessed RT prices.
+            try
             {
-                DownloadLastPriceIex(p_secIDs);
-                return p_secIDs.Select(r =>
+                Utils.Logger.Info("RtTimer_Elapsed(). BEGIN");
+                 if (!m_rtTimerRunning)
+                     return; // if it was disabled by another thread in the meantime, we should not waste resources to execute this.
+
+                var tradingHoursNow = Utils.UsaTradingHoursNow();
+
+                m_lastDownloadLastPrice = DateTime.UtcNow;
+
+                if (tradingHoursNow == TradingHours.RegularTrading)
+                {
+                    DownloadLastPriceIex(m_rtSecIDs);
+                }
+                else
+                {
+                    DownloadLastPriceYF(m_rtSecIDs, tradingHoursNow);
+                }
+
+                m_rtMres.Set();
+                // m_rtMres.Reset();   // This doesn't work here. If we reset it too quickly, clients doesn't get the signal.
+
+                lock (m_rtTimerLock)
+                {
+                    if (m_rtTimerRunning)
                     {
-                        var sec = GetSecurity(r);
-                        return (sec.SecID, sec.LastPriceIex);
-                    });
+                        TimeSpan tsSinceLastRtCall = DateTime.UtcNow - m_lastGetLastRtCall;
+                        if (tsSinceLastRtCall <= TimeSpan.FromSeconds(5 * 60))  // only repeat it, if there was a function call in the last 5 minutes
+                        if (m_rtTimer != null)
+                            m_rtTimer.Change(TimeSpan.FromMilliseconds((tradingHoursNow == TradingHours.RegularTrading) ? m_rtTimerFrequencyRegularMs : m_rtTimerFrequencyPrePostMs), TimeSpan.FromMilliseconds(-1.0));
+                        else
+                            m_rtTimerRunning = false;
+                    }
+                }
+                Utils.Logger.Info("RtTimer_Elapsed(). END");
             }
-            else
+            catch (Exception e)
             {
-                DownloadLastPriceYF(p_secIDs, tradingHoursNow);
-                return p_secIDs.Select(r =>
-                    {
-                        var sec = GetSecurity(r);
-                        return (sec.SecID, sec.LastPriceYF);
-                    });
+                Utils.Logger.Error(e, "RtTimer_Elapsed() exception.");
+                throw;
             }
         }
 
-        DateTime m_lastDownloadLastPriceYF = DateTime.MinValue;
+        
+        DateTime m_lastGetLastRtCall = DateTime.MinValue;
+        public IEnumerable<(uint SecdID, float LastPrice)> GetLastRtPrice(uint[] p_secIDs)     // C# 7.0 adds tuple types and named tuple literals. uint[] is faster to create and more RAM efficient than linked-list<uint>
+        {
+            m_lastGetLastRtCall = DateTime.UtcNow;
+            lock (m_rtTimerLock)
+            {
+                if (!m_rtTimerRunning)      // if it is not running, start it immediately
+                {
+                    Utils.Logger.Info("GetLastRtPrice(). Starting m_rtTimer.");
+                    m_rtSecIDs = p_secIDs;      // at the moment, it only bring RT price for the list of securities which was used when GetLastRtPrice() was called first. Later, it will be better.
+                    if (m_rtTimer == null)
+                        m_rtTimer = new System.Threading.Timer(new TimerCallback(RtTimer_Elapsed), this, TimeSpan.FromMilliseconds(-1.0), TimeSpan.FromMilliseconds(-1.0));
+                    m_rtTimerRunning = true;
+                    m_rtTimer.Change(TimeSpan.FromMilliseconds(0), TimeSpan.FromMilliseconds(-1.0));     // runs immediately, but only once. To avoid that it runs parallel, if first one doesn't finish
+                }
+            }
+
+            var tradingHoursNow = Utils.UsaTradingHoursNow();
+            TimeSpan tsSinceLastRtDownload = DateTime.UtcNow - m_lastDownloadLastPrice;
+            if (tsSinceLastRtDownload > TimeSpan.FromSeconds(80))  // if price is too old, wait for RT background thread to signal successful price.
+            {
+                m_rtMres.Reset();
+                 bool isSignalledNoTimeout = m_rtMres.Wait(TimeSpan.FromSeconds(90));
+            }
+            
+            return p_secIDs.Select(r =>
+                {
+                    var sec = GetSecurity(r);
+                    return (sec.SecID, (tradingHoursNow == TradingHours.RegularTrading) ? sec.LastPriceIex : sec.LastPriceYF);
+                });
+        }
+
+
         void DownloadLastPriceYF(uint[] p_secIDs, TradingHours p_tradingHoursNow)  // takes ? ms from WinPC
         {
             Utils.Logger.Info("DownloadLastPriceYF() START");
+            m_nYfDownload++;
             try
             {
-                TimeSpan tsSinceLastYfDownload = DateTime.UtcNow - m_lastDownloadLastPriceYF;
-                if (tsSinceLastYfDownload <= TimeSpan.FromSeconds(60))  // To avoid being banned by YF, don't query more frequently than 60 sec. That is 60 query per hour.
-                    Thread.Sleep(TimeSpan.FromSeconds(60) - tsSinceLastYfDownload);
-
-                m_lastDownloadLastPriceYF = DateTime.UtcNow;
-
                 // https://query1.finance.yahoo.com/v7/finance/quote?symbols=AAPL,AMZN  returns all the fields.
                 // https://query1.finance.yahoo.com/v7/finance/quote?symbols=QQQ%2CSPY%2CGLD%2CTLT%2CVXX%2CUNG%2CUSO&fields=symbol%2CregularMarketPreviousClose%2CregularMarketPrice%2CmarketState%2CpostMarketPrice%2CpreMarketPrice  // returns just the specified fields.
                 // "marketState":"PRE" or "marketState":"POST", In PreMarket both "preMarketPrice" and "postMarketPrice" are returned.
@@ -115,10 +184,13 @@ namespace FinTechCommon
 
                     if (sec != null)
                     {
-                        if (p_tradingHoursNow == TradingHours.PreMarket)
-                            sec.LastPriceYF = (float)quote.Value.PreMarketPrice;
-                        else
-                            sec.LastPriceYF = (float)quote.Value.PostMarketPrice;
+                        dynamic lastPrice = float.NaN;
+                        string fieldStr = (p_tradingHoursNow == TradingHours.PreMarket) ? "PreMarketPrice" : "PostMarketPrice";
+                        // TLT doesn't have premarket data. https://finance.yahoo.com/quote/TLT  "quoteSourceName":"Delayed Quote", while others: "quoteSourceName":"Nasdaq Real Time Price"
+                        if (!quote.Value.Fields.TryGetValue(fieldStr, out lastPrice))
+                            lastPrice = (float)quote.Value.RegularMarketPrice;  // fallback: the last regular-market Close price both in Post and next Pre-market
+
+                        sec.LastPriceYF = (float)lastPrice;
                     }
                 }
             }
@@ -130,17 +202,26 @@ namespace FinTechCommon
 
         void DownloadLastPriceIex(uint[] p_secIDs)  // takes 450-540ms from WinPC
         {
-
-            if (!Request_api_iextrading_com(string.Format("https://api.iextrading.com/1.0/tops?symbols={0}", String.Join(", ", p_secIDs.Select(r => GetSecurity(r).Ticker))), out HttpWebResponse? response) || (response == null))
-                return;
-
-            using (var reader = new System.IO.StreamReader(response.GetResponseStream(), ASCIIEncoding.ASCII))
+            Utils.Logger.Info("DownloadLastPriceIex() START");
+            m_nIexDownload++;
+            try
             {
-                string responseText = reader.ReadToEnd();
-                Utils.Logger.Info("DownloadLastPriceIex() str = '{0}'", responseText);
-                ExtractAttributeIex(responseText, "lastSalePrice", p_secIDs);
+                if (!Request_api_iextrading_com(string.Format("https://api.iextrading.com/1.0/tops?symbols={0}", String.Join(", ", p_secIDs.Select(r => GetSecurity(r).Ticker))), out HttpWebResponse? response) || (response == null))
+                    return;
+
+                using (var reader = new System.IO.StreamReader(response.GetResponseStream(), ASCIIEncoding.ASCII))
+                {
+                    string responseText = reader.ReadToEnd();
+                    Utils.Logger.Info("DownloadLastPriceIex() str = '{0}'", responseText);
+                    ExtractAttributeIex(responseText, "lastSalePrice", p_secIDs);
+                }
+                response.Close();
+
             }
-            response.Close();
+            catch (Exception e)
+            {
+                Utils.Logger.Error(e, "DownloadLastPriceIex()");
+            }
         }
 
         private void ExtractAttributeIex(string responseText, string p_attribute, uint[] p_secIDs)
