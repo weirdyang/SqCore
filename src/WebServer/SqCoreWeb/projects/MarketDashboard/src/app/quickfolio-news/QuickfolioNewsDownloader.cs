@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Xml.Linq;
 using SqCommon;
+using Newtonsoft.Json;
+using Microsoft.AspNetCore.SignalR;
 
 namespace SqCoreWeb
 {
@@ -18,7 +20,8 @@ namespace SqCoreWeb
     {
         YahooRSS,
         CnbcRss,
-        Benzinga
+        Benzinga,
+        TipRanks
     }
     public class NewsItem
     {
@@ -30,6 +33,7 @@ namespace SqCoreWeb
         public DateTime PublishDate { get; set; }
         public string Source { get; set; } = string.Empty;
         public string DisplayText { get; set; } = string.Empty;
+        public string Sentiment { get; set; } = string.Empty;
     }
 
     public class QuickfolioNewsDownloader
@@ -98,17 +102,231 @@ namespace SqCoreWeb
             return new List<string> { "All assets" }.Union(m_stockTickers).ToList();
         }
 
-        internal List<NewsItem> GetStockNews()
+        internal void GetStockNews(IClientProxy? p_clients)
         {
-            List<NewsItem> foundNewsItems = new List<NewsItem>();
             foreach (string ticker in m_stockTickers)
             {
                 string rssFeedUrl = string.Format(@"https://feeds.finance.yahoo.com/rss/2.0/headline?s={0}&region=US&lang=en-US", ticker);
-                foundNewsItems.AddRange(ReadRSS(rssFeedUrl, NewsSource.YahooRSS, ticker));
+                p_clients.SendAsync("quickfNewsStockNewsUpdated", ReadRSS(rssFeedUrl, NewsSource.YahooRSS, ticker));
+                p_clients.SendAsync("quickfNewsStockNewsUpdated", ReadBenzingaNews(ticker));
+                p_clients.SendAsync("quickfNewsStockNewsUpdated", ReadTipranksNews(ticker));
+            }
+        }
+
+        private List<NewsItem> ReadTipranksNews(string p_ticker)
+        {
+            List<NewsItem> foundNewsItems = new List<NewsItem>();
+            if (foundNewsItems == null)
+                foundNewsItems = new List<NewsItem>();
+            //MakeRequests();
+            string url = string.Format(@"https://www.tipranks.com/api/stocks/getNews/?ticker={0}", p_ticker);
+            string webpageData;
+            HttpStatusCode status = GetPageData(url, out webpageData);
+            if (status == HttpStatusCode.OK)
+            {
+                ReadTipranksNews(foundNewsItems, p_ticker, webpageData);
+            }
+            return foundNewsItems;
+        }
+        private void ReadTipranksNews(List<NewsItem> p_foundNewsItems, string p_ticker, string webpageData)
+        {
+            try
+            {
+                Newtonsoft.Json.Linq.JObject json = Newtonsoft.Json.Linq.JObject.Parse(webpageData);
+
+                if (json == null)
+                    return;
+                if (!json.HasValues)
+                    return;
+                var jsonNews = json.First;
+                if (jsonNews == null)
+                    return;
+                var jsonNewsList = jsonNews.First;
+                if (jsonNewsList == null)
+                    return;
+                var jsonNewsItem = jsonNewsList.First;
+                while (jsonNewsItem != null)
+                {
+                    if (jsonNewsItem == null)
+                        return;
+                    NewsItem newsItem = new NewsItem();
+                    newsItem.Ticker = p_ticker;
+                    Newtonsoft.Json.Linq.JToken? token = jsonNewsItem.SelectToken("url");
+                    if (token == null)
+                        continue;
+                    newsItem.LinkUrl = jsonNewsItem.Value<string>("url");
+                    token = jsonNewsItem.SelectToken("title");
+                    if (token == null)
+                        continue;
+                    newsItem.Title = WebUtility.HtmlDecode(jsonNewsItem.Value<string>("title"));
+                    newsItem.Summary = "  ";
+                    token = jsonNewsItem.SelectToken("sentiment");
+                    if (token != null)
+                    {
+                        newsItem.Sentiment = jsonNewsItem.Value<string>("sentiment");
+                    }
+                    DateTime date;
+                    token = jsonNewsItem.SelectToken("articleTimestamp");
+                    if (token == null)
+                        continue;
+                    if (DateTime.TryParse(jsonNewsItem.Value<string>("articleTimestamp"), out date))
+                        newsItem.PublishDate = date;
+                    newsItem.DownloadTime = DateTime.Now;
+                    newsItem.Source = NewsSource.TipRanks.ToString();
+
+                    p_foundNewsItems.Add(newsItem);
+                    jsonNewsItem = jsonNewsItem.Next;
+                }
+            }
+            catch (Exception)
+            {
+                DateTime.Today.AddDays(1);
+            }
+        }
+        private List<NewsItem> ReadBenzingaNews(string p_ticker)
+        {
+            List<NewsItem> foundNewsItems = new List<NewsItem>();
+            if (foundNewsItems == null)
+                foundNewsItems = new List<NewsItem>();
+            string url = string.Format(@"https://www.benzinga.com/stock/{0}", p_ticker);
+            string webpageData;
+            HttpStatusCode status = GetPageData(url, out webpageData);
+            System.Threading.Thread.Sleep(m_sleepBetweenDnsMs.Key + m_random.Next(m_sleepBetweenDnsMs.Value));
+            if (status == HttpStatusCode.OK)
+            {
+                ReadBenzingaSection(foundNewsItems, p_ticker, webpageData, "headlines");
+                ReadBenzingaSection(foundNewsItems, p_ticker, webpageData, "press");
             }
             return foundNewsItems;
         }
 
+        public static HttpStatusCode GetPageData(string p_uri, out string p_pageData)
+        {
+            HttpStatusCode status = (HttpStatusCode)0;
+            HttpWebResponse resp = new HttpWebResponse();
+
+            // initialize the out param (in case of error)
+            p_pageData = "";
+
+            ServicePointManager.Expect100Continue = true;
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
+            try
+            {
+                // create the web request
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(p_uri);
+
+                // disable the proxy?
+                //if (this.m_noProxy)
+                //{
+                request.Proxy = new WebProxy();
+                //    req.ProtocolVersion = HttpVersion.Version10; // default is 1.1
+                //}
+                // make the connection
+                resp = (HttpWebResponse)request.GetResponse();
+
+                // get the page data
+                StreamReader sr = new StreamReader(resp.GetResponseStream());
+                p_pageData = sr.ReadToEnd();
+                sr.Close();
+
+                // get the status code (should be 200)
+                status = resp.StatusCode;
+            }
+
+            catch (WebException e)
+            {
+                string str = e.Status.ToString();
+
+                resp = (HttpWebResponse)e.Response;
+                if (null != resp)
+                {
+                    // get the failure code from the response
+                    status = resp.StatusCode;
+                    str += status;
+                }
+                else
+                {
+                    status = (HttpStatusCode)(-1);  // generic connection error
+                }
+            }
+            catch
+            {
+                status = (HttpStatusCode)(-2);
+            }
+            finally
+            {
+                // close the response
+                if (resp != null)
+                {
+                    resp.Close();
+                }
+            }
+            return status;
+        }
+
+        private void ReadBenzingaSection(List<NewsItem> p_foundNewsItems, string p_ticker, string p_webpageData, string p_keyWord)
+        {
+            Regex regexBenzingaLists = new Regex(@"<div[^>]*?class=""stories""[^>]*?" + p_keyWord + @"(?<CONTENT>(\s|\S)*?)</div>"
+                , RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+            Regex regexBenzingaNews = new Regex(@"<li(\s|\S)*?class=""story""(\s|\S)*?<a href=""(?<LINK>[^""]*)"">(?<TITLE>[^<]*)<(\s|\S)*?<span class=""date"">(?<DATE>[^<]*)"
+                , RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+            MatchCollection matches = regexBenzingaLists.Matches(p_webpageData);
+            if (matches == null)
+                return;
+            for (int index = 0; index < matches.Count;index++)
+            {
+                Match match = matches[index];
+                MatchCollection matchesNews = regexBenzingaNews.Matches(match.Groups["CONTENT"].Value);
+                for (int indexNews= 0; indexNews < matchesNews.Count; indexNews++)
+                {
+                    Match matchNews = matchesNews[indexNews];
+                    NewsItem newsItem = new NewsItem();
+                    newsItem.Ticker = p_ticker;
+                    newsItem.LinkUrl = matchNews.Groups["LINK"].Value;
+                    newsItem.Title = WebUtility.HtmlDecode(matchNews.Groups["TITLE"].Value);
+                    newsItem.Summary = "  ";
+                    newsItem.PublishDate = GetNewsDate(matchNews.Groups["DATE"].Value);
+                    newsItem.DownloadTime = DateTime.Now;
+                    newsItem.Source = NewsSource.Benzinga.ToString();
+
+                    p_foundNewsItems.Add(newsItem);
+                }
+            }
+        }
+        private DateTime GetNewsDate(string p_dateString)
+        {
+            DateTime date;
+            if (DateTime.TryParse(p_dateString, out date))
+                return date;
+            p_dateString = p_dateString.ToUpper();
+            if (p_dateString.Contains("AGO"))
+            {
+                p_dateString = p_dateString.Replace("AGO", "").Trim();
+                if (p_dateString.Contains("HOUR"))
+                {
+                    p_dateString = p_dateString.Replace("HOURS", "").Replace("HOUR", "").Trim();
+                    int hours;
+                    if (int.TryParse(p_dateString, out hours))
+                        return DateTime.Now.AddHours(-hours);
+                }
+                else if (p_dateString.Contains("DAY"))
+                {
+                    p_dateString = p_dateString.Replace("DAYS", "").Replace("DAY", "").Trim();
+                    int days;
+                    if (int.TryParse(p_dateString, out days))
+                        return DateTime.Now.AddDays(-days);
+                }
+                else if (p_dateString.Contains("MIN"))
+                {
+                    p_dateString = p_dateString.Replace("MINUTES", "").Replace("MIN", "").Replace("MINS", "").Trim();
+                    int days;
+                    if (int.TryParse(p_dateString, out days))
+                        return DateTime.Now.AddDays(-days);
+                }
+            }
+            return DateTime.Now;
+        }
         private string NewsToString(List<NewsItem> newsList)
         {
             string finalString = string.Empty;
@@ -153,8 +371,8 @@ namespace SqCoreWeb
                     NewsItem newsItem = new NewsItem();
                     newsItem.Ticker = p_ticker;
                     newsItem.LinkUrl = item.Links[0].Uri.AbsoluteUri;
-                    newsItem.Title = item.Title.Text;
-                    newsItem.Summary = item.Summary.Text;
+                    newsItem.Title = WebUtility.HtmlDecode(item.Title.Text);
+                    newsItem.Summary = WebUtility.HtmlDecode(item.Summary.Text);
                     newsItem.PublishDate = item.PublishDate.LocalDateTime;
                     newsItem.DownloadTime = DateTime.Now;
                     newsItem.Source = p_newsSource.ToString();

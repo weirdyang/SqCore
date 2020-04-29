@@ -10,6 +10,7 @@ class NewsItem {
   public publishDate: Date = new Date();
   public source = '';
   public displayText = '';
+  public sentiment = '';
 }
 
 @Component({
@@ -25,6 +26,9 @@ export class QuickfolioNewsComponent implements OnInit {
   previewText = '';
   previewTextCommon = '';
   selectedTicker = '';
+  selectedSource = '';
+  totalnewsCount = 0;
+  filteredNewsCount = 0;
   previewedCommonNews: NewsItem = new NewsItem();
   previewCommonInterval: NodeJS.Timeout = setInterval(
     () => {
@@ -125,7 +129,7 @@ export class QuickfolioNewsComponent implements OnInit {
       // console.log('news ticker count = ' + tickerSpan.innerHTML);
       if (hyperLink.getAttribute('href') === this.previewedStockNews.linkUrl) {
         newsElement.className = newsElement.className.replace(' previewed', '') + ' previewed';
-        // console.log('setting to previewed');
+        // console.log('setting to previewed ' + hyperLink.getAttribute('href'));
       } else {
         newsElement.className = newsElement.className.replace(' previewed', '');
       }
@@ -149,6 +153,16 @@ export class QuickfolioNewsComponent implements OnInit {
     this.UpdateNewsVisibility();
   }
 
+  public menuSourceClick(event, ticker: string): void {
+    // console.log('menu source clicked xx' + ticker + 'xx');
+    if (ticker === 'All sources') {
+      this.selectedSource = '';
+    } else {
+      this.selectedSource = ticker;
+    }
+    this.UpdateNewsVisibility();
+  }
+
   UpdateNewsVisibility() {
     const menuElements = document.querySelectorAll('.menuElement');
     for (const menuElement of menuElements) {
@@ -164,18 +178,71 @@ export class QuickfolioNewsComponent implements OnInit {
         menuElement.className += ' active';
       }
     }
+
+    const sourceElements = document.querySelectorAll('.source');
+    for (const sourceElement of sourceElements) {
+      // console.log('source element found xx' + sourceElement.innerHTML + 'xx');
+      // menuElement.className += ' active';
+      let source = this.selectedSource;
+      if (source === '') {
+        source = 'All sources';
+      }
+      sourceElement.className = 'source';
+      if (sourceElement.innerHTML === source) {
+        // console.log('menu element found ' + ticker);
+        sourceElement.className += ' active';
+      }
+    }
+
     const newsElements = document.querySelectorAll('.newsItemStock');
+    let visibleCount = 0;
     // console.log('newsItems count = ' + newsElements.length);
     for (const newsElement of newsElements) {
       // console.log('news ' + newsElement);
       const tickerSpan = newsElement.getElementsByClassName('newsTicker')[0];
+      const sourceSpan = newsElement.getElementsByClassName('newsSource')[0];
+      const sentimentSpan = newsElement.getElementsByClassName('newsSentiment')[0];
       // console.log('news ticker count = ' + tickerSpan.innerHTML);
-      if (this.TickerIsPresent(tickerSpan.innerHTML, this.selectedTicker)) {
+      const isVisibleDueTicker = this.TickerIsPresent(tickerSpan.innerHTML, this.selectedTicker);
+      const isVisibleDueSource = this.SourceIsSelected(sourceSpan.innerHTML, sentimentSpan.innerHTML, this.selectedSource);
+      if (isVisibleDueTicker && isVisibleDueSource) {
         newsElement.className = newsElement.className.replace(' inVisible', '');
+        visibleCount++;
       } else {
         newsElement.className = newsElement.className.replace(' inVisible', '') + ' inVisible';
       }
     }
+    this.filteredNewsCount = visibleCount;
+  }
+
+  SourceIsSelected(source: string, sentiment: string, selectedSource: string): boolean {
+    // console.log('source is XX' + source + 'XX, sentiment is XX' + sentiment + 'XX');
+    if (selectedSource === '') {
+      return true;
+    }
+    if (source === 'YahooRSS' && selectedSource === 'Yahoo') {
+      return true;
+    }
+    if (source === 'Benzinga' && selectedSource === 'Benzinga') {
+      return true;
+    }
+    // all, yahoo and benzinga handled. Tipranks needs special handling
+    if (source !== 'TipRanks' || !selectedSource.startsWith('TipRanks')) {
+      return false;
+    }
+    if (selectedSource === 'TipRanks all') {
+      return true;
+    }
+    if (selectedSource === 'TipRanks bullish' && sentiment === 'positive') {
+      return true;
+    }
+    if (selectedSource === 'TipRanks neutral' && sentiment === 'neutral') {
+      return true;
+    }
+    if (selectedSource === 'TipRanks bearish' && sentiment === 'negative') {
+      return true;
+    }
+    return false;
   }
 
   TickerIsPresent(tickersConcatenated: string, selectedTicker: string): boolean {
@@ -221,6 +288,7 @@ export class QuickfolioNewsComponent implements OnInit {
           console.log('Quickfolio News: stock news update arrived');
           this.extractNewsList(message, this.stockNews);
           this.UpdateNewsVisibility();
+          this.totalnewsCount = this.stockNews.length;
           this.previewStockInterval = setInterval(
             () => {
               this.SetStockPreviewIfEmpty();

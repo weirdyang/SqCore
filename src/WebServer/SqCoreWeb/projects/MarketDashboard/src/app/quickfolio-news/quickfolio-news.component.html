@@ -22,12 +22,38 @@
 </div>
 
 <div style="overflow: hidden;">
-<p style="float:left;">Quickfolio specific news. You can change the quickfolio members
-  <a target="_blank" href="https://docs.google.com/spreadsheets/d/1c5ER22sXDEVzW3uKthclpArlZvYuZd6xUffXhs6rRsM">here</a>
-  .</p>
+  <p style="float:left;">Quickfolio specific news. You can change the quickfolio members
+    <a target="_blank" href="https://docs.google.com/spreadsheets/d/1c5ER22sXDEVzW3uKthclpArlZvYuZd6xUffXhs6rRsM">here</a>
+  </p>
   <button type="button" style="float:left; margin: 14px;" (click)="reloadClick($event)">Reload quickfolio</button>
+  <p style="float:right">Showing {{filteredNewsCount}} news articles from {{totalnewsCount}} downloaded.</p>
 </div>
 
+<div>
+  <ul class="horizontal-menu">
+    <li class="active">
+      <a class="source active" href="#" (click)="menuSourceClick($event, 'All sources')">All sources</a>
+    </li>
+    <li>
+      <a class="source" href="#" (click)="menuSourceClick($event, 'Yahoo')">Yahoo</a>
+    </li>
+    <li>
+      <a class="source" href="#" (click)="menuSourceClick($event, 'Benzinga')">Benzinga</a>
+    </li>
+    <li>
+      <a class="source" href="#" (click)="menuSourceClick($event, 'TipRanks all')">TipRanks all</a>
+    </li>
+    <li>
+      <a class="source" href="#" (click)="menuSourceClick($event, 'TipRanks bullish')">TipRanks bullish</a>
+    </li>
+    <li>
+      <a class="source" href="#" (click)="menuSourceClick($event, 'TipRanks neutral')">TipRanks neutral</a>
+    </li>
+    <li>
+      <a class="source" href="#" (click)="menuSourceClick($event, 'TipRanks bearish')">TipRanks bearish</a>
+    </li>
+  </ul>
+</div>
 <div>
   <div style="width: 100px; height: 602px; float:left; overflow-y: auto;">
     <div class="vertical-menu" *ngFor="let ticker of stockTickers">
@@ -35,10 +61,11 @@
     </div>
   </div>
 
+
   <div style="width: 490px; height: 602px; float:left; overflow-y: auto;">
     <!-- <div style=" height:602px;"> -->
       <ul style="margin: 0px;">
-        <div class="newsItemStock" *ngFor="let news of stockNews">
+        <div class="newsItemStock inVisible" *ngFor="let news of stockNews">
           <li (mouseenter)=mouseEnter(news)>
           <!-- <span>{{getpublishedString(news.publishDate)}} </span> -->
           <span>{{news.displayText}} </span>
@@ -46,6 +73,8 @@
             <a class="newsHyperlink" [title]="news.summary" [href]="news.linkUrl" target="_blank">
               {{news.title}}
             </a>
+            <span class="newsSource" style="display: none;">{{news.source}}</span>
+            <span class="newsSentiment" style="display: none;">{{news.sentiment}}</span>
             <!-- <span>{{ news.DownloadTime}} </span> -->
           </li>
         </div>

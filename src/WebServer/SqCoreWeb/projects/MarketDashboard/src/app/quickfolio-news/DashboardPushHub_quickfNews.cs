@@ -34,8 +34,7 @@ namespace SqCoreWeb
         {
             List<NewsItem> commonNews = m_newsDownloader.GetCommonNews();
             DashboardPushHubKestrelBckgrndSrv.HubContext?.Clients.All.SendAsync("quickfNewsCommonNewsUpdated", commonNews);
-            List<NewsItem> stockNews = m_newsDownloader.GetStockNews();
-            DashboardPushHubKestrelBckgrndSrv.HubContext?.Clients.All.SendAsync("quickfNewsStockNewsUpdated", stockNews);
+            m_newsDownloader.GetStockNews(DashboardPushHubKestrelBckgrndSrv.HubContext?.Clients.All);
         }
 
         public void OnDisconnectedAsync_QuickfNews(Exception exception)
@@ -52,8 +51,7 @@ namespace SqCoreWeb
         public void ReloadQuickfolio() {
             m_newsDownloader.UpdateStockTickers();
             DashboardPushHubKestrelBckgrndSrv.HubContext?.Clients.All.SendAsync("stockTickerList", m_newsDownloader.GetStockTickers());
-            List<NewsItem> stockNews = m_newsDownloader.GetStockNews();
-            DashboardPushHubKestrelBckgrndSrv.HubContext?.Clients.All.SendAsync("quickfNewsStockNewsUpdated", stockNews);
+            m_newsDownloader.GetStockNews(DashboardPushHubKestrelBckgrndSrv.HubContext?.Clients.All);
         }
 
     }
