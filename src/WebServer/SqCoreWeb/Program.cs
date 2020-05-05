@@ -68,6 +68,8 @@ namespace SqCoreWeb
             Utils.Configuration = builder.Build();
             Utils.MainThreadIsExiting = new ManualResetEventSlim(false);
             HealthMonitorMessage.InitGlobals(ServerIp.HealthMonitorPublicIp, HealthMonitorMessage.DefaultHealthMonitorServerPort);       // until HealthMonitor runs on the same Server, "localhost" is OK
+            Email.SenderName = Utils.Configuration["Emails:HQServer"];
+            Email.SenderPwd =Utils.Configuration["Emails:HQServerPwd"];
             StrongAssert.g_strongAssertEvent += StrongAssertMessageSendingEventHandler;
             TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException; // Occurs when a faulted task's unobserved exception is about to trigger exception which, by default, would terminate the process.
 
@@ -75,6 +77,7 @@ namespace SqCoreWeb
             {
                 DashboardPushHub.EarlyInit();    // services add handlers to the MemDb.EvMemDbInitialized event.
                 MemDb.gMemDb.Init();
+                Caretaker.gCaretaker.Init(Utils.Configuration["Emails:ServiceSupervisors"], p_needDailyMaintenance: true, TimeSpan.FromHours(2));
                 CreateHostBuilder(args).Build().Run();
             }
             catch (Exception e)
@@ -86,6 +89,7 @@ namespace SqCoreWeb
                 }
                 HealthMonitorMessage.SendAsync($"Exception in SqCoreWebsite.C#.MainThread. Exception: '{ e.ToStringWithShortenedStackTrace(1200)}'", HealthMonitorMessageID.SqCoreWebCsError).GetAwaiter().GetResult();
             }
+            Caretaker.gCaretaker.Exit();
             MemDb.gMemDb.Exit();
 
             gLogger.Info("****** Main() END");

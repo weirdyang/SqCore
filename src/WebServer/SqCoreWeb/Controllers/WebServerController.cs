@@ -165,6 +165,30 @@ namespace SqCoreWeb.Controllers
             return Content($"<HTML><body>TestGoogleApiGsheet1() finished OK. <br> Received data: '{valuesFromGSheetStr}'</body></HTML>", "text/html");
         }
 
+        [HttpGet]
+        public ActionResult TestCaretakerCheckFreeDiskSpace()
+        {
+            Utils.Logger.Info("TestCaretakerCheckFreeDiskSpace() BEGIN");
+
+            StringBuilder noteToClient = new StringBuilder();
+            bool success = Caretaker.gCaretaker.CheckFreeDiskSpace(noteToClient);
+
+            Utils.Logger.Info("TestCaretakerCheckFreeDiskSpace() END");
+            return Content($"<HTML><body>TestCaretakerCheckFreeDiskSpace() finished with { (success ? "OK" : "Error") }. <br> Note To Client '{noteToClient.ToString()}'</body></HTML>", "text/html");
+        }
+
+        [HttpGet]
+        public ActionResult TestCaretakerCleanLogfiles()
+        {
+            Utils.Logger.Info("TestCaretakerCleanLogfiles() BEGIN");
+
+            StringBuilder noteToClient = new StringBuilder();
+            bool success = Caretaker.gCaretaker.CleanLogfiles(noteToClient);
+
+            Utils.Logger.Info("TestCaretakerCleanLogfiles() END");
+            return Content($"<HTML><body>TestCaretakerCleanLogfiles() finished with { (success ? "OK" : "Error") }. <br> Note To Client '{noteToClient.ToString()}'</body></HTML>", "text/html");
+        }
+
         [HttpPost, HttpGet]     // we only leave HttpGet here so we got a Log message into a log file.
         public ActionResult ReportHealthMonitorCurrentStateToDashboardInJSON()
         {

@@ -73,7 +73,7 @@ namespace FinTechCommon
             ThreadPool.QueueUserWorkItem(Init_WT);
         }
 
-        void Init_WT(object p_state)    // WT : WorkThread
+        void Init_WT(object? p_state)    // WT : WorkThread
         {
             Thread.CurrentThread.Name = "MemDb.Init_WT Thread";
 

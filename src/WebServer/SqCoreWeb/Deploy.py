@@ -162,7 +162,7 @@ for root, dirs, files in os.walk(rootLocalDir, topdown=True):
         # print(Style.RESET_ALL + str(ret))
 
 if use7zip:
-    # Windows has an 8KB limit on command line length. SqCore Web all files with relative paths are 10KB. We cannot list all the files in he command line. We have to use a @listfile, which can be longer than the command line limit
+    # Windows has an 8KB limit on command line length. SqCore Web all files with relative paths are 10KB. We cannot list all the files in the command line. We have to use a @listfile, which can be longer than the command line limit
     zipListFile = open(zipListFileName,"w")
     zipListFile.write('\n'.join(fileNamesToDeploy))         # concatenate them with a CRLF
     zipListFile.close()
@@ -200,6 +200,6 @@ if os.path.isfile(zipFileName):
 if os.path.isfile(zipListFileName):
     os.remove(zipListFileName)  # remove zip file
 
-print("--- Deployment of %d files ended in %03.2f seconds ---" % (len(fileNamesToDeploy), time.time() - start_time))
+print("--- Deployment of %d files ended in %03.2f seconds ---" % (len(fileNamesToDeploy), time.time() - start_time))    # 183 files: one by one upload: 38sec, 7zip: 4.8sec
 
 # k = input("Press ENTER...")

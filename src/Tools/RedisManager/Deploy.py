@@ -148,7 +148,7 @@ for root, dirs, files in os.walk(rootLocalDir, topdown=True):
         # print(Style.RESET_ALL + str(ret))
 
 if use7zip:
-    # Windows has an 8KB limit on command line length. SqCore Web all files with relative paths are 10KB. We cannot list all the files in he command line. We have to use a @listfile, which can be longer than the command line limit
+    # Windows has an 8KB limit on command line length. SqCore Web all files with relative paths are 10KB. We cannot list all the files in the command line. We have to use a @listfile, which can be longer than the command line limit
     zipListFile = open(zipListFileName,"w")
     zipListFile.write('\n'.join(fileNamesToDeploy))         # concatenate them with a CRLF
     zipListFile.close()
