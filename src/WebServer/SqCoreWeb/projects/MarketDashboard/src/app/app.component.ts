@@ -24,8 +24,8 @@ export class AppComponent implements OnInit {
   toolSelectionMsg = 'Click red arrow in toolbar! isToolSelectionVisible is set to ' + this.isToolSelectionVisible;
   activeTool = 'MarketHealth';
 
-    // http://localhost:4202/hub/exsvpush/negotiate?negotiateVersion=1 404 (Not Found), if it is not served on port 4202 on ng serve (proxy)
-    public _hubConnection: HubConnection = new HubConnectionBuilder().withUrl('/hub/dashboardpush').build();
+  // http://localhost:4202/hub/exsvpush/negotiate?negotiateVersion=1 404 (Not Found), if it is not served on port 4202 on ng serve (proxy)
+  public _hubConnection: HubConnection = new HubConnectionBuilder().withUrl('/hub/dashboardpush').build();
 
   // called after Angular has initialized all data-bound properties before any of the view or content children have been checked. Handle any additional initialization tasks.
   ngOnInit() {
@@ -85,6 +85,7 @@ export class AppComponent implements OnInit {
     this.isUserSelectionVisible = !this.isUserSelectionVisible;
   }
 
+  // input comes from HTML. such as 'Docs-WhatIsNew'
   onChangeActiveTool(tool: string) {
     if (this.activeTool === tool) {
       return;

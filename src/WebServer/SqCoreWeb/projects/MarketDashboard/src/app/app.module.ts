@@ -7,7 +7,8 @@ import { MarketHealthComponent } from './market-health/market-health.component';
 import { CatalystSnifferComponent } from './catalyst-sniffer/catalyst-sniffer.component';
 import { QuickfolioNewsComponent } from './quickfolio-news/quickfolio-news.component';
 import { TooltipSandpitComponent } from './tooltip-sandpit/tooltip-sandpit.component';
-import {ClickOutsideDirective} from './../../../sq-ng-common/src/lib/sq-ng-common.directive.click-outside';
+import { DocsWhatIsNewComponent, DocsGetStartedComponent, DocsTutorialComponent } from './docs/docs.component';
+import { ClickOutsideDirective } from './../../../sq-ng-common/src/lib/sq-ng-common.directive.click-outside';
 
 @NgModule({
   declarations: [
@@ -16,6 +17,9 @@ import {ClickOutsideDirective} from './../../../sq-ng-common/src/lib/sq-ng-commo
     CatalystSnifferComponent,
     QuickfolioNewsComponent,
     TooltipSandpitComponent,
+    DocsWhatIsNewComponent,
+    DocsGetStartedComponent,
+    DocsTutorialComponent,
     ClickOutsideDirective
   ],
   imports: [

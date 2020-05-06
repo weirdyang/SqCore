@@ -9,7 +9,7 @@
       <svg class="material-icons2" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 -8 24 24">
         <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
       </svg>
-      <div class="dropdown_2columns">
+      <div class="dropdown_3columns">
         <div class="col_1">
           <ul>
             <h3>Tools</h3>
@@ -25,6 +25,16 @@
             <h3>Developer</h3>
             <ul>
               <li><a href="#" (click)="onChangeActiveTool('TooltipSandpit')">TooltipSandpit</a></li>
+            </ul>
+          </ul>
+        </div>
+        <div class="col_1">
+          <ul>
+            <h3>Docs</h3>
+            <ul>
+              <li><a href="#" (click)="onChangeActiveTool('Docs-WhatIsNew')">What is new?</a></li>
+              <li><a href="#" (click)="onChangeActiveTool('Docs-GetStarted')">Get Started</a></li>
+              <li><a href="#" (click)="onChangeActiveTool('Docs-Tutorial')">Tutorial</a></li>
             </ul>
           </ul>
         </div>
@@ -58,6 +68,9 @@
   <app-catalyst-sniffer [hidden]="!(activeTool=='CatalystSniffer')" ></app-catalyst-sniffer>
   <app-quickfolio-news [hidden]="!(activeTool=='QuickfolioNews')" [_parentHubConnection]="_hubConnection"></app-quickfolio-news>
   <app-tooltip-sandpit [hidden]="!(activeTool=='TooltipSandpit')" ></app-tooltip-sandpit>
+  <app-docs-what-is-new [hidden]="!(activeTool=='Docs-WhatIsNew')" [_parentActiveTool]="activeTool"></app-docs-what-is-new>
+  <app-docs-get-started [hidden]="!(activeTool=='Docs-GetStarted')" [_parentActiveTool]="activeTool"></app-docs-get-started>
+  <app-docs-tutorial [hidden]="!(activeTool=='Docs-Tutorial')" [_parentActiveTool]="activeTool"></app-docs-tutorial>
   <hr style="margin: 0" size="0.2rem" width="100%">
 </div>
 
