@@ -7,6 +7,10 @@ namespace SqCommon
 
     public static partial class Utils
     {
+        public static bool IsDigit(char p_char)
+        {
+            return (uint)(p_char - '0') <= 9u;
+        }
 
         public static string TruncateLongString(this string str, int maxLengthAllowed)
         {
@@ -17,12 +21,12 @@ namespace SqCommon
             return str.Substring(0, maxLengthAllowed - "...".Length) + "...";
         }
 
-        public static string[] SplitStringByString(this string str)
+        public static string[] SplitStringByCommaWithCharArray(this string str)
         {
             return str.Split(new char[] {','}, StringSplitOptions.RemoveEmptyEntries);
         }
 
-        public static string[] SplitStringByRegex(this string str)
+        public static string[] SplitStringByCommaWithRegex(this string str)
         {
             return Regex.Split(str, @"(,\s)+");
         }

@@ -52,21 +52,27 @@ namespace SqCoreWeb
 
             // https://docs.microsoft.com/en-us/aspnet/core/performance/caching/response?view=aspnetcore-3.0
             services.AddResponseCaching(); // DI: these services could be used in MVC control/Razor pages (either as [Attributes], or in code)
+            services.AddSignalR();  //  enables bi-directional communication between the browser and server. Based on WebSocket.
             services.AddMvc(options =>     // AddMvc() equals AddControllersWithViews() + AddRazorPages()
-            {
-                options.CacheProfiles.Add("NoCache",      // this CashProfile is given once here, and if it changes, we only have to change here, not in all Controllers.
+            { // this CashProfile is given once here, and if it changes, we only have to change here, not in all Controllers.
+                options.CacheProfiles.Add("NoCache",
                     new CacheProfile()
                     {
                         Duration = 0,
                         Location = ResponseCacheLocation.None,
                         NoStore = true
                     });
-                options.CacheProfiles.Add("DefaultMidDuration",      // this CashProfile is given once here, and if it changes, we only have to change here, not in all Controllers.
-                new CacheProfile()
-                {
-                    //Duration = (int)TimeSpan.FromHours(12).TotalSeconds
-                    Duration = 100000   // 100,000 seconds = 27 hours
-                });
+                options.CacheProfiles.Add("DefaultShortDuration",
+                    new CacheProfile()
+                    {
+                        Duration = 60 * 1   // 1 min for real-time price data
+                    });
+                options.CacheProfiles.Add("DefaultMidDuration",
+                    new CacheProfile()
+                    {
+                        //Duration = (int)TimeSpan.FromHours(12).TotalSeconds
+                        Duration = 100000   // 100,000 seconds = 27 hours
+                    });
             }).SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
             //services.AddControllersWithViews();        // AddMvc() equals AddControllersWithViews() + AddRazorPages(), so we don't use Razor pages now.
             // In production, the Angular files (index.html) will be served from this directory, but actually we don't use UseSpaStaticFiles(), so we don't need this here.
@@ -123,11 +129,27 @@ namespace SqCoreWeb
                 {
                     options.ClientId = googleClientId;
                     options.ClientSecret = googleClientSecret;
+                    // Note: Once logged in to Google Ecosystem (and once allowed Sqcore website), the Google login prompt (offering different users) does not even display.
+                    // Do we want it displayed? Probably NOT. Because this is good and fast:
+                    // "the Google login prompt does not even display. From the app I get redirected to Google, 
+                    // and because I am already signed in with a user with that domain, Google immediately returns that as the authenticated user to your app."
+                    // If you really want to logout that Guser from SqCore: sign out of your Google account (in Gmail, GDrive or any G.app), or open an Incognito browser window.
+                    // >e.g. go do GoogleDrive: log-out as user. After that SqCore will ask the user login user only once. But that login will login to ALL Google services.
+                    // Which is actually fine. That is what I want. Once user logged in to his Gmail, he can enjoy SqCore without logging in again.
+                    // So, the same way, why GoogleDrive doesn't re-ask the password every time, the same applies here too.
                     options.Events = new OAuthEvents
                     {
+                        // https://www.jerriepelser.com/blog/forcing-users-sign-in-gsuite-domain-account/
+                        OnRedirectToAuthorizationEndpoint = context =>
+                        {
+                            Utils.Logger.Info("GoogleAuth.OnRedirectToAuthorizationEndpoint()");
+                            //context.Response.Redirect(context.RedirectUri + "&hd=" + System.Net.WebUtility.UrlEncode("jerriepelser.com"));
+                            context.Response.Redirect(context.RedirectUri);
+                            return Task.CompletedTask;
+                        },
                         OnCreatingTicket = context =>
                         {
-                            Console.WriteLine(context.User);
+                            Utils.Logger.Info("GoogleAuth.OnCreatingTicket(), User: " + context.User);
                             // string email = context.User.Value<Newtonsoft.Json.Linq.JArray>("emails")[0]["value"].ToString();
                             // Utils.Logger.Debug($"[Authorize] attribute forced Google auth. Email:'{email ?? "null"}', RedirectUri: '{context.Properties.RedirectUri ?? "null"}'");
 
@@ -142,6 +164,7 @@ namespace SqCoreWeb
                         },
                         OnTicketReceived = context =>
                         {
+                            Utils.Logger.Info("GoogleAuth.OnTicketReceived()");
                             // if this is not set, then the cookie in the browser expires, even though the validation-info in the cookie is still valid. By default, cookies expire: "When the browsing session ends" Expires: 'session'
                             // https://www.jerriepelser.com/blog/managing-session-lifetime-aspnet-core-oauth-providers/
                             context.Properties.IsPersistent = true;
@@ -158,24 +181,39 @@ namespace SqCoreWeb
                 //Utils.Logger.Warn("A_G_CId and A_G_CSe from Config has NOT been found. Cannot initialize GoogelAuthentication.");
             }
 
+            services.AddHostedService<DashboardPushHubKestrelBckgrndSrv>();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            Program.g_webAppGlobals.KestrelEnv = env;
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();        // in DEBUG it returns a nice webpage that shows the stack trace and everything of the crash.
             }
             else
             {
-                // app.UseDeveloperExceptionPage();     // a very detailed Exception page can be used even in Production to catch the error quicker.
-                app.UseExceptionHandler("/error.html"); // it hides the crash totally. There is no browser redirection. It returns error.html with status: 200 (OK). Maybe 500 (Error) would be better to return, but then the Browser might not display that page to the user.
+                app.UseDeveloperExceptionPage();     // it is more useful in the first years of development. A very detailed Exception page can be used even in Production to catch the error quicker.
+                //app.UseExceptionHandler("/error.html"); // it hides the crash totally. There is no browser redirection. It returns 'error.html' with status: 200 (OK). Maybe 500 (Error) would be better to return, but then the Browser might not display that page to the user.
                 
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
                 app.UseHttpsRedirection();     // Chrome Caching warning! If you are developing using a self-signed certificate over https and there is an issue with the certificate then google will not cache the response
             }
+
+            // TODO: experiment with this later. Currently default works fine, because 'ng serve proxy' redirect
+            // The protections provided by CORS don't apply to WebSockets. Browsers do not: Perform CORS pre-flight requests. Respect the restrictions specified in Access-Control headers when making WebSocket requests.
+            // var webSocketOptions = new WebSocketOptions()
+            // {
+            //     KeepAliveInterval = TimeSpan.FromSeconds(120),
+            //     ReceiveBufferSize = 4 * 1024
+            // };
+            // webSocketOptions.AllowedOrigins.Add("https://localhost:5001");
+            // webSocketOptions.AllowedOrigins.Add("https://localhost:4202");
+            // app.UseWebSockets(webSocketOptions);
 
             //app.UseDefaultFiles();      // "UseDefaultFiles is a URL rewriter (default.htm, default.html, index.htm, index.html whichever first, 4 file queries to find the file) that doesn't actually serve the file. "
             app.UseRewriter(new RewriteOptions()
@@ -190,9 +228,16 @@ namespace SqCoreWeb
 
             app.UseMiddleware<SqFirewallMiddlewarePostAuth>();  // For this to catch Exceptions, it should come after UseExceptionHadlers(), because those will swallow exceptions and generates nice ErrPage.
 
+            // Request "dashboard.sqcore.net/index.html" should be converted to "sqcore.net/webapps/MarketDashboard/index.html"
+            // But Authentication (and user check) should be done BEFORE that, because we will lose the subdomain 'dashboard' prefix from the host. 
+            // And the browser keeps separate cookies for the subdomain and main domain. dashboard.sqcore.net has different cookies than sqcore.net
+            var options = new RewriteOptions();
+            options.Rules.Add(new SubdomainRewriteOptionsRule());
+            app.UseRewriter(options);
+
             app.Use(async (context, next) =>
             {
-                Utils.Logger.Info($"After SqFirewallMiddlewarePostAuth(). These URLs should be legit to serve. Request.Path: '{context.Request.Path.Value}'");
+                Utils.Logger.Info($"Serving '{context.Request.Path.Value}'");
                 await next();
             });
 
@@ -203,38 +248,64 @@ namespace SqCoreWeb
             // So, while developing browser caching on localhost: Either:
             // 1. Test HTTPS on port 5001 in Edge, https://localhost:5001/HealthMonitor/   OR
             // 2. Test HTTP on PORT 5000 in Chrome, http://localhost:5000/HealthMonitor/  (disable UseHttpsRedirection()) not HTTPS  (but note that Chrome can be slow on http://localhost)
+            
+            // because when we do Ctrl-R in Chrome, the Request header contains: "cache-control: no-cache". Then ResponseCaching will not use entry, and places this log:
+            // dbug: Microsoft.AspNetCore.ResponseCaching.ResponseCachingMiddleware[9]
+            //     The age of the entry is 00:05:23.2291902 and has exceeded the maximum age of 00:00:00 specified by the 'max-age' cache directive.
+            // So, if we want to test responseCaching, open the same '/WeatherForecast' in a different tab.
+            // GET '/WeatherForecast' from 127.0.0.1 (gyantal@gmail.com) in 63.35ms can decrease to 
+            // GET '/WeatherForecast' from 127.0.0.1 (gyantal@gmail.com) in 4.21ms
             app.UseResponseCaching();       // this fills up the Response header Cache-Control, but only for MVC Controllers (classes, methods), Razor Page handlers (classes)
+            
             app.Use(async (context, next) =>    // this fills up the Response header Cache-Control for everything else, like static files.
             {
+                // main Index.html cache is controlled in SqFirewallMiddlewarePostAuth(), because to differentiate based on Login/Logout
+                if (((Program.g_webAppGlobals.KestrelEnv?.EnvironmentName == "Development") || context.Request.Host.Host.StartsWith("sqcore.net")) 
+                    && context.Request.Path.Value.Equals("/index.html", StringComparison.OrdinalIgnoreCase))
+                {
+                    await next();
+                    return;
+                }
+
                 if (!env.IsDevelopment())   // in development, don't use browser caching at all.
                 {
                     // we have to add header Before filling up the response with 'await next();', otherwise 
                     // if we try to add After StaticFiles(), we got exception: "System.InvalidOperationException: Headers are read-only, response has already started."
-                    Console.WriteLine($"Adding Cache-control to header '{context.Request.Path}'");
-                    string ext = Path.GetExtension(context.Request.Path.Value) ?? String.Empty;
-                    if (ext != String.Empty)    // If has any extension, then it is not a Controller (but probably a StaticFile()). If it is "/", then it is already converted to "index.htmL". Controllers will handle its own cacheAge with attributes. 
+                    TimeSpan maxBrowserCacheAge = TimeSpan.Zero;
+                    if (context.Request.Path.Value.Equals("/index.html", StringComparison.OrdinalIgnoreCase)   // main index.html has Login/username on it. After Login, the page should be refreshed. So, ignore CacheControl for that
+                        || context.Request.Path.Value.StartsWith("/hub/")   // WebSockets should not be cached
+                    )  
                     {
-                        // UseResponseCaching() will fill up headers, if MVC controllers or Razor pages, we don't want to use this caching, because the Controller will specify it in an attribute.
-                        // probably no cache for API calls like "https://localhost:5001/WeatherForecast"  (they probably get RT data), Controllers will handle it.
-                        TimeSpan maxBrowserCacheAge = (ext) switch
+                        maxBrowserCacheAge = TimeSpan.Zero;
+                    }
+                    else
+                    {
+                        string ext = Path.GetExtension(context.Request.Path.Value) ?? String.Empty;
+                        if (ext != String.Empty)    // If has any extension, then it is not a Controller (but probably a StaticFile()). If it is "/", then it is already converted to "index.htmL". Controllers will handle its own cacheAge with attributes. 
                         {
-                            ".html" => TimeSpan.FromDays(8),
-                            var xt when xt == ".html" || xt == ".htm" => TimeSpan.FromHours(8),    // short cache time for html files (like index.html or when no  that contains the URL links for other JS, CSS files)                            
-                            var xt when xt == ".css" => TimeSpan.FromDays(7),   // mediam time frames for CSS and JS files. Angular only changes HTML files.
-                            var xt when xt == ".js" => TimeSpan.FromDays(7),
-                            var xt when xt == ".jpg" || xt == ".jpeg" || xt == ".ico" => TimeSpan.FromDays(300),      // images files are very long term, long cache time for *.jpg files. assume a year, 31536000 seconds, typically used. They will never change
-                            _ => TimeSpan.FromDays(350)
-                        };
-                       
-                        if (maxBrowserCacheAge.TotalSeconds > 0)    // if Duration = 0, it will raise exception of "The relative expiration value must be positive. (Parameter 'AbsoluteExpirationRelativeToNow')"
-                        {
-                            context.Response.GetTypedHeaders().CacheControl =
-                                new Microsoft.Net.Http.Headers.CacheControlHeaderValue()
-                                {
-                                    Public = true,
-                                    MaxAge = maxBrowserCacheAge
-                                };
+                            // UseResponseCaching() will fill up headers, if MVC controllers or Razor pages, we don't want to use this caching, because the Controller will specify it in an attribute.
+                            // probably no cache for API calls like "https://localhost:5001/WeatherForecast"  (they probably get RT data), Controllers will handle it.
+                            maxBrowserCacheAge = (ext) switch
+                            {
+                                ".html" => TimeSpan.FromDays(8),
+                                var xt when xt == ".html" || xt == ".htm" => TimeSpan.FromHours(8),    // short cache time for html files (like index.html or when no  that contains the URL links for other JS, CSS files)                            
+                                var xt when xt == ".css" => TimeSpan.FromDays(7),   // median time frames for CSS and JS files. Angular only changes HTML files.
+                                var xt when xt == ".js" => TimeSpan.FromDays(7),
+                                var xt when xt == ".jpg" || xt == ".jpeg" || xt == ".ico" => TimeSpan.FromDays(300),      // images files are very long term, long cache time for *.jpg files. assume a year, 31536000 seconds, typically used. They will never change
+                                _ => TimeSpan.FromDays(350)
+                            };
                         }
+                    }
+                    if (maxBrowserCacheAge.TotalSeconds > 0)    // if Duration = 0, it will raise exception of "The relative expiration value must be positive. (Parameter 'AbsoluteExpirationRelativeToNow')"
+                    {
+                        Console.WriteLine($"Adding Cache-control to header '{context.Request.Host} {context.Request.Path}'");
+                        Utils.Logger.Info($"Adding Cache-control to header '{context.Request.Host} {context.Request.Path}'");
+                        context.Response.GetTypedHeaders().CacheControl =
+                            new Microsoft.Net.Http.Headers.CacheControlHeaderValue()
+                            {
+                                Public = true,
+                                MaxAge = maxBrowserCacheAge
+                            };
                     }
                 }
                 // Vary: User-Agent or Vary: Accept-Encoding is used by intermediate CDN caches (if used, we don't.) It is not necessary to set in direct server to client connection.
@@ -247,8 +318,8 @@ namespace SqCoreWeb
             });
 
 
-            AddAngularSpaHandlingMiddleware(app, env, "HealthMonitor");
-            AddAngularSpaHandlingMiddleware(app, env, "MarketDashboard");
+            // AddAngularSpaHandlingMiddleware(app, env, "HealthMonitor");     // it doesn't do anything useful now, but might do in the future
+            // AddAngularSpaHandlingMiddleware(app, env, "MarketDashboard");   // it doesn't do anything useful now, but might do in the future
 
             app.UseResponseCompression();       // this is on the fly, just-in-time (JIT) compression. CompressionLevel.Optimal takes 250ms, but CompressionLevel.Fastest takes 4ms time on CPU, but still worth it.
 
@@ -357,9 +428,11 @@ namespace SqCoreWeb
 
             app.UseEndpoints(endpoints =>
             {
+                endpoints.MapHub<ExSvPushHub>("/hub/exsvpush");
+                endpoints.MapHub<DashboardPushHub>("/hub/dashboardpush");
                 endpoints.MapControllerRoute(
                     name: "default",
-                    pattern: "{controller}/{action=Index}/{id?}");
+                    pattern: "{controller}/{action=Index}/{id?}");  // controllers should listen on "/api/" so SubdomainRewriteOptionsRule() can differentiate what to leave as from root and what path to extend
             });
 
             app.Use(async (context, next) =>
@@ -487,48 +560,51 @@ namespace SqCoreWeb
             // });
         }
 
-        private void AddAngularSpaHandlingMiddleware(IApplicationBuilder app, IWebHostEnvironment env, string spaName)
-        {
-            var rwOptions = new RewriteOptions();
-            if (env.IsDevelopment())
-            {
-                rwOptions
-                .AddRedirect(@"^"+spaName, @"dev/DeveloperWarningForServingAngularSPA.html");  // Redirect() forces client to query again.
-            }
-            else
-            {
-                rwOptions
-                .AddRedirect(@"^" + spaName +"$", spaName + @"/");  // Redirect("HealthMonitor" to "HealthMonitor/") forces client to query again (needed for base URL to be the SPA folder)
-                //.AddRewrite(@"^" + spaName + "/$", spaName + @"/index.html", skipRemainingRules: true);   // Rewrite("HealthMonitor/" to "HealthMonitor/index.html") is hidden from the Client. Helps to find it by UseStaticFiles()
-            }
-            app.UseRewriter(rwOptions);
 
-            app.Map(new PathString("/" + spaName), client =>
-            {
-                // In Development, when we do 'ng serve' the 'index.hml' should be in the root folder, and all other files (main, pollyfill) should be in the root too. So, only <base href=""> is possible
-                // Therefor, in Production, index.html should be in the HealthMonitor folder, so browser should ask 'https://localhost:5001/HealthMonitor/' and NOT 'https://localhost:5001/HealthMonitor'
-                // If browser asks 'https://localhost:5001/HealthMonitor', we should redirect to 'https://localhost:5001/HealthMonitor/'
-                client.Use(async (context, next) =>
-                {
-                    Console.WriteLine($"Map.Use({"/" + spaName}): context.Request.Path.Value: '{context.Request.Path.Value}'");
+        // it doesn't do anything useful now, but might do in the future
+        // private void AddAngularSpaHandlingMiddleware(IApplicationBuilder app, IWebHostEnvironment env, string spaName)
+        // {
+        //     var rwOptions = new RewriteOptions();
+        //     if (env.IsDevelopment())
+        //     {
+        //         // rwOptions
+        //         // .AddRedirect(@"^webapps/"+spaName, @"dev/DeveloperWarningForServingAngularSPA.html")  // Redirect() forces client to query again.
+        //         // .AddRewrite(@"^webapps/forced/"+spaName, "webapps/" + spaName + @"/index.html", skipRemainingRules: true);  // just in case Developer in Debug wants to access the Prod version of the Angular app
+        //     }
+        //     else
+        //     {
+        //         rwOptions
+        //         .AddRedirect(@"^" + spaName +"$", "webapps/" + spaName + @"/");  // Redirect("HealthMonitor" to "webapps/HealthMonitor/") forces client to query again (needed for base URL to be the SPA folder)
+        //         //.AddRewrite(@"^" + spaName + "/$", spaName + @"/index.html", skipRemainingRules: true);   // Rewrite("HealthMonitor/" to "HealthMonitor/index.html") is hidden from the Client. Helps to find it by UseStaticFiles()
+        //     }
+        //     app.UseRewriter(rwOptions);
 
-                    // if (String.IsNullOrEmpty(context.Request.Path.Value))    // turn https://localhost:5001/HealthMonitor   to // turn https://localhost:5001/HealthMonitor/index.html
-                    // {
-                    //     context.Request.Path = "/index.html";
-                    // }
-                    // else if (String.Equals(context.Request.Path.Value, "/index.html", StringComparison.OrdinalIgnoreCase))
-                    //     context.Request.Path = "";
+        //     // app.Map(new PathString("/" + spaName), client =>
+        //     // {
+        //     //     // In Development, when we do 'ng serve' the 'index.hml' should be in the root folder, and all other files (main, pollyfill) should be in the root too. So, only <base href=""> is possible
+        //     //     // Therefor, in Production, index.html should be in the HealthMonitor folder, so browser should ask 'https://localhost:5001/HealthMonitor/' and NOT 'https://localhost:5001/HealthMonitor'
+        //     //     // If browser asks 'https://localhost:5001/HealthMonitor', we should redirect to 'https://localhost:5001/HealthMonitor/'
+        //     //     client.Use(async (context, next) =>
+        //     //     {
+        //     //         Console.WriteLine($"Map.Use({"/" + spaName}): context.Request.Path.Value: '{context.Request.Path.Value}'");
 
-                    await next();
-                });
+        //     //         // if (String.IsNullOrEmpty(context.Request.Path.Value))    // turn https://localhost:5001/HealthMonitor   to // turn https://localhost:5001/HealthMonitor/index.html
+        //     //         // {
+        //     //         //     context.Request.Path = "/index.html";
+        //     //         // }
+        //     //         // else if (String.Equals(context.Request.Path.Value, "/index.html", StringComparison.OrdinalIgnoreCase))
+        //     //         //     context.Request.Path = "";
 
-                StaticFileOptions clientAppDist = new StaticFileOptions()
-                {
-                    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"Angular/dist/" + spaName))   // "Angular\dist\" is Windows like, not good. Use forward slash for Linux.
-                };
-                //client.UseStaticFiles(clientAppDist);
-                client.UseCompressedStaticFiles(clientAppDist);
-            });
-        }
+        //     //         await next();
+        //     //     });
+
+        //     //     StaticFileOptions clientAppDist = new StaticFileOptions()
+        //     //     {
+        //     //         FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"Angular/dist/" + spaName))   // "Angular\dist\" is Windows like, not good. Use forward slash for Linux.
+        //     //     };
+        //     //     //client.UseStaticFiles(clientAppDist);
+        //     //     client.UseCompressedStaticFiles(clientAppDist);
+        //     // });
+        // }
     }
 }

@@ -3,7 +3,7 @@
 screen -S "SqCoreWeb" -d -m
 # Send the command to be executed on your screen
 # The $ before the command is to make the shell parse the \n inside the quotes, and the newline is required to execute the command (like when you press enter).
-screen -r "SqCoreWeb" -X stuff $'cd /home/sq-vnc-client/SQ/WebServer/SqCoreWeb/src/WebServer/SqCoreWeb/bin/Release/netcoreapp3.0/publish\ndotnet SqCoreWeb.dll\n'
+screen -r "SqCoreWeb" -X stuff $'cd /home/sq-vnc-client/SQ/WebServer/SqCoreWeb/published/publish\ndotnet SqCoreWeb.dll\n'
 #
 #this is how to kill a session
 #screen -X -S "SqCoreWeb" quit

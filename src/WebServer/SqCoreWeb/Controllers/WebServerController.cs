@@ -11,21 +11,21 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using SqCommon;
-//using static SqCoreWeb.WsUtils;
+using FinTechCommon;
 
 namespace SqCoreWeb.Controllers
 {
     //[Route("WebServer")]
     public class WebServerController : Controller
     {
-        private readonly ILogger<Program> m_logger;
-        private readonly IConfigurationRoot m_config;
+        private readonly ILogger<Program> m_loggerKestrelStyleDontUse; // Kestrel sends the logs to AspLogger, which will send it back to NLog. It can be used, but practially never use it. Even though this is the official ASP practice. It saves execution resource to not use it. Also, it is more consistent to use Utils.Logger global everywhere in our code.
+        private readonly IConfigurationRoot m_configKestrelStyleDontUse; // use the global Utils.Configuration instead. That way you don't have to pass down further in the call stack later
         private readonly IWebAppGlobals m_webAppGlobals;
 
         public WebServerController(ILogger<Program> p_logger, IConfigurationRoot p_config, IWebAppGlobals p_webAppGlobals)
         {
-            m_logger = p_logger;
-            m_config = p_config;
+            m_loggerKestrelStyleDontUse = p_logger;
+            m_configKestrelStyleDontUse = p_config;
             m_webAppGlobals = p_webAppGlobals;
         }
 
@@ -41,7 +41,7 @@ namespace SqCoreWeb.Controllers
 #if !DEBUG
         [Authorize]     // we can live without it, because ControllerCommon.CheckAuthorizedGoogleEmail() will redirect to /login anyway, but it is quicker that this automatically redirects without clicking another URL link.
 #endif
-        public ActionResult HttpRequestAcitivityLog()
+        public ActionResult HttpRequestActivityLog()
         {
             HttpRequestLog[] logsPointerArr = new HttpRequestLog[0];
             lock (m_webAppGlobals.HttpRequestLogs)  // prepare for multiple threads
@@ -59,6 +59,21 @@ namespace SqCoreWeb.Controllers
 
             return Content(@"<HTML><body><h1>HttpRequests Activity Log</h1><br />" + sb.ToString() + "</body></HTML>", "text/html");
         }
+
+         [HttpGet]
+#if !DEBUG
+        [Authorize]     // we can live without it, because ControllerCommon.CheckAuthorizedGoogleEmail() will redirect to /login anyway, but it is quicker that this automatically redirects without clicking another URL link.
+#endif
+        public ActionResult ServerDiagnostics()
+        {
+            StringBuilder sb = new StringBuilder(@"<HTML><body><h1>ServerDiagnostics</h1>");
+            Program.ServerDiagnostic(sb);
+            MemDb.gMemDb.ServerDiagnostic(sb);
+            DashboardPushHub.ServerDiagnostic(sb);
+
+            return Content(sb.Append("</body></HTML>").ToString(), "text/html");
+        }
+
 
         [HttpGet]
         public ActionResult HttpRequestHeader()
@@ -142,12 +157,36 @@ namespace SqCoreWeb.Controllers
                 // TODO: not high priority to fix it. It returns code 403, Forbidden. Also the same problem in SqLab. (it might only work on Linux server if IP should have been registered)
                 // it works on remote server: https://www.snifferquant.net/WebServer/TestGoogleApiGsheet1   (but not locally, and not in SqLab either)
                 // gSheet is public: https://docs.google.com/spreadsheets/d/1onwqrdxQIIUJytd_PMbdFKUXnBx3YSRYok0EmJF8ppM
-                if (!Utils.DownloadStringWithRetry(out valuesFromGSheetStr, "https://sheets.googleapis.com/v4/spreadsheets/1onwqrdxQIIUJytd_PMbdFKUXnBx3YSRYok0EmJF8ppM/values/A1%3AA3?key=" + Utils.Configuration["GoogleApiKeyKey"]))
+                if (!Utils.DownloadStringWithRetry(out valuesFromGSheetStr, "https://sheets.googleapis.com/v4/spreadsheets/1onwqrdxQIIUJytd_PMbdFKUXnBx3YSRYok0EmJF8ppM/values/A1%3AA3?key=" + Utils.Configuration["Google:GoogleApiKeyKey"]))
                     valuesFromGSheetStr = "Error in DownloadStringWithRetry().";
             }
 
             Utils.Logger.Info("TestGoogleApiGsheet1() END");
             return Content($"<HTML><body>TestGoogleApiGsheet1() finished OK. <br> Received data: '{valuesFromGSheetStr}'</body></HTML>", "text/html");
+        }
+
+        [HttpGet]
+        public ActionResult TestCaretakerCheckFreeDiskSpace()
+        {
+            Utils.Logger.Info("TestCaretakerCheckFreeDiskSpace() BEGIN");
+
+            StringBuilder noteToClient = new StringBuilder();
+            bool success = Caretaker.gCaretaker.CheckFreeDiskSpace(noteToClient);
+
+            Utils.Logger.Info("TestCaretakerCheckFreeDiskSpace() END");
+            return Content($"<HTML><body>TestCaretakerCheckFreeDiskSpace() finished with { (success ? "OK" : "Error") }. <br> Note To Client '{noteToClient.ToString()}'</body></HTML>", "text/html");
+        }
+
+        [HttpGet]
+        public ActionResult TestCaretakerCleanLogfiles()
+        {
+            Utils.Logger.Info("TestCaretakerCleanLogfiles() BEGIN");
+
+            StringBuilder noteToClient = new StringBuilder();
+            bool success = Caretaker.gCaretaker.CleanLogfiles(noteToClient);
+
+            Utils.Logger.Info("TestCaretakerCleanLogfiles() END");
+            return Content($"<HTML><body>TestCaretakerCleanLogfiles() finished with { (success ? "OK" : "Error") }. <br> Note To Client '{noteToClient.ToString()}'</body></HTML>", "text/html");
         }
 
         [HttpPost, HttpGet]     // we only leave HttpGet here so we got a Log message into a log file.

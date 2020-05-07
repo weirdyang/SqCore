@@ -110,7 +110,7 @@ namespace SqCommon
                         case "Balazs":
                             return "d:/GDrive/GDriveHedgeQuant/shared/GitHubRepos/NonCommitedSensitiveData/";
                         case "Laci":
-                            return "d:/ArchiData/GoogleDrive/GDriveHedgeQuant/shared/GitHubRepos/NonCommitedSensitiveData/";
+                            return "d:\\ArchiData\\GoogleDrive\\GDriveHedgeQuant\\shared\\GitHubRepos\\NonCommitedSensitiveData\\";
                         default:
                             throw new Exception("Windows user name is not recognized. Add your username and folder here!");
                     }

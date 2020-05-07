@@ -4,18 +4,33 @@ print("Python version: " + platform.python_version() + " (" + platform.architect
 import os        # listdir, isfile
 import paramiko  # for sftp
 import colorama  # for colourful print
+import subprocess
 from stat import S_ISDIR
 from colorama import Fore, Back, Style
+import platform
+import time
+
+use7zip = True
+
+start_time = time.time()
 # Parameters to change:
 
 rootLocalDir = "g:/work/Archi-data/GitHubRepos/SqCore/src"       #os.walk() gives back in a way that the last character is not slash, so do that way
+# rootLocalDir = "d:/ArchiData/SqCore/src"       #os.walk() gives back in a way that the last character is not slash, so do that way
 acceptedSubTreeRoots = ["Tools\\BenchmarkDB", "Common\\SqCommon", "Common\\DbCommon"]        # everything under these relPaths is traversed: files or folders too
 
 serverHost = "ec2-34-251-1-119.eu-west-1.compute.amazonaws.com"  # ManualTradingServer
-serverPort = 22
+serverPort = 122    # on MTraderServer, port 22 bandwidth throttled, because of VNC viewer usage, a secondary SSH port 122 has no bandwith limit
 serverUser = "sq-vnc-client"
-serverRsaKeyFile = "g:\work\Archi-data\HedgeQuant\src\Server\AmazonAWS\AwsMTrader\AwsMTrader,sq-vnc-client.pem"
+serverRsaKeyFile = 'g:/work/Archi-data/HedgeQuant/src/Server/AmazonAWS/AwsMTrader/AwsMTrader,sq-vnc-client.pem'
+# serverRsaKeyFile = 'd:/ArchiData/HedgeQuant/src/Server/AmazonAWS/AwsMTrader/AwsMTrader,sq-vnc-client.pem'
+zipExeWithPath = 'c:/Program Files/7-Zip/7z.exe'
 rootRemoteDir = "/home/sq-vnc-client/SQ/Tools/BenchmarkDB/src"
+
+zipFileNameWithoutPath = "deploy.7z"
+zipFileRemoteName = rootRemoteDir + "/" + zipFileNameWithoutPath
+zipListFileName = rootLocalDir + "/" + "deployList.txt"
+zipFileName = rootLocalDir + "/" + zipFileNameWithoutPath
 
 excludeDirs = set(["bin", "obj", ".vs", "artifacts", "Properties"])
 excludeFileExts = set(["sln", "xproj", "log", "sqlog", "ps1", "py", "sh", "user", "md"])
@@ -40,10 +55,7 @@ def mkdir_p(sftp, remote_directory):
         sftp.chdir(basename)
         return True
 
-# deployment should delete old src folder (because it is dangerous otherwise to leave old *.cs files there)
-# with Python paramiko sftp, the only possible way to remove folders one by one. (Windows WinScp.exe can execute Linux commands on server like "rm * -rf")
-# future todo: think about zipping the files and upload in 1 go; it would take 2 days to implement, so forget it now.
-#remove directory recursively
+# remove directory recursively
 # http://stackoverflow.com/questions/20507055/recursive-remove-directory-using-sftp
 # http://stackoverflow.com/questions/3406734/how-to-delete-all-files-in-directory-on-remote-server-in-python
 def isdir(path):
@@ -82,6 +94,11 @@ def rm_onlySubdirectories(sftp, path):
 colorama.init()
 print(Fore.MAGENTA + Style.BRIGHT  +  "Start deploying '" + acceptedSubTreeRoots[0] + "' ...")
 
+if os.path.isfile(zipFileName):
+    os.remove(zipFileName)  #remove old zip list file if exists
+if os.path.isfile(zipListFileName):
+    os.remove(zipListFileName)  #remove old zip file if exists
+
 #quicker to do one remote command then removing files/folders recursively one by one
 #in the future. We can 7-zip locally, upload it by Sftp, unzip it with SSHClient commands. It is about 2 days development, so, later.
 #command = "ls " + rootRemoteDir
@@ -93,7 +110,6 @@ sshClient.connect(serverHost, serverPort, username = serverUser, pkey = paramiko
 (stdin, stdout, stderr) = sshClient.exec_command(command)
 for line in stdout.readlines():
     print(line)
-sshClient.close()
 
 print("SFTPClient is connecting...")
 transport = paramiko.Transport((serverHost, serverPort))
@@ -101,13 +117,15 @@ transport.connect(username = serverUser, pkey = paramiko.RSAKey.from_private_key
 sftp = paramiko.SFTPClient.from_transport(transport)
 #rm_onlySubdirectories(sftp, rootRemoteDir)
 
+fileNamesToDeploy = []
+
 for root, dirs, files in os.walk(rootLocalDir, topdown=True):
-    curRelPathWin = os.path.relpath(root, rootLocalDir);
+    curRelPathWin = os.path.relpath(root, rootLocalDir)
     # we have to visit all subdirectories
     dirs[:] = [d for d in dirs if d not in excludeDirs]     #Modifying dirs in-place will prune the (subsequent) files and directories visited by os.walk
 
     if curRelPathWin != ".":    # root folder is always traversed
-        isFilesTraversed = False;
+        isFilesTraversed = False
         for aSubTreeRoot in acceptedSubTreeRoots:
             if curRelPathWin.startswith(aSubTreeRoot):
                 isFilesTraversed = True   
@@ -122,12 +140,53 @@ for root, dirs, files in os.walk(rootLocalDir, topdown=True):
         else:
             curRelPathLinux = curRelPathWin.replace(os.path.sep, '/') + "/"
         remoteDir = rootRemoteDir + "/" +  curRelPathLinux
-        print(Fore.CYAN + Style.BRIGHT  + "Sending: " + remoteDir  + f)
-        mkdir_p(sftp, remoteDir) 
-        ret = sftp.put(root + "/" + f, remoteDir + f, None, True) # Check FileSize after Put() = True
-        #print(Style.RESET_ALL + str(ret))
+        print(Fore.CYAN + Style.BRIGHT  + "Processing file: " + remoteDir  + f)
+        currFileName = rootLocalDir + "/"+ curRelPathWin.replace(os.path.sep, '/')+  "/"+f
+        if os.path.isfile(currFileName):
+            fileNamesToDeploy.append((curRelPathWin.replace(os.path.sep, '/') + "/" + f))
+            if not use7zip:
+                mkdir_p(sftp, remoteDir) 
+                ret = sftp.put(root + "/" + f, remoteDir + f, None, True) # Check FileSize after Put() = True
+        # print(Style.RESET_ALL + str(ret))
 
-print(Fore.MAGENTA + Style.BRIGHT  +  "SFTP Session is closing. Deployment " + acceptedSubTreeRoots[0] + " is OK.")
+if use7zip:
+    # Windows has an 8KB limit on command line length. SqCore Web all files with relative paths are 10KB. We cannot list all the files in the command line. We have to use a @listfile, which can be longer than the command line limit
+    zipListFile = open(zipListFileName,"w")
+    zipListFile.write('\n'.join(fileNamesToDeploy))         # concatenate them with a CRLF
+    zipListFile.close()
+
+    print(Fore.CYAN + Style.BRIGHT  + "Packing all files ...")
+
+    print("working dir before " + os.getcwd())
+    os.chdir(rootLocalDir)
+    print("working dir after " + os.getcwd())
+
+    cmd = [zipExeWithPath, 'a', zipFileName, '-spf2', '@' + zipListFileName]
+    # cmd = [zipExeWithPath, 'a', zipFileName, '-spf2', ' '.join(fileNamesToDeploy]  # file list on command line works only if command line is less than 8KB
+    sp = subprocess.Popen(cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE).wait()
+
+    print(Fore.CYAN + Style.BRIGHT  + "Creating root directory on the server ...")
+    mkdir_p(sftp, rootRemoteDir)
+
+    print(Fore.CYAN + Style.BRIGHT + "Sending packed file ...")
+    ret = sftp.put(zipFileName, zipFileRemoteName, None, True)  # Check FileSize after Put() = True
+
+    print(Fore.CYAN + Style.BRIGHT  + "Unpacking file on the server ...")
+    command = "cd " + rootRemoteDir + " && 7z x " + zipFileRemoteName
+    (stdin, stdout, stderr) = sshClient.exec_command(command)
+    for line in stdout.readlines():
+        print(line, end='') # tell print not to add any 'new line', because the input already contains that
+
+sshClient.close()
+
+print(Fore.MAGENTA + Style.BRIGHT  +  "SFTPClient is closing. Deployment '" + acceptedSubTreeRoots[0] + "' is OK.")
 sftp.close()
 transport.close()
-#k = input("Press ENTER...")  
+
+if os.path.isfile(zipFileName):
+    os.remove(zipFileName)  # remove zip list file
+if os.path.isfile(zipListFileName):
+    os.remove(zipListFileName)  # remove zip file
+
+print("--- Deployment of %d files ended in %03.2f seconds ---" % (len(fileNamesToDeploy), time.time() - start_time))
+#k = input("Press ENTER...")

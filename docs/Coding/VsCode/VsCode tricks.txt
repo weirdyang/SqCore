@@ -1,14 +1,38 @@
 
 - start vscode in any directory in CMD, type: "code ."  // runs code with the current directory.
 
-- (Ctrl + ') toggles the Terminal window parts
-- (Ctrl+Shift+B) start build
+Shortcuts:
+Debugger:
 - F5: Debug, attach debugger
 - Ctrl-F5: Run without attaching debugger
+
+Code editing:
 - F12: Go to definition
+- Go to definition via mouse: hold down Control, Move mouse over a method, simple click (not double click). After that Ctrl-Back will go back.
+- Alt-LeftArrow, Alt-RightArrow: Navigate back and forward. (after Go To Definition, or after changing opened files.). Navigate Forward only makes sense After a Navigate Back, otherwise nothing happens.
 - F2: Refactoring:Rename symbol (function, variable) in all files. see https://code.visualstudio.com/docs/editor/refactoring
-- Ctrl+P (Quick Open) + and start to type any filename
+- Ctrl-K, Ctrl-F Format selection.
+
+- Ctrl+Shift+O (Go to Symbol, in editor window). type : for lines, @ for symbols. (no local symbols, only class symbols in C#, in TS it works for local symbols too) Can save a lot of navigation time.
+- Ctrl+T (Go to Symbol, in workspace) (jumping to a symbol across files)
+
+Vscode services:
+- (Ctrl + ,): Search Settings
+- (Ctrl + ') toggles the Terminal window parts
+- (Ctrl+Shift+B) start build
+- Ctrl+P (Quick Open 'file') + and start to type any filename: "*.ts", or "Program.cs". It is easier to find files than browsing. You can now continue to navigate to the symbols of a file result simply by typing '@'.
+
 
 
 - 2019-09-20: I found no way to run task (tasks.json) in an external terminal (only internal),
-however, it is possible to launch thing in launch.json and use "externalConsole": true
+however, it is possible to launch things in launch.json and use "externalConsole": true
+
+- open tab in new window
+// There is no floating window concept in vscode, probably because of Linux
+https://stackoverflow.com/questions/43362133/visual-studio-code-open-tab-in-new-window
+"When I want to split the screens I usually do one of the following:
+1. open new window (new vscode instance) with: Ctrl+Shift+N and after that I drag the current file I want to the new window.
+on dual display, it is better (the second vscode instance is on a different screen)
+2. on the File explorer - I hit Ctrl+Enter on the file I want - and then this file and the other file open together 
+in the same screen but in split mode, so you can see the two files together. If the screen is wide enough this is not a bad solution at all that you can get used to.
+(if the screen is huge, 40", then this is better if vsCode is extended to fullscreen. Less mouse and eye movement.)

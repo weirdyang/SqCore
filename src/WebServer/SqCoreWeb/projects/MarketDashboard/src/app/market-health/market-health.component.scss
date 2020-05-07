@@ -1,0 +1,162 @@
+:host {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+      Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    font-size: 1.4rem;
+    color: rgb(32, 34, 148);
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    width: 100%;
+  }
+.dashboardTopCont {
+  width: 100%;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+}
+.dashboardTopCont .leftDiv {
+  float:left;
+  visibility: hidden;
+}
+
+.dashboardTopCont table{
+  border-collapse: collapse;
+}
+.dashboardTopCont table td, th{
+  padding: 0rem;
+  border-style: ridge;
+  border-width: 0.2rem;
+  border-color: #4e95f4 ;
+  width: 7rem;
+  text-align: center;
+}
+
+.dashboardTopCont .tableHeader {
+  background: #95bbf3;
+}
+
+.dashboardTopCont .rightDiv {
+  float:right;
+  text-align: center;
+}
+.dashboardTopCont .realtimeRow{
+  font-size: 1.6rem;
+  font-weight: 500;
+  background-color: #c5d8f3;
+}
+.dashboardTopCont .pastPerfRow{
+  font-size: 1.4rem;
+  background-color: #f0f2f7;
+}
+
+.dashboardTopCont .pastPerfRow .lookbAndMarketIndSel{
+  width: 20rem;
+}
+
+.tooltipCell {
+  position: relative;
+  cursor: help;
+  // display: inline-block;
+  // border-bottom: 1px dotted black;
+}
+
+.positivePerf {
+  color: green;
+}
+
+.negativePerf {
+  color: red;
+}
+
+.tooltipCell .tooltipText {
+  padding:0.3rem;
+  font-size: 1.4rem;
+  font-weight: normal;
+  display: none;
+  background:rgb(210, 252, 176);
+  border: 0.1rem solid rgb(19, 7, 177);
+  color: rgb(6, 8, 153);
+  text-align: left;
+  border-radius: 1rem;
+  position: absolute;
+  z-index: 100;
+  white-space: pre;
+  opacity: 0.87;
+}
+
+.tooltipCell .tooltipText .bold{
+  font-weight: bold;
+}
+
+.tooltipCell .tooltipText .smallTT{
+  font-size: 1rem;
+}
+
+.tooltipCell:hover .tooltipText {
+  display: inline-block;
+}
+
+.lookbackError {
+  background-color: salmon;
+}
+
+.lookbackError .tooltipText {
+  background-color: salmon;
+}
+
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  -ms-appearance: none;
+  appearance: none;
+  outline: 0;
+  box-shadow: none;
+  border: 0 !important;
+  background: #2c3e50;
+  background-image: none;
+}
+/* Remove IE arrow */
+select::-ms-expand {
+  display: none;
+}
+/* Custom Select */
+.select {
+  position: relative;
+  display: inline-block;
+  margin-top: 0.25rem;
+  // width: 20em;
+  // height: 3em;
+  // line-height: 3;
+  background: #a5cde4;
+  overflow: hidden;
+  border-radius: .5rem;
+}
+select {
+  flex: 1;
+  padding: 0rem 1.5rem 0rem 0.5rem;
+  background: #a5cde4;
+  // color: #fff;
+  cursor: pointer;
+  color: blue;
+  font-weight: bold;
+}
+/* Arrow */
+.select::after {
+  content: '\25BC';
+  color: blue;
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0rem 0rem;
+  background: #a5cde4;
+  cursor: pointer;
+  pointer-events: none;
+  -webkit-transition: .25s all ease;
+  -o-transition: .25s all ease;
+  transition: .25s all ease;
+}
+/* Transition */
+.select:hover::after {
+  color: #f39c12;
+}
+

@@ -1,0 +1,68 @@
+.vertical-menu {
+  width: 100px;
+}
+
+.vertical-menu a {
+  background-color: #eee;
+  color: black;
+  display: block;
+  padding: 12px;
+  text-decoration: none;
+}
+
+.vertical-menu a:hover {
+  background-color: #ccc;
+}
+
+.vertical-menu a.active {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.horizontal-menu {
+  list-style-type: none;
+  height: 40px;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+.horizontal-menu li {
+  float: left;
+}
+.horizontal-menu a {
+  background-color: #eee;
+  color: black;
+  display: block;
+  padding: 12px;
+  text-decoration: none;
+}
+
+.horizontal-menu a:hover {
+  background-color: #ccc;
+}
+
+.horizontal-menu a.active {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.newsTicker {
+  // float: left;
+  // width: 80px;
+  // height: 40px;
+  background-color: #eee;
+  color: black;
+}
+
+.newsItemStock {
+  display: block;
+}
+
+.inVisible {
+  display: none;
+}
+
+.previewed {
+  font-weight: bold;
+}

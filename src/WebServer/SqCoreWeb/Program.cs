@@ -12,13 +12,19 @@ using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using NLog.Web;
 using SqCommon;
+using FinTechCommon;
+using System.Text;
+using System.Globalization;
 
 namespace SqCoreWeb
 {
     public interface IWebAppGlobals
     {
         DateTime WebAppStartTime { get; set; }
+
+        IWebHostEnvironment? KestrelEnv { get; set; }   // instead of the 3 member variables separately, store the container p_env
 
         Queue<HttpRequestLog> HttpRequestLogs { get; set; }     // Fast Insert, limited size. Better that List
     }
@@ -28,6 +34,9 @@ namespace SqCoreWeb
         DateTime m_webAppStartTime = DateTime.UtcNow;
         DateTime IWebAppGlobals.WebAppStartTime { get => m_webAppStartTime; set => m_webAppStartTime = value; }
 
+        IWebHostEnvironment? m_kestrelEnv = null;
+        IWebHostEnvironment? IWebAppGlobals.KestrelEnv { get => m_kestrelEnv; set => m_kestrelEnv = value; }
+        
         Queue<HttpRequestLog> m_httpRequestLogs = new Queue<HttpRequestLog>();
         Queue<HttpRequestLog> IWebAppGlobals.HttpRequestLogs { get => m_httpRequestLogs; set => m_httpRequestLogs = value; }
     }
@@ -40,8 +49,8 @@ namespace SqCoreWeb
         public static void Main(string[] args)
         {
             string appName = System.Reflection.MethodBase.GetCurrentMethod()?.ReflectedType?.Namespace ?? "UnknownNamespace";
-            Console.Title = $"{appName} v1.0.14";
-            string systemEnvStr = $"(v1.0.14, {Utils.RuntimeConfig() /* Debug | Release */}, CLR: {System.Environment.Version}, {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription},  OS: {System.Environment.OSVersion}, user: {System.Environment.UserName}, CPU: {System.Environment.ProcessorCount}, ThId-{Thread.CurrentThread.ManagedThreadId})";
+            Console.Title = $"{appName} v1.0.15";
+            string systemEnvStr = $"(v1.0.15, {Utils.RuntimeConfig() /* Debug | Release */}, CLR: {System.Environment.Version}, {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription},  OS: {System.Environment.OSVersion}, user: {System.Environment.UserName}, CPU: {System.Environment.ProcessorCount}, ThId-{Thread.CurrentThread.ManagedThreadId})";
             Console.WriteLine($"Hello {appName}. {systemEnvStr}");
             gLogger.Info($"********** Main() START {systemEnvStr}");
 
@@ -59,18 +68,29 @@ namespace SqCoreWeb
             Utils.Configuration = builder.Build();
             Utils.MainThreadIsExiting = new ManualResetEventSlim(false);
             HealthMonitorMessage.InitGlobals(ServerIp.HealthMonitorPublicIp, HealthMonitorMessage.DefaultHealthMonitorServerPort);       // until HealthMonitor runs on the same Server, "localhost" is OK
+            Email.SenderName = Utils.Configuration["Emails:HQServer"];
+            Email.SenderPwd =Utils.Configuration["Emails:HQServerPwd"];
             StrongAssert.g_strongAssertEvent += StrongAssertMessageSendingEventHandler;
             TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException; // Occurs when a faulted task's unobserved exception is about to trigger exception which, by default, would terminate the process.
 
             try
             {
+                DashboardPushHub.EarlyInit();    // services add handlers to the MemDb.EvMemDbInitialized event.
+                MemDb.gMemDb.Init();
+                Caretaker.gCaretaker.Init(Utils.Configuration["Emails:ServiceSupervisors"], p_needDailyMaintenance: true, TimeSpan.FromHours(2));
                 CreateHostBuilder(args).Build().Run();
             }
             catch (Exception e)
             {
                 gLogger.Error(e, $"CreateHostBuilder(args).Build().Run() exception.");
-                HealthMonitorMessage.SendAsync($"Exception in SqCoreWebsite.C#.MainThread. Exception: '{ e.ToStringWithShortenedStackTrace(400)}'", HealthMonitorMessageID.SqCoreWebError).RunSynchronously();
+                if (e is System.Net.Sockets.SocketException)
+                {
+                    gLogger.Error("Linux. See 'Allow non-root process to bind to port under 1024.txt'. If Dotnet.exe was updated, it lost privilaged port. Try 'whereis dotnet','sudo setcap 'cap_net_bind_service=+ep' /usr/share/dotnet/dotnet'.");
+                }
+                HealthMonitorMessage.SendAsync($"Exception in SqCoreWebsite.C#.MainThread. Exception: '{ e.ToStringWithShortenedStackTrace(1200)}'", HealthMonitorMessageID.SqCoreWebCsError).GetAwaiter().GetResult();
             }
+            Caretaker.gCaretaker.Exit();
+            MemDb.gMemDb.Exit();
 
             gLogger.Info("****** Main() END");
             NLog.LogManager.Shutdown();
@@ -101,7 +121,7 @@ namespace SqCoreWeb
                             // from here https://docs.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel?view=aspnetcore-3.0#endpoint-configuration  (find: SNI)
                             // listenOptions.UseHttps(httpsOptions =>
                             // {
-                                
+
                             //     // see 'certmgr.msc'
                             //     // https://localhost:5005/ with this turns out to be 'valid' in Chrome. Cert is issued by 'localhost', issued to 'localhost'. 
                             //     // https://127.0.0.1:5005/ will say: invalid. (as the 'name' param is null in the callback down)
@@ -114,7 +134,7 @@ namespace SqCoreWeb
                             //     var certs = new Dictionary<string, X509Certificate2>(StringComparer.OrdinalIgnoreCase);
                             //     certs["localhost"] = localhostCert;
                             //     certs["sqcore.net"] = letsEncryptCert;
-                            //     certs["desktop.sqcore.net"] = letsEncryptCert;  // it seems the same certificate is used for the root and the sub-domain.
+                            //     certs["dashboard.sqcore.net"] = letsEncryptCert;  // it seems the same certificate is used for the root and the sub-domain.
                             //     //certs["example.com"] = exampleCert;
                             //     //certs["sub.example.com"] = subExampleCert;
 
@@ -132,13 +152,31 @@ namespace SqCoreWeb
 
                         });
                     })
-                    .UseStartup<Startup>();
+                    .UseStartup<Startup>()
+                    .ConfigureLogging(logging =>
+                    {
+                        // for very detailed logging:
+                        // set "Microsoft": "Trace" in appsettings.json or appsettings.dev.json
+                        // set set this ASP logging.SetMinimumLevel to Trace, 
+                        // set minlevel="Trace" in NLog.config
+                        logging.ClearProviders();   // this deletes the Console logger which is a default in ASP.net
+                        if (String.Equals(Utils.RuntimeConfig(), "DEBUG", StringComparison.OrdinalIgnoreCase)) 
+                        {
+                            logging.AddConsole();   // in vscode at F5, launching a web browser works by finding a pattern in Console
+                            logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
+                        } else 
+                        {
+                            // in production, logging slows down.
+                            logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Warning);
+                        }
+                    })
+                    .UseNLog();  // NLog: Setup NLog for Dependency injection; LoggerProvider under the ASP.NET Core platform.
                 });
 
         internal static void StrongAssertMessageSendingEventHandler(StrongAssertMessage p_msg)
         {
             gLogger.Info("StrongAssertEmailSendingEventHandler()");
-            HealthMonitorMessage.SendAsync($"Msg from SqCore.Website.C#.StrongAssert. StrongAssert Warning (if Severity is NoException, it is just a mild Warning. If Severity is ThrowException, that exception triggers a separate message to HealthMonitor as an Error). Severity: {p_msg.Severity}, Message: { p_msg.Message}, StackTrace: { p_msg.StackTrace.ToStringWithShortenedStackTrace(400)}", HealthMonitorMessageID.SqCoreWebError).FireParallelAndForgetAndLogErrorTask();
+            HealthMonitorMessage.SendAsync($"Msg from SqCore.Website.C#.StrongAssert. StrongAssert Warning (if Severity is NoException, it is just a mild Warning. If Severity is ThrowException, that exception triggers a separate message to HealthMonitor as an Error). Severity: {p_msg.Severity}, Message: { p_msg.Message}, StackTrace: { p_msg.StackTrace.ToStringWithShortenedStackTrace(800)}", HealthMonitorMessageID.SqCoreWebCsError).FireParallelAndForgetAndLogErrorTask();
         }
 
         // Called by the GC.FinalizerThread. Occurs when a faulted task's unobserved exception is about to trigger exception which, by default, would terminate the process.
@@ -151,7 +189,7 @@ namespace SqCoreWeb
             if (e.Exception != null) {
                 isSendable = SqFirewallMiddlewarePreAuthLogger.IsSendableToHealthMonitorForEmailing(e.Exception);
                 if (isSendable)
-                    msg += $" Exception: '{ e.Exception.ToStringWithShortenedStackTrace(400)}'.";
+                    msg += $" Exception: '{ e.Exception.ToStringWithShortenedStackTrace(600)}'.";
             }
 
             if (sender != null)
@@ -160,19 +198,25 @@ namespace SqCoreWeb
                 if (senderTask != null)
                 {
                     msg += $" Sender is a task. TaskId: {senderTask.Id}, IsCompleted: {senderTask.IsCompleted}, IsCanceled: {senderTask.IsCanceled}, IsFaulted: {senderTask.IsFaulted}, TaskToString(): {senderTask.ToString()}.";
-                    msg += (senderTask.Exception == null) ? " SenderTask.Exception is null" : $" SenderTask.Exception {senderTask.Exception.ToStringWithShortenedStackTrace(400)}";
+                    msg += (senderTask.Exception == null) ? " SenderTask.Exception is null" : $" SenderTask.Exception {senderTask.Exception.ToStringWithShortenedStackTrace(800)}";
                 }
                 else
                     msg += " Sender is not a task.";
             }
 
             if (isSendable)
-                HealthMonitorMessage.SendAsync(msg, HealthMonitorMessageID.SqCoreWebError).GetAwaiter().GetResult();
+                HealthMonitorMessage.SendAsync(msg, HealthMonitorMessageID.SqCoreWebCsError).GetAwaiter().GetResult();
             else 
                 gLogger.Warn(msg);
             e.SetObserved();        //  preventing it from triggering exception escalation policy which, by default, terminates the process.
         }
 
+        public static void ServerDiagnostic(StringBuilder p_sb)
+        {
+            p_sb.Append("<H2>Program.exe</H2>");
+            var timeSinceAppStart = DateTime.UtcNow - g_webAppGlobals.WebAppStartTime;
+            p_sb.Append($"WebAppStartTimeUtc: {g_webAppGlobals.WebAppStartTime.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)}({timeSinceAppStart:dd\\.hh\\:mm\\:ss} days ago)<br>");
+        }
 
     }
 }

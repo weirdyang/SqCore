@@ -3,13 +3,14 @@
 <body>
     <h2>DeveloperDashboard</h2>
 
-    <A href="/webapps/ExampleNonRealtime/index.html"> Example webapp: NonRealtime with TS</A><br />
-    <A href="/webapps/ExampleNonRealtime_youtube/index.html"> Example webapp: NonRealtime (YouTube) with TS</A><br />
+    <A href="/webapps/ExampleJsClientGet/index.html"> Example webapp: JS-client Get Data Non-Realtime</A><br />
+    <A href="/webapps/ExampleJsClientGet_youtube/index.html"> Example webapp: JS-client Get Data Non-Realtime (YouTube)</A><br />
+    <A href="/webapps/ExampleCsServerPushInRealtime/index.html"> Example webapp: CsharpServer Push Data In Realtime</A><br />
 
     <A href="/WeatherForecast"> Test an MVC WebApi Controller to return JSON: WeatherForecast</A><br /><br />
 
-    <A href="/HealthMonitor/"> Test Angular: HealthMonitor</A><br />
-    <A href="/MarketDashboard/"> Test Angular: MarketDashboard</A><br /><br /><br />
+    <A href="/webapps/HealthMonitor/"> Test Angular: HealthMonitor</A> (<A href="//healthmonitor.sqcore.net">End users</A>, <A href="//healthmonitor.sqcore.net/UserAccount/login"> Login</A>, <A href="//healthmonitor.sqcore.net/UserAccount/logout"> Logout</A>) (<A href="http://localhost:4201/">Local Debug only: ngServed</A>)<br />
+    <A href="/webapps/MarketDashboard/"> Test Angular: MarketDashboard</A>(<A href="//dashboard.sqcore.net">End users</A>, <A href="//dashboard.sqcore.net/UserAccount/login"> Login</A>, <A href="//dashboard.sqcore.net/UserAccount/logout"> Logout</A>) (<A href="http://localhost:4202/">Local Debug only: ngServed</A>)<br /><br /><br />
 
     <hr>
 
@@ -21,14 +22,19 @@
     <hr>
     <hr>
     <a href="/WebServer/Ping">WebServer/Ping</a><br />
-    <a href="/WebServer/HttpRequestAcitivityLog">WebServer/HttpRequestAcitivityLog</a><br />    
+    <a href="/WebServer/HttpRequestActivityLog">WebServer/HttpRequestActivityLog</a><br />
+    <a href="/WebServer/ServerDiagnostics">WebServer/ServerDiagnostics</a><br />
+    <hr>
     <a href="/WebServer/HttpRequestHeader">WebServer/Show HttpRequestHeader</a><br />
-
     <a href="/WebServer/TestHealthMonitorByRaisingExceptionInController">WebServer/ Test HealthMonitor by C# exception in a Controller (caught in SqFirewallMiddlewarePreAuthLogger()) Debug: nice page, Release: error.html.</a><br />
     <a href="/WebServer/TestHealthMonitorByRaisingStrongAssert">WebServer/ Test HealthMonitor Email by C# exception in StrongAssert()</a><br />
     <a href="/WebServer/TestHealthMonitorByRaisingUnobservedTaskException">WebServer/ Test HealthMonitor Email by C# exception in UnobservedTaskException()</a><br />
-    
+    <a href="/webapps/ExampleJsClientGet/index.html"> WebServer/ Test JS exception for HealthMonitor Email (Click button there)</a><br />
+
     <a href="/WebServer/TestGoogleApiGsheet1">WebServer/Test GoogleApi: sheets.spreadsheets.values.get() via HTTP</a><br />
+
+    <a href="/WebServer/TestCaretakerCheckFreeDiskSpace">WebServer/Test Caretaker.CheckFreeDiskSpace() via HTTP</a><br />
+    <a href="/WebServer/TestCaretakerCleanLogfiles">WebServer/Test Caretaker.CleanLogfiles() via HTTP</a><br />
     <hr>
     <a href="/UserAccount/UserInfo">UserAccount/Show UserProfile, Tokens (NoAuth in DEBUG, Any Google user in RELEASE)</a><br />
     <A href="/UserAccount/NoAuthNeedWebserviceSample"> Test login-status 1: No Auth Needed to access this.</A><br />
@@ -36,10 +42,11 @@
     <A href="/UserAccount/SelectedGoogleUsersAuthNeedWebserviceSample"> Test login-status 3: Only Selected GoogleUsers can access this.</A><br />
 
     <hr>
-    Copied from SqLab. Under construction.<br />
+    <a href="/YahooFinanceForwarder?yffOutFormat=json&yffOutVar=myData1&yffUri=query1.finance.yahoo.com/v7/finance/download/QQQ&period1=1492941064&period2=1495533064&interval=1d&events=history">Test YahooFinanceForwarder (JSON data), all yffColumns</a><br />
+    <a href="/YahooFinanceForwarder?yffOutFormat=json&yffColumns=dc1&yffOutVar=myData1&yffUri=query1.finance.yahoo.com/v7/finance/download/QQQ&period1=1492941064&period2=1495533064&interval=1d&events=history">Test YahooFinanceForwarder  (JSON data), columns: d:date, c1-AdjClose</a><br />
+    <a href="/YahooFinanceForwarder?yffOutFormat=json&yffColumns=dc1&jsonp=JsonpCallbackFunc&yffUri=query1.finance.yahoo.com/v7/finance/download/QQQ&period1=2017-02-02&period2=2017-05-22&interval=1d&events=history">Test YahooFinanceForwarder  (JSONP), columns: d:date, c1-AdjClose, startDate, endDate is not Unix format</a><br />
+    <a href="/YahooFinanceForwarder?yffOutFormat=csv&yffColumns=dc1&yffUri=query1.finance.yahoo.com/v7/finance/download/QQQ&period1=2017-02-02&period2=UtcNow&interval=1d&events=history">Test YahooFinanceForwarder (CSV), columns: d:date, c1-AdjClose, startDate is not Unix, endDate is UtcNow (intraday realtime price)</a><br />
 
-
-    <a href="/VXXAdaptiveConnorLiveBacktest">WebServer/ Test JS exception for HealthMonitor Email (JS Button at the very bottom of the Connor page)</a><br />
 </body>
 
 </HTML>

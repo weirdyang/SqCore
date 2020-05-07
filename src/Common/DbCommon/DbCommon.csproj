@@ -2,12 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-	<Nullable>enable</Nullable>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NLog" Version="4.6.7" />
-    <PackageReference Include="Npgsql" Version="4.0.10" />
+    <ProjectReference Include="..\SqCommon\SqCommon.csproj" />
+    <PackageReference Include="NLog" Version="4.6.8" />
+    <PackageReference Include="Npgsql" Version="4.1.2" />
     <PackageReference Include="StackExchange.Redis" Version="2.0.601" />
   </ItemGroup>
 

@@ -21,8 +21,12 @@ namespace SqCoreWeb.Controllers
             await HttpContext.ChallengeAsync("Google",
                 new AuthenticationProperties()
                 {
-                    RedirectUri = returnUrl ?? "/index.html"      // if http://localhost/api/UserAccount/login is called directly, there is no returnURL, which is null. However if we pass Null to GoogleAuth, it will come back to this "/login" which will cause an infinite loop. 
-            });
+                    // IsPersistent = true,
+                    // AllowRefresh = true,
+                    // ExpiresUtc = ? Leave them as default.
+                    // subdomain https://healthmonitor.sqcore.net/UserAccount/login should redirect back to https://healthmonitor.sqcore.net/
+                    RedirectUri = returnUrl ?? "/"      //  better in a short form, so don't do "/index.html" if http://localhost/api/UserAccount/login is called directly, there is no returnURL, which is null. However if we pass Null to GoogleAuth, it will come back to this "/login" which will cause an infinite loop. 
+                });
         }
 
         [Authorize]
@@ -32,19 +36,20 @@ namespace SqCoreWeb.Controllers
             // TODO: redirect user to a nicer page that shows: ""You have been logged out. Goodbye " + context.User.Identity.Name + "<br>""
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme, new AuthenticationProperties
             {
-                //RedirectUri = Url.Action("Index", "Home")
-                RedirectUri = "/"
+                // RedirectUri = Url.Action("Index", "Home")
+                // subdomain https://healthmonitor.sqcore.net/UserAccount/logout should NOT redirect back to https://healthmonitor.sqcore.net/  because that requires user login and will automatically login back auto on Edge Browser.
+                RedirectUri = (Program.g_webAppGlobals.KestrelEnv?.EnvironmentName == "Development") ? "https://localhost:5001/" : "//sqcore.net"
             });
         }
 
-         [HttpGet]
+        [HttpGet("[action]")]
 #if !DEBUG
         [Authorize]     // we can live without it, because ControllerCommon.CheckAuthorizedGoogleEmail() will redirect to /login anyway, but it is quicker that this automatically redirects without clicking another URL link.
 #endif
         public ActionResult UserInfo()
         {
             var userAuthCheck = WsUtils.CheckAuthorizedGoogleEmail(this.HttpContext);
-            if (userAuthCheck != UserAuthCheckResult.UserKnownAuthOK)   
+            if (userAuthCheck != UserAuthCheckResult.UserKnownAuthOK)
             {
                 return Content(@"<HTML><body>Google Authorization Is Required. You are not logged in or your your Google account is not accepted.<br>" +
                    @"<A href=""/logout"">logout this Google user </a> and login with another one." +
@@ -93,7 +98,7 @@ namespace SqCoreWeb.Controllers
         public string SelectedGoogleUsersAuthNeedWebserviceSample()
         {
             var userEmailClaim = HttpContext?.User?.Claims?.FirstOrDefault(p => p.Type == @"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress");
-            string email = userEmailClaim?.Value  ?? "Unknown email";
+            string email = userEmailClaim?.Value ?? "Unknown email";
 
             if (!String.Equals(email, "foo@google.com"))
                 return "You don't belong to our precious users. Your email is: " + email;
@@ -101,6 +106,6 @@ namespace SqCoreWeb.Controllers
             return "You are one of our precious users. Cheers. Your email is: " + email;
         }
 
-        
+
     }
 }

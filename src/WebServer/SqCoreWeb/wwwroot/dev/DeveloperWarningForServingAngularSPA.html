@@ -1,14 +1,23 @@
 <HTML>
 
 <body>
-    Dear Developer. <br /><br />
-Find ServeOnly1ProjectInMonorepo.cmd, customize it and run it.<br /><br />
+    Dear Developer. <br /><br /><br /><br />
+
+    THIS is OBSOLETE now. However, leave it for a while.
+
+    <br /><br /><br /><br />
+    
+In Debug mode, Angular apps are 'ng serve'-d. The app will automatically reload if you change any of the source files.<br />
+<ol>
+    <li><a href="http://localhost:4201/">HealthMonitor in ngServe (DEBUG), localhost:4201</a></li>
+    <li><a href="http://localhost:4202/">MarketDashboard in ngServe (DEBUG), localhost:4202</a></li>
+</ol>
+<br />
+
 
 Notes:<br />
 
-Development of many Angular projects (Monorepo). To enjoy that any file modification reloads the browser, only 1 Angular projects should be served.  <br />
-And it should be tested by visiting http://localhost:4200/ (served by that 'ng serve') and not visiting  https://localhost:5001 (which is served by the the ASP webserver)<br />
-In Production, everything will be fine. Webpack files will be served by the ASP webserver as static files.<br />
+In Production, everything will be fine. Webpack files will be served by the Kestrel webserver as static files.<br />
 
 </body>
 

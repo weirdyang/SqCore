@@ -8,10 +8,10 @@
             "name": "WebServer/SqCoreWeb (DEBUG)",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "SqCoreWeb predebugBuildAndTscWatchTask",
-            "postDebugTask": "SqCoreWeb postdebugKillVsCodeTask",
+            "preLaunchTask": "SqCoreWeb-PreDebugBuildWatchDev",
+            "postDebugTask": "SqCoreWeb-PostDebugWatchDev.py",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/src/WebServer/SqCoreWeb/bin/Debug/netcoreapp3.0/SqCoreWeb.dll",
+            "program": "${workspaceFolder}/src/WebServer/SqCoreWeb/bin/Debug/netcoreapp3.1/SqCoreWeb.dll",
             "args": [],
             "cwd": "${workspaceFolder}/src/WebServer/SqCoreWeb",
             "stopAtEntry": false,
@@ -26,6 +26,11 @@
             },
             "sourceFileMap": {
                 "/Views": "${workspaceFolder}/src/WebServer/SqCoreWeb/Views"
+            },
+            "presentation": {
+                "group": "1_SqCoreWeb",
+                "order": 1,
+                "hidden": false
             }
         },
         {
@@ -35,27 +40,37 @@
             //"preLaunchTask": "WebServer/SqCoreWeb publish",
             "program": "SqCoreWeb.exe",
             "args": [],
-            "cwd": "${workspaceFolder}/src/WebServer/SqCoreWeb/bin/Release/netcoreapp3.0/publish",
+            "cwd": "${workspaceFolder}/src/WebServer/SqCoreWeb/bin/Release/netcoreapp3.1/publish",
             "console": "externalTerminal",
-            "stopAtEntry": false
+            "stopAtEntry": false,
+            "presentation": {
+                "group": "1_SqCoreWeb",
+                "order": 2,
+                "hidden": false
+            }
         },
         {
             "name": "Tools/RedisManager (DEBUG)",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "RedisManager build Debug",
-            "program": "${workspaceFolder}/src/Tools/RedisManager/bin/Debug/netcoreapp3.0/RedisManager.dll",
+            "program": "${workspaceFolder}/src/Tools/RedisManager/bin/Debug/netcoreapp3.1/RedisManager.dll",
             "args": [],
             "cwd": "${workspaceFolder}/src/Tools/RedisManager",
             "console": "externalTerminal",
-            "stopAtEntry": false
+            "stopAtEntry": false,
+            "presentation": {
+                "group": "2_Tools",
+                "order": 1,
+                "hidden": false
+            }
         },
         {
             "name": "Tools/BenchmarkDB (DEBUG)",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "BenchmarkDB build Debug",
-            "program": "${workspaceFolder}/src/Tools/BenchmarkDB/bin/Debug/netcoreapp3.0/BenchmarkDB.dll",
+            "program": "${workspaceFolder}/src/Tools/BenchmarkDB/bin/Debug/netcoreapp3.1/BenchmarkDB.dll",
             "args": [],
             "cwd": "${workspaceFolder}/src/Tools/BenchmarkDB",
             "console": "externalTerminal",
@@ -68,13 +83,18 @@
                 "elapsedTiming": false,
                 "programOutput": true
             },
+            "presentation": {
+                "group": "2_Tools",
+                "order": 2,
+                "hidden": false
+            }
         },
         {
             "name": "PerfTestExperiment (RELEASE), run without Debugger Attached (Ctrl-F5, not F5)",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build Release PerfTestExperiment",
-            "program": "${workspaceFolder}/test/PerfTestExperiment/bin/Release/netcoreapp3.0/PerfTestExperiment.exe",
+            "program": "${workspaceFolder}/test/PerfTestExperiment/bin/Release/netcoreapp3.1/PerfTestExperiment.exe",
             "args": [],
             "cwd": "${workspaceFolder}/test/PerfTestExperiment",
             "console": "externalTerminal",
@@ -86,6 +106,13 @@
             "type": "coreclr",
             "request": "attach",
             "processId": "${command:pickProcess}"
+        },
+        {
+            "name": "Python: Current File (Default Debug)",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "cwd": "${fileDirname}"
         }
     ]
 }

@@ -4,6 +4,8 @@
 # SqCore files
 *.sqlog
 *.map
+*.br
+*.7z
 
 # User-specific files
 *.suo
@@ -29,11 +31,21 @@ obj/
 Obj/
 dist/
 **/ts/*.js
+**/ts/*/*.js
+**/ts/*/*/*.js
 
-#Typescript compiled JS files. There is no other way than to list them one by one. Otherwise, legit JS files would not be commited
-**/webapps/BalazsTest/BalazsTest.js
-**/webapps/ExampleNonRealtime/ExampleNonRealtime.js
-**/webapps/ExampleNonRealtime_youtube/ExampleNonRealtime.js
+#Non-Webpack based static webapps:
+#Typescript compiled JS files. Webapps' Legit JS files should be commited. So put TS files into the 'ts' folder. So, we don't have to gitIgnore every JS files one by one
+**/webapps/*/ts/*.js
+
+#Webpack based webapps: Webpack generated files
+**/wwwroot/webapps/*/index.html
+**/wwwroot/webapps/*/main*.js
+**/wwwroot/webapps/*/css/main*.css
+
+#Angular based webapps: Angular generated files
+**/wwwroot/webapps/HealthMonitor
+**/wwwroot/webapps/MarketDashboard
 
 # Visual Studio 2015 cache/options directory
 .vs/

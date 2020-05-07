@@ -23,7 +23,7 @@ namespace SqCommon
         ReportErrorFromSQLabWebsite,
         SqCoreWebOk, // SqCoreWeb can actively notify HealthMonitor that a regular event (like a trade scheduling in VBroker) was completed
         SqCoreWebWarning, // warning will send only emails, but not Phonecalls
-        SqCoreWebError,     // C# error on the server side
+        SqCoreWebCsError,     // C# error on the server side
         SqCoreWebJsError,   // JavaScript error on the client side
     };
 
@@ -130,7 +130,7 @@ namespace SqCommon
             }
             catch (Exception e)
             {
-                gLogger.Error(e, "Error:HealthMonitorMessage.SendMessage exception.");
+                gLogger.Error(e, $"Error:HealthMonitorMessage.SendMessage() exception. Check that AWS firewall allows traffic from this IP on port {DefaultHealthMonitorServerPort}");
             }
             return reply;
         }

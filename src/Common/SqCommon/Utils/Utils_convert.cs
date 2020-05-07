@@ -7,6 +7,15 @@ namespace SqCommon
     public static partial class Utils
     {
 
+        // https://stackoverflow.com/questions/3814190/limiting-double-to-3-decimal-places
+        public static T RoundToDecimalPlace<T>(this decimal numberToTruncate, int decimalPlaces) where T : IConvertible
+        {
+            // decimal power = (decimal)(Math.Pow(10.0, (double)decimalPlaces));
+            // decimal result = Math.Truncate((power * numberToTruncate)) / power; // this truncates 105.349998 to 105.3499. Not good.
+            decimal result = Math.Round(numberToTruncate, decimalPlaces);    // this rounds 105.349998 to 105.35. Not good.
+            return (T)Convert.ChangeType(result, typeof(T));
+        }
+
         // Double.Parse() uses the local Culture of the thread to decide whether to use a decimal point or a decimal comma. We should use InvariantCulture always.
         // To avoid using double.Parse("3.5", CultureInfo.InvariantCulture) all the time, we use this Util function.
         // https://stackoverflow.com/questions/55975211/nullable-reference-types-how-to-specify-t-type-without-constraining-to-class
