@@ -9,7 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\DbCommon\DbCommon.csproj" />
     <ProjectReference Include="..\SqCommon\SqCommon.csproj" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="CsvHelper" Version="15.0.1" />
     <PackageReference Include="Flurl" Version="3.0.0-pre3" />
     <PackageReference Include="Flurl.Http" Version="3.0.0-pre3" />
